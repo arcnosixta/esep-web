@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
-import '../widgets/gradient_button.dart';
+import '../widgets/primary_button.dart';
+import '../navigation/app_navigator.dart';
+import 'app_shell.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -23,6 +25,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -31,20 +34,21 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               const Text(
                 'Регистрация',
                 style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 30,
+                  fontWeight: FontWeight.w800,
                   color: AppColors.textPrimary,
+                  letterSpacing: -0.5,
                 ),
               ),
               const SizedBox(height: 8),
               const Text(
                 'Создайте аккаунт для оценки недвижимости',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 15,
                   color: AppColors.textSecondary,
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 36),
               _buildField('Имя', Icons.person_outline_rounded),
               const SizedBox(height: 16),
               _buildField(
@@ -64,18 +68,19 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 Icons.lock_outline_rounded,
                 obscure: true,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               // Checkbox
               GestureDetector(
                 onTap: () => setState(() => _agreed = !_agreed),
                 child: Row(
                   children: [
-                    Container(
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
                       width: 22,
                       height: 22,
                       decoration: BoxDecoration(
-                        color:
-                            _agreed ? AppColors.accent : Colors.transparent,
+                        gradient: _agreed ? AppColors.accentGradient : null,
+                        color: _agreed ? null : Colors.transparent,
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
                           color: _agreed
@@ -86,7 +91,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       ),
                       child: _agreed
                           ? const Icon(Icons.check_rounded,
-                              size: 16, color: Colors.white)
+                              size: 14, color: Colors.white)
                           : null,
                     ),
                     const SizedBox(width: 12),
@@ -113,13 +118,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 28),
-              GradientButton(
+              const SizedBox(height: 32),
+              PrimaryButton(
                 label: 'Зарегистрироваться',
                 onPressed: _agreed
-                    ? () {
-                        // TODO: Register
-                      }
+                    ? () => AppNavigator.pushReplacement(context, const AppShell())
                     : null,
               ),
               const SizedBox(height: 20),
@@ -163,12 +166,17 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     return TextField(
       keyboardType: keyboardType,
       obscureText: obscure,
-      style: const TextStyle(color: AppColors.textPrimary, fontSize: 15),
+      style: const TextStyle(
+        color: AppColors.textPrimary,
+        fontSize: 15,
+      ),
       decoration: InputDecoration(
         hintText: hint,
         prefixIcon: Icon(icon, color: AppColors.textHint, size: 20),
-        suffixIcon:
-            obscure ? const Icon(Icons.visibility_off_outlined, size: 20, color: AppColors.textHint) : null,
+        suffixIcon: obscure
+            ? const Icon(Icons.visibility_off_outlined,
+                size: 20, color: AppColors.textHint)
+            : null,
       ),
     );
   }

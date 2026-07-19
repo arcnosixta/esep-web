@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
-import '../widgets/app_card.dart';
-import '../widgets/gradient_button.dart';
+import '../widgets/glass_card.dart';
+import '../widgets/primary_button.dart';
 
 class _UploadedFile {
   final String name;
@@ -18,193 +18,224 @@ class _UploadedFile {
 class DocumentUploadScreen extends StatelessWidget {
   const DocumentUploadScreen({super.key});
 
-  static final List<_UploadedFile> _files = [
-    const _UploadedFile(name: 'свидетельство.pdf', size: '2.4 MB', type: 'pdf'),
-    const _UploadedFile(name: 'фото_квартиры.jpg', size: '5.1 MB', type: 'jpg'),
-    const _UploadedFile(name: 'план_этажа.png', size: '1.2 MB', type: 'png'),
+  static final List<_UploadedFile> _files = const [
+    _UploadedFile(name: 'свидетельство.pdf', size: '2.4 MB', type: 'pdf'),
+    _UploadedFile(name: 'фото_квартиры.jpg', size: '5.1 MB', type: 'jpg'),
+    _UploadedFile(name: 'план_этажа.png', size: '1.2 MB', type: 'png'),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Документы'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Upload zone
-            GestureDetector(
-              onTap: () {
-                // TODO: Pick files
-              },
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 48),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: AppColors.accent.withValues(alpha: 0.3),
-                    width: 1.5,
-                  ),
-                ),
+      body: SafeArea(
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              sliver: SliverToBoxAdapter(
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        color: AppColors.accent.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Icon(
-                        Icons.cloud_upload_rounded,
-                        size: 32,
-                        color: AppColors.accent.withValues(alpha: 0.8),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
                     const Text(
-                      'Перетащите файлы сюда',
+                      'Документы',
                       style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
+                        letterSpacing: -0.5,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     const Text(
-                      'или нажмите для выбора',
+                      'Загрузите документы для оценки',
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 14,
                         color: AppColors.textSecondary,
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: ['JPG', 'PNG', 'PDF'].map((type) {
-                        return Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 6),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceLight,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            type,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textHint,
-                            ),
-                          ),
-                        );
-                      }).toList(),
                     ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 28),
-            // Uploaded files header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Загруженные файлы',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+
+            // Upload zone
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+              sliver: SliverToBoxAdapter(
+                child: GestureDetector(
+                  onTap: () {},
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 40),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: AppColors.accent.withValues(alpha: 0.25),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            color: AppColors.accent.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Icon(
+                            Icons.cloud_upload_rounded,
+                            size: 28,
+                            color: AppColors.accent.withValues(alpha: 0.8),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        const Text(
+                          'Перетащите файлы сюда',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          'или нажмите для выбора',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textHint,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: ['JPG', 'PNG', 'PDF'].map((type) {
+                            return Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 5),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceLight,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                type,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textHint,
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                Text(
-                  '${_files.length} файлов',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
+              ),
             ),
-            const SizedBox(height: 16),
-            // File list
-            ...List.generate(_files.length, (i) {
-              final file = _files[i];
-              return AppCard(
+
+            // Files header
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
+              sliver: SliverToBoxAdapter(
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // File icon
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: _fileColor(file.type).withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        _fileIcon(file.type),
-                        color: _fileColor(file.type),
-                        size: 22,
+                    const Text(
+                      'Загруженные файлы',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
                       ),
                     ),
-                    const SizedBox(width: 14),
-                    // Info
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            file.name,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            file.size,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
+                    Text(
+                      '${_files.length} файлов',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
                       ),
-                    ),
-                    // Delete
-                    IconButton(
-                      icon: const Icon(
-                        Icons.delete_outline_rounded,
-                        size: 20,
-                        color: AppColors.error,
-                      ),
-                      onPressed: () {
-                        // TODO: Delete file
-                      },
                     ),
                   ],
                 ),
-              );
-            }),
-            const SizedBox(height: 24),
-            GradientButton(
-              label: 'Продолжить',
-              onPressed: () {
-                // TODO: Continue
-              },
+              ),
+            ),
+
+            // Files
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate(
+                  List.generate(_files.length, (i) {
+                    final file = _files[i];
+                    return GlassCard(
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: _fileColor(file.type).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              _fileIcon(file.type),
+                              color: _fileColor(file.type),
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  file.name,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  file.size,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.delete_outline_rounded,
+                              size: 20,
+                              color: AppColors.error,
+                            ),
+                            onPressed: () {},
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ),
+              ),
+            ),
+
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+              sliver: SliverToBoxAdapter(
+                child: PrimaryButton(
+                  label: 'Продолжить',
+                  onPressed: () {},
+                ),
+              ),
             ),
           ],
         ),
@@ -214,8 +245,8 @@ class DocumentUploadScreen extends StatelessWidget {
 
   Color _fileColor(String type) => switch (type) {
         'pdf' => const Color(0xFFEF4444),
-        'jpg' => const Color(0xFF3B82F6),
-        'png' => const Color(0xFF22C55E),
+        'jpg' => const Color(0xFF38BDF8),
+        'png' => const Color(0xFF2DD4A8),
         _ => AppColors.textSecondary,
       };
 

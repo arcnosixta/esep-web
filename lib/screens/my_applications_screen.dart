@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
-import '../widgets/app_card.dart';
+import '../widgets/glass_card.dart';
 import '../widgets/status_badge.dart';
 
 class _ApplicationItem {
@@ -34,182 +34,178 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
 
   static final List<_ApplicationItem> _applications = [
     const _ApplicationItem(
-      number: '2847',
-      type: 'Квартира',
-      area: '85 м²',
-      date: '12.01.2026',
-      status: BadgeStatus.inProgress,
-      statusLabel: 'В работе',
+      number: '2847', type: 'Квартира', area: '85 м²',
+      date: '12.01.2026', status: BadgeStatus.inProgress, statusLabel: 'В работе',
     ),
     const _ApplicationItem(
-      number: '2831',
-      type: 'Дом',
-      area: '180 м²',
-      date: '10.01.2026',
-      status: BadgeStatus.completed,
-      statusLabel: 'Завершён',
+      number: '2831', type: 'Дом', area: '180 м²',
+      date: '10.01.2026', status: BadgeStatus.completed, statusLabel: 'Завершён',
     ),
     const _ApplicationItem(
-      number: '2819',
-      type: 'Квартира',
-      area: '62 м²',
-      date: '08.01.2026',
-      status: BadgeStatus.pending,
-      statusLabel: 'Ожидание',
+      number: '2819', type: 'Квартира', area: '62 м²',
+      date: '08.01.2026', status: BadgeStatus.pending, statusLabel: 'Ожидание',
     ),
     const _ApplicationItem(
-      number: '2805',
-      type: 'Офис',
-      area: '120 м²',
-      date: '05.01.2026',
-      status: BadgeStatus.completed,
-      statusLabel: 'Завершён',
+      number: '2805', type: 'Офис', area: '120 м²',
+      date: '05.01.2026', status: BadgeStatus.completed, statusLabel: 'Завершён',
     ),
     const _ApplicationItem(
-      number: '2798',
-      type: 'Квартира',
-      area: '94 м²',
-      date: '03.01.2026',
-      status: BadgeStatus.rejected,
-      statusLabel: 'Отклонена',
+      number: '2798', type: 'Квартира', area: '94 м²',
+      date: '03.01.2026', status: BadgeStatus.rejected, statusLabel: 'Отклонена',
     ),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Мои заявки'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: Column(
-        children: [
-          // Filters
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-            child: Row(
-              children: List.generate(_filters.length, (i) {
-                final active = _filterIndex == i;
-                return GestureDetector(
-                  onTap: () => setState(() => _filterIndex = i),
-                  child: Container(
-                    margin: const EdgeInsets.only(right: 8),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: active ? AppColors.accent : AppColors.surface,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      _filters[i],
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: active
-                            ? Colors.white
-                            : AppColors.textSecondary,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 16, 20, 0),
+              child: Text(
+                'Мои заявки',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Filters
+            SizedBox(
+              height: 40,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: _filters.length,
+                itemBuilder: (context, index) {
+                  final active = _filterIndex == index;
+                  return GestureDetector(
+                    onTap: () => setState(() => _filterIndex = index),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeOutCubic,
+                      margin: const EdgeInsets.only(right: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                      decoration: BoxDecoration(
+                        gradient: active ? AppColors.buttonGradient : null,
+                        color: active ? null : AppColors.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: active
+                            ? [
+                                BoxShadow(
+                                  color: AppColors.accentGlow,
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ]
+                            : null,
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        _filters[index],
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color:
+                              active ? Colors.white : AppColors.textSecondary,
+                        ),
                       ),
                     ),
-                  ),
-                );
-              }),
+                  );
+                },
+              ),
             ),
-          ),
-          // List
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              itemCount: _applications.length,
-              itemBuilder: (context, index) {
-                final app = _applications[index];
-                return AppCard(
-                  onTap: () {
-                    // TODO: Open application card
-                  },
-                  child: Row(
-                    children: [
-                      // Number badge
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: AppColors.accent.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Center(
-                          child: Text(
-                            '#${app.number}',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.accent,
+            const SizedBox(height: 16),
+            // List
+            Expanded(
+              child: ListView.builder(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: _applications.length,
+                itemBuilder: (context, index) {
+                  final app = _applications[index];
+                  return GlassCard(
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: AppColors.accent.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Center(
+                            child: Text(
+                              '#${app.number}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.accent,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 14),
-                      // Info
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  app.type,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary,
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    app.type,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textPrimary,
+                                    ),
                                   ),
-                                ),
-                                StatusBadge(
-                                  status: app.status,
-                                  label: app.statusLabel,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-                            Row(
-                              children: [
-                                Text(
-                                  app.area,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: AppColors.textSecondary,
+                                  StatusBadge(
+                                    status: app.status,
+                                    label: app.statusLabel,
+                                    small: true,
                                   ),
-                                ),
-                                const Text(
-                                  '  ·  ',
-                                  style: TextStyle(
-                                    color: AppColors.textHint,
+                                ],
+                              ),
+                              const SizedBox(height: 5),
+                              Row(
+                                children: [
+                                  Text(
+                                    app.area,
+                                    style: const TextStyle(
+                                        fontSize: 12,
+                                        color: AppColors.textSecondary),
                                   ),
-                                ),
-                                Text(
-                                  app.date,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: AppColors.textSecondary,
+                                  const Text('  ·  ',
+                                      style:
+                                          TextStyle(color: AppColors.textHint)),
+                                  Text(
+                                    app.date,
+                                    style: const TextStyle(
+                                        fontSize: 12,
+                                        color: AppColors.textSecondary),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ],
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              },
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

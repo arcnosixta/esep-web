@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
-import '../widgets/app_card.dart';
-import '../widgets/gradient_button.dart';
+import '../widgets/glass_card.dart';
+import '../widgets/primary_button.dart';
 
 class PaymentScreen extends StatefulWidget {
   const PaymentScreen({super.key});
@@ -24,135 +24,93 @@ class _PaymentScreenState extends State<PaymentScreen> {
         ),
       ),
       body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Amount
-            Center(
+            // Amount card
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(28),
+              decoration: BoxDecoration(
+                gradient: AppColors.accentGradient,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.accentGlow,
+                    blurRadius: 32,
+                    offset: const Offset(0, 12),
+                  ),
+                ],
+              ),
               child: Column(
                 children: [
                   const Text(
                     'Сумма к оплате',
                     style: TextStyle(
-                      fontSize: 14,
-                      color: AppColors.textSecondary,
-                    ),
+                        fontSize: 14, color: Color(0xCCFFFFFF)),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   const Text(
                     '15 000 ₸',
                     style: TextStyle(
-                      fontSize: 40,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
+                      fontSize: 44,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      letterSpacing: -1,
                     ),
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    'Оценка квартиры · Заявка №2847',
+                    'Оценка · Заявка №2847',
                     style: TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textHint,
-                    ),
+                        fontSize: 13, color: Color(0xAAFFFFFF)),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 36),
-            const Text(
-              'Способ оплаты',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+            const SizedBox(height: 32),
+            // Payment methods
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Способ оплаты',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
               ),
             ),
-            const SizedBox(height: 16),
-            // Kaspi
+            const SizedBox(height: 14),
             _paymentMethod(
               index: 0,
               icon: Icons.account_balance_wallet_rounded,
               label: 'Kaspi Pay',
               color: const Color(0xFFE8394A),
+              subtitle: 'Оплата через приложение Kaspi',
             ),
-            const SizedBox(height: 12),
-            // Card
+            const SizedBox(height: 10),
             _paymentMethod(
               index: 1,
               icon: Icons.credit_card_rounded,
               label: 'Банковская карта',
               color: AppColors.accent,
+              subtitle: 'Visa, Mastercard, Mir',
             ),
-            const SizedBox(height: 32),
-            // Details
-            if (_selectedMethod == 0)
-              AppCard(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE8394A).withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.account_balance_wallet_rounded,
-                        color: Color(0xFFE8394A),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Kaspi Pay',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            'Оплата через приложение Kaspi',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Icon(
-                      Icons.check_circle_rounded,
-                      color: _selectedMethod == 0
-                          ? AppColors.accent
-                          : AppColors.textHint,
-                    ),
-                  ],
-                ),
-              ),
+            const SizedBox(height: 28),
             if (_selectedMethod == 1)
-              AppCard(
+              GlassCard(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
                     TextField(
                       style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 15,
-                      ),
+                          color: AppColors.textPrimary, fontSize: 15),
                       decoration: const InputDecoration(
                         hintText: 'Номер карты',
-                        prefixIcon: Icon(
-                          Icons.credit_card_rounded,
-                          size: 20,
-                          color: AppColors.textHint,
-                        ),
+                        prefixIcon: Icon(Icons.credit_card_rounded,
+                            size: 20, color: AppColors.textHint),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -161,24 +119,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         Expanded(
                           child: TextField(
                             style: const TextStyle(
-                              color: AppColors.textPrimary,
-                              fontSize: 15,
-                            ),
-                            decoration: const InputDecoration(
-                              hintText: 'MM/YY',
-                            ),
+                                color: AppColors.textPrimary, fontSize: 15),
+                            decoration: const InputDecoration(hintText: 'MM/YY'),
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: TextField(
                             style: const TextStyle(
-                              color: AppColors.textPrimary,
-                              fontSize: 15,
-                            ),
-                            decoration: const InputDecoration(
-                              hintText: 'CVV',
-                            ),
+                                color: AppColors.textPrimary, fontSize: 15),
+                            decoration: const InputDecoration(hintText: 'CVV'),
                             obscureText: true,
                           ),
                         ),
@@ -187,12 +137,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   ],
                 ),
               ),
-            const SizedBox(height: 32),
-            GradientButton(
+            const SizedBox(height: 28),
+            PrimaryButton(
               label: 'Оплатить 15 000 ₸',
-              onPressed: () {
-                // TODO: Process payment
-              },
+              icon: Icons.lock_rounded,
+              onPressed: () {},
             ),
           ],
         ),
@@ -204,17 +153,18 @@ class _PaymentScreenState extends State<PaymentScreen> {
     required int index,
     required IconData icon,
     required String label,
+    required String subtitle,
     required Color color,
   }) {
     final selected = _selectedMethod == index;
     return GestureDetector(
       onTap: () => setState(() => _selectedMethod = index),
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: selected
-              ? color.withValues(alpha: 0.08)
-              : AppColors.surface,
+          color: selected ? color.withValues(alpha: 0.06) : AppColors.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: selected ? color : AppColors.border,
@@ -234,16 +184,30 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ),
             const SizedBox(width: 14),
             Expanded(
-              child: Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textPrimary,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
               ),
             ),
-            Container(
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
               width: 22,
               height: 22,
               decoration: BoxDecoration(

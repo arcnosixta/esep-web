@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
-import '../widgets/app_card.dart';
-import '../widgets/gradient_button.dart';
+import '../widgets/glass_card.dart';
+import '../widgets/primary_button.dart';
 
 class ReportScreen extends StatelessWidget {
   const ReportScreen({super.key});
@@ -17,22 +17,22 @@ class ReportScreen extends StatelessWidget {
         ),
       ),
       body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Price highlight
+            // Price
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(28),
               decoration: BoxDecoration(
                 gradient: AppColors.accentGradient,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: const [
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
                   BoxShadow(
-                    color: Color(0x407C3AED),
-                    blurRadius: 24,
-                    offset: Offset(0, 10),
+                    color: AppColors.accentGlow,
+                    blurRadius: 32,
+                    offset: const Offset(0, 12),
                   ),
                 ],
               ),
@@ -41,41 +41,42 @@ class ReportScreen extends StatelessWidget {
                   const Text(
                     'Итоговая стоимость',
                     style: TextStyle(
-                      fontSize: 14,
-                      color: Color(0xCCFFFFFF),
-                    ),
+                        fontSize: 14, color: Color(0xCCFFFFFF)),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   const Text(
                     '42 500 000 ₸',
                     style: TextStyle(
-                      fontSize: 36,
-                      fontWeight: FontWeight.w800,
+                      fontSize: 38,
+                      fontWeight: FontWeight.w900,
                       color: Colors.white,
+                      letterSpacing: -1,
                     ),
                   ),
                   const SizedBox(height: 4),
                   const Text(
                     'Заявка №2847',
                     style: TextStyle(
-                      fontSize: 13,
-                      color: Color(0xAAFFFFFF),
-                    ),
+                        fontSize: 13, color: Color(0xAAFFFFFF)),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
-              'Данные объекта',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+            // Info
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Данные объекта',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
               ),
             ),
             const SizedBox(height: 12),
-            AppCard(
+            GlassCard(
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
@@ -85,7 +86,7 @@ class ReportScreen extends StatelessWidget {
                   _divider(),
                   _infoRow('Дата оценки', '15 января 2026'),
                   _divider(),
-                  _infoRow('Тип недвижимости', 'Квартира'),
+                  _infoRow('Тип', 'Квартира'),
                   _divider(),
                   _infoRow('Комнаты', '3'),
                   _divider(),
@@ -93,31 +94,34 @@ class ReportScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
-            const Text(
-              'Рекомендации',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+            const SizedBox(height: 20),
+            // Recommendations
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Рекомендации',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
               ),
             ),
             const SizedBox(height: 12),
-            AppCard(
+            GlassCard(
               padding: const EdgeInsets.all(16),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _recommendationItem(
+                  _recItem(
                     Icons.trending_up_rounded,
                     'Рынок стабилен',
-                    'Средняя стоимость квадратного метра выросла на 3.2% за последние 6 месяцев',
+                    'Рост +3.2% за 6 месяцев',
                   ),
-                  const SizedBox(height: 16),
-                  _recommendationItem(
+                  const SizedBox(height: 14),
+                  _recItem(
                     Icons.home_rounded,
                     'Выгодное расположение',
-                    'Объект находится в престижном районе с развитой инфраструктурой',
+                    'Престижный район, развитая инфраструктура',
                   ),
                 ],
               ),
@@ -126,26 +130,23 @@ class ReportScreen extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: GradientButton(
+                  child: PrimaryButton(
                     label: 'Скачать PDF',
-                    onPressed: () {
-                      // TODO: Download PDF
-                    },
+                    icon: Icons.download_rounded,
+                    onPressed: () {},
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: GradientButton(
+                  child: PrimaryButton(
                     label: 'Поделиться',
                     outlined: true,
-                    onPressed: () {
-                      // TODO: Share
-                    },
+                    icon: Icons.share_rounded,
+                    onPressed: () {},
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -158,13 +159,9 @@ class ReportScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppColors.textSecondary,
-            ),
-          ),
+          Text(label,
+              style: const TextStyle(
+                  fontSize: 14, color: AppColors.textSecondary)),
           Text(
             value,
             style: const TextStyle(
@@ -180,7 +177,7 @@ class ReportScreen extends StatelessWidget {
 
   Widget _divider() => Container(height: 0.5, color: AppColors.divider);
 
-  Widget _recommendationItem(IconData icon, String title, String subtitle) {
+  Widget _recItem(IconData icon, String title, String subtitle) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -198,23 +195,17 @@ class ReportScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                  height: 1.4,
-                ),
-              ),
+              Text(title,
+                  style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary)),
+              const SizedBox(height: 3),
+              Text(subtitle,
+                  style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                      height: 1.4)),
             ],
           ),
         ),

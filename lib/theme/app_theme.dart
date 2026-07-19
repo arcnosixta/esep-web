@@ -10,14 +10,16 @@ class AppTheme {
       const TextTheme(
         headlineLarge: TextStyle(
           fontSize: 32,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w800,
           color: AppColors.textPrimary,
-          letterSpacing: -0.5,
+          letterSpacing: -1.0,
+          height: 1.1,
         ),
         headlineMedium: TextStyle(
           fontSize: 24,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
+          letterSpacing: -0.5,
         ),
         headlineSmall: TextStyle(
           fontSize: 20,
@@ -50,9 +52,10 @@ class AppTheme {
           color: AppColors.textHint,
         ),
         labelLarge: TextStyle(
-          fontSize: 14,
+          fontSize: 15,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
+          letterSpacing: 0.2,
         ),
       ),
     );
@@ -73,19 +76,14 @@ class AppTheme {
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.background,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
         titleTextStyle: TextStyle(
-          fontSize: 18,
+          fontSize: 17,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
-        ),
-      ),
-      cardTheme: CardThemeData(
-        color: AppColors.card,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          letterSpacing: -0.2,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -103,10 +101,11 @@ class AppTheme {
           borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
         ),
-        hintStyle: const TextStyle(
-          color: AppColors.textHint,
-          fontSize: 14,
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.error, width: 1),
         ),
+        hintStyle: const TextStyle(color: AppColors.textHint, fontSize: 15),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
@@ -116,6 +115,9 @@ class AppTheme {
         unselectedItemColor: AppColors.textHint,
         type: BottomNavigationBarType.fixed,
         elevation: 0,
+        selectedLabelStyle: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+        unselectedLabelStyle:
+            TextStyle(fontSize: 11, fontWeight: FontWeight.w400),
       ),
     );
   }

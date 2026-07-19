@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
-import '../widgets/app_card.dart';
+import '../widgets/glass_card.dart';
 import '../widgets/status_badge.dart';
-import '../widgets/gradient_button.dart';
+import '../widgets/primary_button.dart';
+import '../navigation/app_navigator.dart';
+import 'report_screen.dart';
 
 class ApplicationCardScreen extends StatelessWidget {
   const ApplicationCardScreen({super.key});
@@ -18,18 +20,19 @@ class ApplicationCardScreen extends StatelessWidget {
         ),
       ),
       body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Status card
-            AppCard(
+            // Status
+            GlassCard(
               padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
                         'Статус заявки',
@@ -38,63 +41,66 @@ class ApplicationCardScreen extends StatelessWidget {
                           color: AppColors.textSecondary,
                         ),
                       ),
-                      const StatusBadge(
-                        status: BadgeStatus.inProgress,
-                        label: 'В работе',
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Создана 12 января 2026',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textHint,
+                        ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Создана 12 января 2026',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textHint,
-                    ),
+                  const StatusBadge(
+                    status: BadgeStatus.inProgress,
+                    label: 'В работе',
                   ),
                 ],
               ),
             ),
+
             // Details
+            const SizedBox(height: 4),
             const Text(
               'Детали объекта',
               style: TextStyle(
                 fontSize: 18,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 12),
-            AppCard(
+            GlassCard(
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  _infoRow('Тип недвижимости', 'Квартира'),
+                  _infoRow('Тип', 'Квартира'),
                   _divider(),
                   _infoRow('Адрес', 'г. Алматы, ул. Абая 52'),
                   _divider(),
                   _infoRow('Площадь', '85 м²'),
                   _divider(),
                   _infoRow(
-                    'Предварительная стоимость',
+                    'Стоимость',
                     '42 500 000 ₸',
                     highlight: true,
                   ),
                 ],
               ),
             ),
+
+            // History
             const SizedBox(height: 20),
-            // Status history
             const Text(
               'История статусов',
               style: TextStyle(
                 fontSize: 18,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 12),
-            AppCard(
+            GlassCard(
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
@@ -122,12 +128,13 @@ class ApplicationCardScreen extends StatelessWidget {
                 ],
               ),
             ),
+
             const SizedBox(height: 24),
-            GradientButton(
+            PrimaryButton(
               label: 'Посмотреть отчёт',
-              onPressed: () {
-                // TODO: Open report
-              },
+              icon: Icons.description_rounded,
+              onPressed: () =>
+                  AppNavigator.push(context, const ReportScreen()),
             ),
           ],
         ),
@@ -141,13 +148,9 @@ class ApplicationCardScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppColors.textSecondary,
-            ),
-          ),
+          Text(label,
+              style: const TextStyle(
+                  fontSize: 14, color: AppColors.textSecondary)),
           Text(
             value,
             style: TextStyle(
@@ -161,12 +164,7 @@ class ApplicationCardScreen extends StatelessWidget {
     );
   }
 
-  Widget _divider() {
-    return Container(
-      height: 0.5,
-      color: AppColors.divider,
-    );
-  }
+  Widget _divider() => Container(height: 0.5, color: AppColors.divider);
 
   Widget _statusStep({
     required String title,
@@ -184,11 +182,13 @@ class ApplicationCardScreen extends StatelessWidget {
               width: 24,
               height: 24,
               decoration: BoxDecoration(
-                color: done ? AppColors.accent : AppColors.surfaceLight,
+                gradient: done ? AppColors.accentGradient : null,
+                color: done ? null : AppColors.surfaceLight,
                 shape: BoxShape.circle,
               ),
               child: done
-                  ? const Icon(Icons.check_rounded, size: 14, color: Colors.white)
+                  ? const Icon(Icons.check_rounded,
+                      size: 14, color: Colors.white)
                   : Center(
                       child: Container(
                         width: 8,
@@ -205,7 +205,7 @@ class ApplicationCardScreen extends StatelessWidget {
                 width: 1.5,
                 height: 32,
                 color: done
-                    ? AppColors.accent.withValues(alpha: 0.4)
+                    ? AppColors.accent.withValues(alpha: 0.3)
                     : AppColors.divider,
               ),
           ],
@@ -222,9 +222,8 @@ class ApplicationCardScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: done
-                        ? AppColors.textPrimary
-                        : AppColors.textSecondary,
+                    color:
+                        done ? AppColors.textPrimary : AppColors.textSecondary,
                   ),
                 ),
                 if (time != null) ...[
@@ -232,9 +231,7 @@ class ApplicationCardScreen extends StatelessWidget {
                   Text(
                     time,
                     style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textHint,
-                    ),
+                        fontSize: 12, color: AppColors.textHint),
                   ),
                 ],
               ],
