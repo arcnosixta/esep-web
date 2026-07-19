@@ -4,6 +4,7 @@ import 'home_screen.dart';
 import 'my_applications_screen.dart';
 import 'document_upload_screen.dart';
 import 'ai_assistant_screen.dart';
+import 'profile_screen.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -20,6 +21,7 @@ class _AppShellState extends State<AppShell> {
     AiAssistantScreen(),
     MyApplicationsScreen(),
     DocumentUploadScreen(),
+    ProfileScreen(),
   ];
 
   @override
@@ -46,6 +48,7 @@ class _AppShellState extends State<AppShell> {
                 _navItem(1, Icons.smart_toy_rounded, 'AI'),
                 _navItem(2, Icons.description_rounded, 'Заявки'),
                 _navItem(3, Icons.folder_rounded, 'Документы'),
+                _navItem(4, Icons.person_rounded, 'Профиль'),
               ],
             ),
           ),

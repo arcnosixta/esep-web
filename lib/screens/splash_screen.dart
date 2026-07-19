@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../widgets/primary_button.dart';
 import '../navigation/app_navigator.dart';
+import 'login_screen.dart';
 import 'registration_screen.dart';
-import 'app_shell.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -80,10 +80,6 @@ class _SplashScreenState extends State<SplashScreen>
     _textController.dispose();
     _buttonsController.dispose();
     super.dispose();
-  }
-
-  void _enterApp() {
-    AppNavigator.pushReplacement(context, const AppShell());
   }
 
   @override
@@ -207,7 +203,10 @@ class _SplashScreenState extends State<SplashScreen>
                         children: [
                           PrimaryButton(
                             label: 'Войти',
-                            onPressed: _enterApp,
+                            onPressed: () => AppNavigator.push(
+                              context,
+                              const LoginScreen(),
+                            ),
                           ),
                           const SizedBox(height: 14),
                           PrimaryButton(
@@ -216,18 +215,6 @@ class _SplashScreenState extends State<SplashScreen>
                             onPressed: () => AppNavigator.push(
                               context,
                               const RegistrationScreen(),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          TextButton(
-                            onPressed: _enterApp,
-                            child: const Text(
-                              'Пропустить',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: AppColors.textHint,
-                                fontWeight: FontWeight.w400,
-                              ),
                             ),
                           ),
                         ],

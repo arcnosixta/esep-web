@@ -2,61 +2,91 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/status_badge.dart';
-
-class _ApplicationItem {
-  final String number;
-  final String type;
-  final String area;
-  final String date;
-  final BadgeStatus status;
-  final String statusLabel;
-
-  const _ApplicationItem({
-    required this.number,
-    required this.type,
-    required this.area,
-    required this.date,
-    required this.status,
-    required this.statusLabel,
-  });
-}
+import '../services/supabase_service.dart';
+import '../navigation/app_navigator.dart';
+import 'application_card_screen.dart';
 
 class MyApplicationsScreen extends StatefulWidget {
-  const MyApplicationsScreen({super.key});
+  final int initialFilter;
+
+  const MyApplicationsScreen({super.key, this.initialFilter = 0});
 
   @override
   State<MyApplicationsScreen> createState() => _MyApplicationsScreenState();
 }
 
 class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
-  int _filterIndex = 0;
+  late int _filterIndex;
+  List<Map<String, dynamic>> _applications = [];
+  bool _loading = true;
+
   final _filters = ['Все', 'В работе', 'Завершённые'];
 
-  static final List<_ApplicationItem> _applications = [
-    const _ApplicationItem(
-      number: '2847', type: 'Квартира', area: '85 м²',
-      date: '12.01.2026', status: BadgeStatus.inProgress, statusLabel: 'В работе',
-    ),
-    const _ApplicationItem(
-      number: '2831', type: 'Дом', area: '180 м²',
-      date: '10.01.2026', status: BadgeStatus.completed, statusLabel: 'Завершён',
-    ),
-    const _ApplicationItem(
-      number: '2819', type: 'Квартира', area: '62 м²',
-      date: '08.01.2026', status: BadgeStatus.pending, statusLabel: 'Ожидание',
-    ),
-    const _ApplicationItem(
-      number: '2805', type: 'Офис', area: '120 м²',
-      date: '05.01.2026', status: BadgeStatus.completed, statusLabel: 'Завершён',
-    ),
-    const _ApplicationItem(
-      number: '2798', type: 'Квартира', area: '94 м²',
-      date: '03.01.2026', status: BadgeStatus.rejected, statusLabel: 'Отклонена',
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _filterIndex = widget.initialFilter;
+    _loadApplications();
+  }
+
+  Future<void> _loadApplications() async {
+    try {
+      final data = await SupabaseService.getApplications();
+      if (mounted) {
+        setState(() {
+          _applications = data;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  List<Map<String, dynamic>> get _filteredApplications {
+    switch (_filterIndex) {
+      case 1:
+        return _applications
+            .where((a) => a['status'] == 'in_progress')
+            .toList();
+      case 2:
+        return _applications
+            .where((a) => a['status'] == 'completed')
+            .toList();
+      default:
+        return _applications;
+    }
+  }
+
+  String _statusLabel(String status) => switch (status) {
+        'new' => 'Новая',
+        'in_progress' => 'В работе',
+        'completed' => 'Завершена',
+        'rejected' => 'Отклонена',
+        'paid' => 'Оплачена',
+        _ => status,
+      };
+
+  BadgeStatus _badgeStatus(String status) => switch (status) {
+        'new' => BadgeStatus.pending,
+        'in_progress' => BadgeStatus.inProgress,
+        'completed' => BadgeStatus.completed,
+        'rejected' => BadgeStatus.rejected,
+        _ => BadgeStatus.pending,
+      };
+
+  String _propertyTypeLabel(String type) => switch (type) {
+        'apartment' => 'Квартира',
+        'house' => 'Дом',
+        'land' => 'Участок',
+        'commercial' => 'Коммерческая',
+        _ => type,
+      };
 
   @override
   Widget build(BuildContext context) {
+    final filtered = _filteredApplications;
+
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -124,85 +154,147 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
             const SizedBox(height: 16),
             // List
             Expanded(
-              child: ListView.builder(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: _applications.length,
-                itemBuilder: (context, index) {
-                  final app = _applications[index];
-                  return GlassCard(
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: AppColors.accent.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Center(
-                            child: Text(
-                              '#${app.number}',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.accent,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
+              child: _loading
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                          color: AppColors.accent))
+                  : filtered.isEmpty
+                      ? Center(
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    app.type,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                  StatusBadge(
-                                    status: app.status,
-                                    label: app.statusLabel,
-                                    small: true,
-                                  ),
-                                ],
+                              Icon(
+                                Icons.description_rounded,
+                                size: 48,
+                                color: AppColors.textHint.withValues(alpha: 0.3),
                               ),
-                              const SizedBox(height: 5),
-                              Row(
-                                children: [
-                                  Text(
-                                    app.area,
-                                    style: const TextStyle(
-                                        fontSize: 12,
-                                        color: AppColors.textSecondary),
-                                  ),
-                                  const Text('  ·  ',
-                                      style:
-                                          TextStyle(color: AppColors.textHint)),
-                                  Text(
-                                    app.date,
-                                    style: const TextStyle(
-                                        fontSize: 12,
-                                        color: AppColors.textSecondary),
-                                  ),
-                                ],
+                              const SizedBox(height: 12),
+                              Text(
+                                'Нет заявок',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: AppColors.textHint,
+                                ),
                               ),
                             ],
                           ),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: _loadApplications,
+                          color: AppColors.accent,
+                          child: ListView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(
+                              parent: BouncingScrollPhysics(),
+                            ),
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 20),
+                            itemCount: filtered.length,
+                            itemBuilder: (context, index) {
+                              final app = filtered[index];
+                              final prop = app['properties'];
+                              final propType =
+                                  prop != null ? (prop['type'] ?? '') : '';
+                              final address =
+                                  prop != null ? (prop['address'] ?? '') : '';
+                              final area = prop != null
+                                  ? '${prop['area'] ?? 0} м²'
+                                  : '';
+                              final status = app['status'] ?? 'new';
+
+                              return GlassCard(
+                                onTap: () => AppNavigator.push(
+                                  context,
+                                  const ApplicationCardScreen(),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 44,
+                                      height: 44,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.accent
+                                            .withValues(alpha: 0.1),
+                                        borderRadius:
+                                            BorderRadius.circular(12),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          '#${(app['id'] ?? '').toString().substring(0, 4).toUpperCase()}',
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.accent,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment
+                                                    .spaceBetween,
+                                            children: [
+                                              Text(
+                                                _propertyTypeLabel(
+                                                    propType),
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight:
+                                                      FontWeight.w600,
+                                                  color: AppColors
+                                                      .textPrimary,
+                                                ),
+                                              ),
+                                              StatusBadge(
+                                                status:
+                                                    _badgeStatus(status),
+                                                label:
+                                                    _statusLabel(status),
+                                                small: true,
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 5),
+                                          Row(
+                                            children: [
+                                              Text(
+                                                area,
+                                                style: const TextStyle(
+                                                    fontSize: 12,
+                                                    color: AppColors
+                                                        .textSecondary),
+                                              ),
+                                              const Text('  ·  ',
+                                                  style: TextStyle(
+                                                      color: AppColors
+                                                          .textHint)),
+                                              Expanded(
+                                                child: Text(
+                                                  address,
+                                                  style: const TextStyle(
+                                                      fontSize: 12,
+                                                      color: AppColors
+                                                          .textSecondary),
+                                                  overflow: TextOverflow
+                                                      .ellipsis,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
                         ),
-                      ],
-                    ),
-                  );
-                },
-              ),
             ),
           ],
         ),
