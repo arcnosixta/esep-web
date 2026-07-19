@@ -73,7 +73,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       }
     } catch (e) {
       if (mounted) {
-        _showError(_parseError(e.toString()));
+        _showError(e.toString());
       }
     } finally {
       if (mounted) setState(() => _loading = false);
