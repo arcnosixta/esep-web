@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/primary_button.dart';
+import '../services/supabase_service.dart';
 
 class _PropertyType {
   final String label;
+  final String dbType;
   final IconData icon;
   final Color color;
 
-  const _PropertyType(this.label, this.icon, this.color);
+  const _PropertyType(this.label, this.dbType, this.icon, this.color);
 }
 
 class NewApplicationScreen extends StatefulWidget {
@@ -23,14 +25,15 @@ class _NewApplicationScreenState extends State<NewApplicationScreen> {
   final _addressController = TextEditingController();
   final _areaController = TextEditingController();
   final _roomsController = TextEditingController();
-  final _nameController = TextEditingController();
-  final _phoneController = TextEditingController();
+  final _floorController = TextEditingController();
+  final _totalFloorsController = TextEditingController();
+  bool _loading = false;
 
   static const _types = [
-    _PropertyType('Квартира', Icons.apartment_rounded, Color(0xFF7C5CFC)),
-    _PropertyType('Дом', Icons.home_rounded, Color(0xFF38BDF8)),
-    _PropertyType('Участок', Icons.landscape_rounded, Color(0xFF2DD4A8)),
-    _PropertyType('Коммерческая', Icons.business_rounded, Color(0xFFFBBF24)),
+    _PropertyType('Квартира', 'apartment', Icons.apartment_rounded, Color(0xFF7C5CFC)),
+    _PropertyType('Дом', 'house', Icons.home_rounded, Color(0xFF38BDF8)),
+    _PropertyType('Участок', 'land', Icons.landscape_rounded, Color(0xFF2DD4A8)),
+    _PropertyType('Коммерческая', 'commercial', Icons.business_rounded, Color(0xFFFBBF24)),
   ];
 
   @override
@@ -38,9 +41,82 @@ class _NewApplicationScreenState extends State<NewApplicationScreen> {
     _addressController.dispose();
     _areaController.dispose();
     _roomsController.dispose();
-    _nameController.dispose();
-    _phoneController.dispose();
+    _floorController.dispose();
+    _totalFloorsController.dispose();
     super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final address = _addressController.text.trim();
+    final areaText = _areaController.text.trim();
+    final roomsText = _roomsController.text.trim();
+    final floorText = _floorController.text.trim();
+    final totalFloorsText = _totalFloorsController.text.trim();
+
+    if (address.isEmpty) {
+      _showError('Введите адрес объекта');
+      return;
+    }
+    if (areaText.isEmpty) {
+      _showError('Введите площадь');
+      return;
+    }
+
+    final area = double.tryParse(areaText);
+    if (area == null || area <= 0) {
+      _showError('Введите корректную площадь');
+      return;
+    }
+
+    setState(() => _loading = true);
+
+    try {
+      final property = await SupabaseService.addProperty(
+        type: _types[_selectedType].dbType,
+        address: address,
+        area: area,
+        rooms: int.tryParse(roomsText),
+        floor: int.tryParse(floorText),
+        totalFloors: int.tryParse(totalFloorsText),
+      );
+
+      await SupabaseService.createApplication(
+        propertyId: property['id'],
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'Заявка создана! AI-ассистент начнёт диалог',
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      if (mounted) _showError('Ошибка: $e');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: const TextStyle(color: Colors.white)),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   @override
@@ -155,23 +231,22 @@ class _NewApplicationScreenState extends State<NewApplicationScreen> {
                 ),
               ],
             ),
-
-            const SizedBox(height: 28),
-            const Text(
-              'Контакты',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildField('Этаж', Icons.layers_outlined,
+                      controller: _floorController,
+                      keyboardType: TextInputType.number),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildField('Всего этажей', Icons.stairs_rounded,
+                      controller: _totalFloorsController,
+                      keyboardType: TextInputType.number),
+                ),
+              ],
             ),
-            const SizedBox(height: 14),
-            _buildField('Ваше имя', Icons.person_outline_rounded,
-                controller: _nameController),
-            const SizedBox(height: 14),
-            _buildField('Телефон', Icons.phone_outlined,
-                controller: _phoneController,
-                keyboardType: TextInputType.phone),
 
             const SizedBox(height: 28),
             GlassCard(
@@ -221,24 +296,9 @@ class _NewApplicationScreenState extends State<NewApplicationScreen> {
 
             const SizedBox(height: 24),
             PrimaryButton(
-              label: 'Создать заявку',
+              label: _loading ? 'Создание...' : 'Создать заявку',
               icon: Icons.add_location_alt_rounded,
-              onPressed: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text(
-                      'Заявка создана! AI-ассистент начнёт диалог',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    backgroundColor: AppColors.accent,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                );
-              },
+              onPressed: _loading ? null : _submit,
             ),
             const SizedBox(height: 20),
           ],

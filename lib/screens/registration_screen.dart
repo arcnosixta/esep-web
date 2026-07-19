@@ -91,19 +91,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     );
   }
 
-  String _parseError(String error) {
-    if (error.contains('already registered')) {
-      return 'Этот email уже зарегистрирован';
-    }
-    if (error.contains('valid email')) {
-      return 'Введите корректный email';
-    }
-    if (error.contains('at least 6')) {
-      return 'Пароль должен быть не менее 6 символов';
-    }
-    return 'Ошибка регистрации. Попробуйте ещё раз';
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

@@ -17,7 +17,7 @@ class SupabaseService {
     String fullName = '',
     String phone = '',
   }) async {
-    return await supabase.auth.signUp(
+    final response = await supabase.auth.signUp(
       email: email,
       password: password,
       data: {
@@ -25,16 +25,36 @@ class SupabaseService {
         'phone': phone,
       },
     );
+
+    if (response.user != null) {
+      await _ensureProfile(
+        fullName: fullName,
+        email: email,
+        phone: phone,
+      );
+    }
+
+    return response;
   }
 
   static Future<AuthResponse> signIn({
     required String email,
     required String password,
   }) async {
-    return await supabase.auth.signInWithPassword(
+    final response = await supabase.auth.signInWithPassword(
       email: email,
       password: password,
     );
+
+    if (response.user != null) {
+      await _ensureProfile(
+        fullName: response.user!.userMetadata?['full_name'] ?? '',
+        email: email,
+        phone: response.user!.userMetadata?['phone'] ?? '',
+      );
+    }
+
+    return response;
   }
 
   static Future<void> signOut() async {
@@ -43,6 +63,40 @@ class SupabaseService {
 
   static Stream<AuthState> get authStateChanges =>
       supabase.auth.onAuthStateChange;
+
+  // ============================================
+  // PROFILE FALLBACK (если триггер не сработал)
+  // ============================================
+
+  static Future<void> _ensureProfile({
+    String fullName = '',
+    String email = '',
+    String phone = '',
+  }) async {
+    if (userId == null) return;
+
+    final existing = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', userId!)
+        .maybeSingle();
+
+    if (existing == null) {
+      await supabase.from('profiles').insert({
+        'user_id': userId!,
+        'full_name': fullName,
+        'email': email,
+        'phone': phone,
+      });
+    } else if (fullName.isNotEmpty || phone.isNotEmpty) {
+      final updates = <String, dynamic>{};
+      if (fullName.isNotEmpty) updates['full_name'] = fullName;
+      if (phone.isNotEmpty) updates['phone'] = phone;
+      if (updates.isNotEmpty) {
+        await supabase.from('profiles').update(updates).eq('user_id', userId!);
+      }
+    }
+  }
 
   // ============================================
   // PROFILES

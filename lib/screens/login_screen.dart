@@ -62,16 +62,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  String _parseError(String error) {
-    if (error.contains('Invalid login credentials')) {
-      return 'Неверный email или пароль';
-    }
-    if (error.contains('Email not confirmed')) {
-      return 'Подтвердите email перед входом';
-    }
-    return 'Ошибка входа. Попробуйте ещё раз';
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
