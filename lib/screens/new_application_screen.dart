@@ -30,6 +30,7 @@ class _NewApplicationScreenState extends State<NewApplicationScreen> {
   }
 
   Future<void> _submit() async {
+    final c = AppColors.of(context);
     final address = _addressController.text.trim();
     final areaText = _areaController.text.trim();
     final roomsText = _roomsController.text.trim();
@@ -74,7 +75,7 @@ class _NewApplicationScreenState extends State<NewApplicationScreen> {
               'Заявка создана!',
               style: TextStyle(color: Colors.white),
             ),
-            backgroundColor: AppColors.success,
+            backgroundColor: c.success,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -91,10 +92,11 @@ class _NewApplicationScreenState extends State<NewApplicationScreen> {
   }
 
   void _showError(String message) {
+    final c = AppColors.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message, style: const TextStyle(color: Colors.white)),
-        backgroundColor: AppColors.error,
+        backgroundColor: c.error,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -106,8 +108,9 @@ class _NewApplicationScreenState extends State<NewApplicationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -120,19 +123,19 @@ class _NewApplicationScreenState extends State<NewApplicationScreen> {
                   children: [
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
-                      child: const Icon(
+                      child: Icon(
                         Icons.arrow_back_ios_new_rounded,
                         size: 20,
-                        color: AppColors.textPrimary,
+                        color: c.textPrimary,
                       ),
                     ),
                     const SizedBox(width: 12),
-                    const Text(
+                    Text(
                       'Новая заявка',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                        color: c.textPrimary,
                       ),
                     ),
                   ],
@@ -144,12 +147,12 @@ class _NewApplicationScreenState extends State<NewApplicationScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Тип недвижимости',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
+                        color: c.textSecondary,
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -175,19 +178,19 @@ class _NewApplicationScreenState extends State<NewApplicationScreen> {
                             duration: const Duration(milliseconds: 200),
                             decoration: BoxDecoration(
                               color: selected
-                                  ? AppColors.accent.withValues(alpha: 0.08)
-                                  : AppColors.surface,
+                                  ? c.accent.withValues(alpha: 0.08)
+                                  : c.surface,
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
                                 color: selected
-                                    ? AppColors.accent
-                                    : AppColors.border,
+                                    ? c.accent
+                                    : c.border,
                                 width: 1,
                               ),
                               boxShadow: selected
                                   ? [
                                       BoxShadow(
-                                        color: AppColors.accent
+                                        color: c.accent
                                             .withValues(alpha: 0.1),
                                         blurRadius: 12,
                                         offset: const Offset(0, 4),
@@ -201,8 +204,8 @@ class _NewApplicationScreenState extends State<NewApplicationScreen> {
                                 Icon(
                                   type.icon,
                                   color: selected
-                                      ? AppColors.accent
-                                      : AppColors.textSecondary,
+                                      ? c.accent
+                                      : c.textSecondary,
                                   size: 22,
                                 ),
                                 const SizedBox(height: 8),
@@ -212,8 +215,8 @@ class _NewApplicationScreenState extends State<NewApplicationScreen> {
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                     color: selected
-                                        ? AppColors.accent
-                                        : AppColors.textPrimary,
+                                        ? c.accent
+                                        : c.textPrimary,
                                   ),
                                 ),
                               ],
@@ -231,24 +234,25 @@ class _NewApplicationScreenState extends State<NewApplicationScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: c.surface,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.border, width: 1),
+                    border: Border.all(color: c.border, width: 1),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Данные объекта',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textSecondary,
+                          color: c.textSecondary,
                           letterSpacing: 0.5,
                         ),
                       ),
                       const SizedBox(height: 16),
                       _buildField(
+                        context,
                         'Адрес объекта',
                         controller: _addressController,
                       ),
@@ -257,6 +261,7 @@ class _NewApplicationScreenState extends State<NewApplicationScreen> {
                         children: [
                           Expanded(
                             child: _buildField(
+                              context,
                               'Площадь (м²)',
                               controller: _areaController,
                               keyboardType: TextInputType.number,
@@ -265,6 +270,7 @@ class _NewApplicationScreenState extends State<NewApplicationScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: _buildField(
+                              context,
                               'Комнаты',
                               controller: _roomsController,
                               keyboardType: TextInputType.number,
@@ -277,6 +283,7 @@ class _NewApplicationScreenState extends State<NewApplicationScreen> {
                         children: [
                           Expanded(
                             child: _buildField(
+                              context,
                               'Этаж',
                               controller: _floorController,
                               keyboardType: TextInputType.number,
@@ -285,6 +292,7 @@ class _NewApplicationScreenState extends State<NewApplicationScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: _buildField(
+                              context,
                               'Всего этажей',
                               controller: _totalFloorsController,
                               keyboardType: TextInputType.number,
@@ -307,12 +315,12 @@ class _NewApplicationScreenState extends State<NewApplicationScreen> {
                     height: 56,
                     decoration: BoxDecoration(
                       color: _loading
-                          ? AppColors.accent.withValues(alpha: 0.5)
-                          : AppColors.accent,
+                          ? c.accent.withValues(alpha: 0.5)
+                          : c.accent,
                       borderRadius: BorderRadius.circular(14),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.accent.withValues(alpha: 0.2),
+                          color: c.accent.withValues(alpha: 0.2),
                           blurRadius: 20,
                           offset: const Offset(0, 8),
                         ),
@@ -349,39 +357,40 @@ class _NewApplicationScreenState extends State<NewApplicationScreen> {
   }
 
   Widget _buildField(
+    BuildContext context,
     String hint, {
     TextEditingController? controller,
     TextInputType keyboardType = TextInputType.text,
   }) {
+    final c = AppColors.of(context);
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
-      style: const TextStyle(
-        color: AppColors.textPrimary,
+      style: TextStyle(
+        color: c.textPrimary,
         fontSize: 14,
       ),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(
-          color: AppColors.textHint,
+        hintStyle: TextStyle(
+          color: c.textHint,
           fontSize: 14,
         ),
         filled: true,
-        fillColor: AppColors.surfaceLight,
+        fillColor: c.surfaceLight,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+          borderSide: BorderSide(color: c.border, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+          borderSide: BorderSide(color: c.border, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide:
-              const BorderSide(color: AppColors.accent, width: 1.5),
+          borderSide: BorderSide(color: c.accent, width: 1.5),
         ),
       ),
     );

@@ -73,10 +73,11 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
   }
 
   Future<void> _deleteDocument(Map<String, dynamic> doc) async {
+    final c = AppColors.of(context);
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: c.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Удалить документ?'),
         content: Text('«${doc['name']}» будет удалён навсегда.'),
@@ -87,7 +88,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Удалить', style: TextStyle(color: AppColors.error)),
+            child: Text('Удалить', style: TextStyle(color: c.error)),
           ),
         ],
       ),
@@ -136,12 +137,14 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _loadDocuments,
-          color: AppColors.accent,
+          color: c.accent,
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(
               parent: BouncingScrollPhysics(),
@@ -153,12 +156,12 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Документы',
                         style: TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary,
+                          color: c.textPrimary,
                           letterSpacing: -0.5,
                         ),
                       ),
@@ -167,9 +170,9 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                         _documents.isEmpty
                             ? 'Загрузите документы для оценки'
                             : '${_documents.length} файл(ов) загружено',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
-                          color: AppColors.textSecondary,
+                          color: c.textSecondary,
                         ),
                       ),
                     ],
@@ -188,25 +191,25 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 36),
                       decoration: BoxDecoration(
                         color: _uploading
-                            ? AppColors.accent.withValues(alpha: 0.04)
-                            : AppColors.surface,
+                            ? c.accent.withValues(alpha: 0.04)
+                            : c.surface,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                           color: _uploading
-                              ? AppColors.accent.withValues(alpha: 0.3)
-                              : AppColors.accent.withValues(alpha: 0.2),
+                              ? c.accent.withValues(alpha: 0.3)
+                              : c.accent.withValues(alpha: 0.2),
                           width: 1.5,
                         ),
                       ),
                       child: Column(
                         children: [
                           if (_uploading)
-                            const SizedBox(
+                            SizedBox(
                               width: 28,
                               height: 28,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2.5,
-                                color: AppColors.accent,
+                                color: c.accent,
                               ),
                             )
                           else
@@ -214,13 +217,13 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                               width: 56,
                               height: 56,
                               decoration: BoxDecoration(
-                                color: AppColors.accent.withValues(alpha: 0.08),
+                                color: c.accent.withValues(alpha: 0.08),
                                 borderRadius: BorderRadius.circular(16),
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.cloud_upload_rounded,
                                 size: 28,
-                                color: AppColors.accent,
+                                color: c.accent,
                               ),
                             ),
                           const SizedBox(height: 14),
@@ -230,16 +233,16 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
                               color: _uploading
-                                  ? AppColors.accent
-                                  : AppColors.textPrimary,
+                                  ? c.accent
+                                  : c.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 6),
-                          const Text(
+                          Text(
                             'PDF, JPG, PNG',
                             style: TextStyle(
                               fontSize: 13,
-                              color: AppColors.textHint,
+                              color: c.textHint,
                             ),
                           ),
                         ],
@@ -256,17 +259,17 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.error.withValues(alpha: 0.08),
+                        color: c.error.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.error_outline, size: 18, color: AppColors.error),
+                          Icon(Icons.error_outline, size: 18, color: c.error),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               _uploadError!,
-                              style: const TextStyle(fontSize: 13, color: AppColors.error),
+                              style: TextStyle(fontSize: 13, color: c.error),
                             ),
                           ),
                         ],
@@ -282,20 +285,20 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'Загруженные файлы',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textSecondary,
+                            color: c.textSecondary,
                             letterSpacing: 0.5,
                           ),
                         ),
                         Text(
                           '${_documents.length} файлов',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
-                            color: AppColors.textSecondary,
+                            color: c.textSecondary,
                           ),
                         ),
                       ],
@@ -304,13 +307,13 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                 ),
 
               _loading
-                  ? const SliverPadding(
-                      padding: EdgeInsets.all(40),
+                  ? SliverPadding(
+                      padding: const EdgeInsets.all(40),
                       sliver: SliverToBoxAdapter(
                         child: Center(
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: AppColors.accent,
+                            color: c.accent,
                           ),
                         ),
                       ),
@@ -325,23 +328,23 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                   Icon(
                                     Icons.folder_open_rounded,
                                     size: 56,
-                                    color: AppColors.muted,
+                                    color: c.muted,
                                   ),
                                   const SizedBox(height: 14),
-                                  const Text(
+                                  Text(
                                     'Пока нет документов',
                                     style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w500,
-                                      color: AppColors.textHint,
+                                      color: c.textHint,
                                     ),
                                   ),
                                   const SizedBox(height: 6),
-                                  const Text(
+                                  Text(
                                     'Нажмите кнопку выше, чтобы загрузить',
                                     style: TextStyle(
                                       fontSize: 13,
-                                      color: AppColors.textHint,
+                                      color: c.textHint,
                                     ),
                                   ),
                                 ],
@@ -373,9 +376,9 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                     margin: const EdgeInsets.only(bottom: 10),
                                     padding: const EdgeInsets.all(14),
                                     decoration: BoxDecoration(
-                                      color: AppColors.surface,
+                                      color: c.surface,
                                       borderRadius: BorderRadius.circular(14),
-                                      border: Border.all(color: AppColors.border, width: 1),
+                                      border: Border.all(color: c.border, width: 1),
                                     ),
                                     child: Row(
                                       children: [
@@ -387,11 +390,11 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                               width: 48,
                                               height: 48,
                                               fit: BoxFit.cover,
-                                              errorBuilder: (_, obj, stack) => _buildFileIcon(fileType),
+                                              errorBuilder: (_, obj, stack) => _buildFileIcon(c, fileType),
                                             ),
                                           )
                                         else
-                                          _buildFileIcon(fileType),
+                                          _buildFileIcon(c, fileType),
                                         const SizedBox(width: 14),
                                         Expanded(
                                           child: Column(
@@ -399,10 +402,10 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                             children: [
                                               Text(
                                                 doc['name'] ?? '',
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontSize: 14,
                                                   fontWeight: FontWeight.w500,
-                                                  color: AppColors.textPrimary,
+                                                  color: c.textPrimary,
                                                 ),
                                                 overflow: TextOverflow.ellipsis,
                                               ),
@@ -411,24 +414,24 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                                 children: [
                                                   Text(
                                                     sizeLabel,
-                                                    style: const TextStyle(
+                                                    style: TextStyle(
                                                       fontSize: 12,
-                                                      color: AppColors.textSecondary,
+                                                      color: c.textSecondary,
                                                     ),
                                                   ),
                                                   if (dateLabel.isNotEmpty) ...[
-                                                    const Text(
+                                                    Text(
                                                       ' · ',
                                                       style: TextStyle(
                                                         fontSize: 12,
-                                                        color: AppColors.textHint,
+                                                        color: c.textHint,
                                                       ),
                                                     ),
                                                     Text(
                                                       dateLabel,
-                                                      style: const TextStyle(
+                                                      style: TextStyle(
                                                         fontSize: 12,
-                                                        color: AppColors.textSecondary,
+                                                        color: c.textSecondary,
                                                       ),
                                                     ),
                                                   ],
@@ -438,10 +441,10 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                           ),
                                         ),
                                         IconButton(
-                                          icon: const Icon(
+                                          icon: Icon(
                                             Icons.delete_outline_rounded,
                                             size: 20,
-                                            color: AppColors.error,
+                                            color: c.error,
                                           ),
                                           onPressed: () => _deleteDocument(doc),
                                         ),
@@ -461,17 +464,17 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
     );
   }
 
-  Widget _buildFileIcon(String type) {
+  Widget _buildFileIcon(AppColors c, String type) {
     return Container(
       width: 48,
       height: 48,
       decoration: BoxDecoration(
-        color: _fileColor(type).withValues(alpha: 0.1),
+        color: _fileColor(c, type).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Icon(
         _fileIcon(type),
-        color: _fileColor(type),
+        color: _fileColor(c, type),
         size: 22,
       ),
     );
@@ -483,11 +486,11 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
     return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
   }
 
-  Color _fileColor(String type) => switch (type) {
+  Color _fileColor(AppColors c, String type) => switch (type) {
         'pdf' => const Color(0xFFEF4444),
         'jpg' || 'jpeg' => const Color(0xFF38BDF8),
         'png' => const Color(0xFF2DD4A8),
-        _ => AppColors.textSecondary,
+        _ => c.textSecondary,
       };
 
   IconData _fileIcon(String type) => switch (type) {

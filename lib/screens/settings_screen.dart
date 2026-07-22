@@ -32,6 +32,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final s = AppStrings.of(context);
     final currentTheme = appSettings.themeMode;
     final currentLangCode = appSettings.localeCode;
@@ -49,7 +50,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     };
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       body: SafeArea(
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
@@ -59,10 +60,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               sliver: SliverToBoxAdapter(
                 child: Text(
                   s.settingsTitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
+                    color: c.textPrimary,
                     letterSpacing: -0.5,
                   ),
                 ),
@@ -82,7 +83,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   children: [
                     _switchRow(
                       icon: Icons.notifications_rounded,
-                      iconColor: AppColors.accent,
+                      iconColor: c.accent,
                       title: s.settingsNotifications,
                       subtitle: s.settingsNotificationsSubtitle,
                       value: _notificationsEnabled,
@@ -91,13 +92,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _divider(),
                     _tapRow(
                       icon: Icons.language_rounded,
-                      iconColor: AppColors.info,
+                      iconColor: c.info,
                       title: s.settingsLanguage,
                       trailing: Text(
                         langLabel,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
-                          color: AppColors.textSecondary,
+                          color: c.textSecondary,
                         ),
                       ),
                       onTap: _showLanguageDialog,
@@ -105,13 +106,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _divider(),
                     _tapRow(
                       icon: Icons.palette_rounded,
-                      iconColor: AppColors.gold,
+                      iconColor: c.gold,
                       title: s.settingsTheme,
                       trailing: Text(
                         themeLabel,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
-                          color: AppColors.textSecondary,
+                          color: c.textSecondary,
                         ),
                       ),
                       onTap: _showThemeDialog,
@@ -135,7 +136,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     children: [
                       _switchRow(
                         icon: Icons.fingerprint_rounded,
-                        iconColor: AppColors.success,
+                        iconColor: c.success,
                         title: s.settingsBiometrics,
                         subtitle: s.settingsBiometricsSubtitle,
                         value: _biometricEnabled,
@@ -160,13 +161,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   children: [
                     _tapRow(
                       icon: Icons.info_outline_rounded,
-                      iconColor: AppColors.textSecondary,
+                      iconColor: c.textSecondary,
                       title: s.settingsVersion,
-                      trailing: const Text(
+                      trailing: Text(
                         '1.0.0',
                         style: TextStyle(
                           fontSize: 14,
-                          color: AppColors.textSecondary,
+                          color: c.textSecondary,
                         ),
                       ),
                       onTap: () {},
@@ -174,14 +175,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _divider(),
                     _tapRow(
                       icon: Icons.description_rounded,
-                      iconColor: AppColors.textSecondary,
+                      iconColor: c.textSecondary,
                       title: s.settingsTerms,
                       onTap: () {},
                     ),
                     _divider(),
                     _tapRow(
                       icon: Icons.shield_rounded,
-                      iconColor: AppColors.textSecondary,
+                      iconColor: c.textSecondary,
                       title: s.settingsPrivacy,
                       onTap: () {},
                     ),
@@ -203,9 +204,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   children: [
                     _tapRow(
                       icon: Icons.delete_outline_rounded,
-                      iconColor: AppColors.error,
+                      iconColor: c.error,
                       title: s.settingsDeleteAccount,
-                      titleColor: AppColors.error,
+                      titleColor: c.error,
                       onTap: _deleteAccount,
                     ),
                   ],
@@ -221,6 +222,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showLanguageDialog() {
+    final c = AppColors.of(context);
     final s = AppStrings.of(context);
     final languages = [
       (code: 'ru', label: s.langRussian),
@@ -230,7 +232,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: c.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(s.settingsLanguage),
         content: Column(
@@ -242,11 +244,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 lang.label,
                 style: TextStyle(
                   fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                  color: selected ? AppColors.accent : AppColors.textPrimary,
+                  color: selected ? c.accent : c.textPrimary,
                 ),
               ),
               trailing: selected
-                  ? const Icon(Icons.check_rounded, color: AppColors.accent, size: 20)
+                  ? Icon(Icons.check_rounded, color: c.accent, size: 20)
                   : null,
               onTap: () {
                 appSettings.setLocale(AppStrings.localeFromCode(lang.code));
@@ -260,6 +262,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showThemeDialog() {
+    final c = AppColors.of(context);
     final s = AppStrings.of(context);
     final themes = [
       (mode: ThemeMode.system, label: s.themeSystem),
@@ -269,7 +272,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: c.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(s.settingsTheme),
         content: Column(
@@ -281,11 +284,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 t.label,
                 style: TextStyle(
                   fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                  color: selected ? AppColors.accent : AppColors.textPrimary,
+                  color: selected ? c.accent : c.textPrimary,
                 ),
               ),
               trailing: selected
-                  ? const Icon(Icons.check_rounded, color: AppColors.accent, size: 20)
+                  ? Icon(Icons.check_rounded, color: c.accent, size: 20)
                   : null,
               onTap: () {
                 appSettings.setThemeMode(t.mode);
@@ -299,16 +302,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _deleteAccount() async {
+    final c = AppColors.of(context);
     final s = AppStrings.of(context);
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: c.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(s.settingsDeleteAccountTitle),
         content: Text(
           s.settingsDeleteAccountContent,
-          style: const TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: c.textSecondary),
         ),
         actions: [
           TextButton(
@@ -317,7 +321,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(s.delete, style: const TextStyle(color: AppColors.error)),
+            child: Text(s.delete, style: TextStyle(color: c.error)),
           ),
         ],
       ),
@@ -331,33 +335,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _sectionHeader(String title) {
+    final c = AppColors.of(context);
     return Text(
       title.toUpperCase(),
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 11,
         fontWeight: FontWeight.w700,
-        color: AppColors.textSecondary,
+        color: c.textSecondary,
         letterSpacing: 0.8,
       ),
     );
   }
 
   Widget _card({required List<Widget> children}) {
+    final c = AppColors.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: c.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: c.border, width: 1),
       ),
       child: Column(children: children),
     );
   }
 
   Widget _divider() {
+    final c = AppColors.of(context);
     return Container(
       height: 1,
       margin: const EdgeInsets.only(left: 52),
-      color: AppColors.divider,
+      color: c.divider,
     );
   }
 
@@ -369,6 +376,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
+    final c = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Row(
@@ -389,19 +397,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.textPrimary,
+                    color: c.textPrimary,
                   ),
                 ),
                 if (subtitle != null) ...[
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.textSecondary,
+                      color: c.textSecondary,
                     ),
                   ),
                 ],
@@ -411,7 +419,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeThumbColor: AppColors.accent,
+            activeThumbColor: c.accent,
           ),
         ],
       ),
@@ -426,6 +434,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     Widget? trailing,
     required VoidCallback onTap,
   }) {
+    final c = AppColors.of(context);
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -449,16 +458,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
-                  color: titleColor ?? AppColors.textPrimary,
+                  color: titleColor ?? c.textPrimary,
                 ),
               ),
             ),
             ?trailing,
             const SizedBox(width: 4),
-            const Icon(
+            Icon(
               Icons.chevron_right_rounded,
               size: 20,
-              color: AppColors.textHint,
+              color: c.textHint,
             ),
           ],
         ),

@@ -38,12 +38,12 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     final password = _passwordController.text;
 
     if (name.isEmpty || email.isEmpty || password.isEmpty) {
-      _showError('Заполните имя, email и пароль');
+      _showError(context, 'Заполните имя, email и пароль');
       return;
     }
 
     if (!_agreed) {
-      _showError('Примите условия использования');
+      _showError(context, 'Примите условия использования');
       return;
     }
 
@@ -57,13 +57,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         phone: phone,
       );
       if (mounted) {
+        final c = AppColors.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text(
               'Аккаунт создан! Проверьте email для подтверждения',
               style: TextStyle(color: Colors.white),
             ),
-            backgroundColor: AppColors.success,
+            backgroundColor: c.success,
             behavior: SnackBarBehavior.floating,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -73,18 +74,19 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       }
     } catch (e) {
       if (mounted) {
-        _showError(e.toString());
+        _showError(context, e.toString());
       }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
-  void _showError(String message) {
+  void _showError(BuildContext context, String message) {
+    final c = AppColors.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message, style: const TextStyle(color: Colors.white)),
-        backgroundColor: AppColors.error,
+        backgroundColor: c.error,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
@@ -93,36 +95,38 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(backgroundColor: AppColors.background, elevation: 0),
+      backgroundColor: c.background,
+      appBar: AppBar(backgroundColor: c.background, elevation: 0),
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Padding(
-                padding: EdgeInsets.fromLTRB(24, 8, 24, 0),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
                 child: Text(
                   'Регистрация',
                   style: TextStyle(
                     fontSize: 42,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
+                    color: c.textPrimary,
                     letterSpacing: -1.5,
                     height: 1.1,
                   ),
                 ),
               ),
               const SizedBox(height: 4),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(24, 0, 24, 0),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
                 child: Text(
                   'Создайте аккаунт для оценки недвижимости',
                   style: TextStyle(
                     fontSize: 15,
-                    color: AppColors.textSecondary,
+                    color: c.textSecondary,
                   ),
                 ),
               ),
@@ -131,9 +135,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 margin: const EdgeInsets.symmetric(horizontal: 24),
                 padding: const EdgeInsets.fromLTRB(20, 28, 20, 28),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: c.surface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.border, width: 1),
+                  border: Border.all(color: c.border, width: 1),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.03),
@@ -149,8 +153,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     const SizedBox(height: 8),
                     TextField(
                       controller: _nameController,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
+                      style: TextStyle(
+                        color: c.textPrimary,
                         fontSize: 15,
                       ),
                       decoration: const InputDecoration(
@@ -163,8 +167,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     TextField(
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
+                      style: TextStyle(
+                        color: c.textPrimary,
                         fontSize: 15,
                       ),
                       decoration: const InputDecoration(
@@ -177,8 +181,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     TextField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
+                      style: TextStyle(
+                        color: c.textPrimary,
                         fontSize: 15,
                       ),
                       decoration: const InputDecoration(
@@ -191,8 +195,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     TextField(
                       controller: _passwordController,
                       obscureText: _obscure,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
+                      style: TextStyle(
+                        color: c.textPrimary,
                         fontSize: 15,
                       ),
                       decoration: InputDecoration(
@@ -204,7 +208,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                 ? Icons.visibility_off_outlined
                                 : Icons.visibility_outlined,
                             size: 20,
-                            color: AppColors.textHint,
+                            color: c.textHint,
                           ),
                         ),
                       ),
@@ -219,12 +223,12 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             width: 22,
                             height: 22,
                             decoration: BoxDecoration(
-                              color: _agreed ? AppColors.accent : Colors.transparent,
+                              color: _agreed ? c.accent : Colors.transparent,
                               borderRadius: BorderRadius.circular(6),
                               border: Border.all(
                                 color: _agreed
-                                    ? AppColors.accent
-                                    : AppColors.inputBorder,
+                                    ? c.accent
+                                    : c.inputBorder,
                                 width: 1.5,
                               ),
                             ),
@@ -236,17 +240,17 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: RichText(
-                              text: const TextSpan(
+                              text: TextSpan(
                                 text: 'Я согласен с ',
                                 style: TextStyle(
                                   fontSize: 13,
-                                  color: AppColors.textSecondary,
+                                  color: c.textSecondary,
                                 ),
                                 children: [
                                   TextSpan(
                                     text: 'условиями использования',
                                     style: TextStyle(
-                                      color: AppColors.accent,
+                                      color: c.accent,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
@@ -270,17 +274,17 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           const LoginScreen(),
                         ),
                         child: RichText(
-                          text: const TextSpan(
+                          text: TextSpan(
                             text: 'Уже есть аккаунт? ',
                             style: TextStyle(
                               fontSize: 14,
-                              color: AppColors.textSecondary,
+                              color: c.textSecondary,
                             ),
                             children: [
                               TextSpan(
                                 text: 'Войти',
                                 style: TextStyle(
-                                  color: AppColors.accent,
+                                  color: c.accent,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -307,12 +311,13 @@ class _Label extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Text(
       text,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 11,
         fontWeight: FontWeight.w600,
-        color: AppColors.textSecondary,
+        color: c.textSecondary,
         letterSpacing: 0.8,
       ),
     );

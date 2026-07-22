@@ -9,7 +9,7 @@ class PrimaryButton extends StatefulWidget {
   final bool outlined;
   final IconData? icon;
 
-  const PrimaryButton({
+  PrimaryButton({
     super.key,
     required this.label,
     this.onPressed,
@@ -49,6 +49,7 @@ class _PrimaryButtonState extends State<PrimaryButton>
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final enabled = widget.onPressed != null;
 
     return GestureDetector(
@@ -65,14 +66,14 @@ class _PrimaryButtonState extends State<PrimaryButton>
         builder: (context, _) {
           return Transform.scale(
             scale: _scaleAnim.value,
-            child: _buildButton(enabled),
+            child: _buildButton(enabled, c),
           );
         },
       ),
     );
   }
 
-  Widget _buildButton(bool enabled) {
+  Widget _buildButton(bool enabled, AppColors c) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       width: widget.width ?? double.infinity,
@@ -83,18 +84,18 @@ class _PrimaryButtonState extends State<PrimaryButton>
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: enabled
-                    ? AppColors.accent
-                    : AppColors.accent.withValues(alpha: 0.3),
+                    ? c.accent
+                    : c.accent.withValues(alpha: 0.3),
                 width: 1.5,
               ),
             )
           : BoxDecoration(
-              color: enabled ? AppColors.accent : AppColors.surfaceLight,
+              color: enabled ? c.accent : c.surfaceLight,
               borderRadius: BorderRadius.circular(14),
               boxShadow: enabled
                   ? [
                       BoxShadow(
-                        color: AppColors.accent.withValues(alpha: 0.2),
+                        color: c.accent.withValues(alpha: 0.2),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),
@@ -114,7 +115,7 @@ class _PrimaryButtonState extends State<PrimaryButton>
               children: [
                 if (widget.icon != null) ...[
                   Icon(widget.icon,
-                      color: enabled ? Colors.white : AppColors.textHint,
+                      color: enabled ? Colors.white : c.textHint,
                       size: 20),
                   const SizedBox(width: 8),
                 ],
@@ -124,7 +125,7 @@ class _PrimaryButtonState extends State<PrimaryButton>
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color:
-                        enabled ? Colors.white : AppColors.textHint,
+                        enabled ? Colors.white : c.textHint,
                   ),
                 ),
               ],

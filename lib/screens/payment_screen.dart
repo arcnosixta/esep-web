@@ -14,8 +14,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       body: SafeArea(
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
@@ -27,19 +28,19 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   children: [
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
-                      child: const Icon(
+                      child: Icon(
                         Icons.arrow_back_ios_new_rounded,
                         size: 20,
-                        color: AppColors.textPrimary,
+                        color: c.textPrimary,
                       ),
                     ),
                     const SizedBox(width: 12),
-                    const Text(
+                    Text(
                       'Оплата',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                        color: c.textPrimary,
                       ),
                     ),
                   ],
@@ -53,9 +54,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: c.surface,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.border, width: 1),
+                    border: Border.all(color: c.border, width: 1),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.04),
@@ -67,32 +68,32 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'СУММА К ОПЛАТЕ',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 1.2,
-                          color: AppColors.textSecondary,
+                          color: c.textSecondary,
                         ),
                       ),
                       const SizedBox(height: 12),
-                      const Text(
+                      Text(
                         '15 000 ₸',
                         style: TextStyle(
                           fontSize: 44,
                           fontWeight: FontWeight.w900,
-                          color: AppColors.textPrimary,
+                          color: c.textPrimary,
                           letterSpacing: -1.5,
                           height: 1.0,
                         ),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
+                      Text(
                         'Оценка · Заявка №FA1D',
                         style: TextStyle(
                           fontSize: 13,
-                          color: AppColors.textSecondary,
+                          color: c.textSecondary,
                         ),
                       ),
                     ],
@@ -104,12 +105,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
-                child: const Text(
+                child: Text(
                   'Способ оплаты',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
+                    color: c.textSecondary,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -121,13 +122,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: c.surface,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.border, width: 1),
+                    border: Border.all(color: c.border, width: 1),
                   ),
                   child: Column(
                     children: [
                       _paymentRow(
+                        context: context,
                         index: 0,
                         icon: Icons.account_balance_wallet_rounded,
                         label: 'Kaspi Pay',
@@ -137,14 +139,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       Container(
                         height: 1,
                         margin: const EdgeInsets.only(left: 56),
-                        color: AppColors.divider,
+                        color: c.divider,
                       ),
                       _paymentRow(
+                        context: context,
                         index: 1,
                         icon: Icons.credit_card_rounded,
                         label: 'Банковская карта',
                         subtitle: 'Visa, Mastercard, Mir',
-                        color: AppColors.accent,
+                        color: c.accent,
                       ),
                     ],
                   ),
@@ -159,19 +162,19 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: c.surface,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border, width: 1),
+                      border: Border.all(color: c.border, width: 1),
                     ),
                     child: Column(
                       children: [
-                        _field('Номер карты', Icons.credit_card_rounded),
+                        _field(context, 'Номер карты', Icons.credit_card_rounded),
                         const SizedBox(height: 12),
                         Row(
                           children: [
-                            Expanded(child: _field('MM/YY', null)),
+                            Expanded(child: _field(context, 'MM/YY', null)),
                             const SizedBox(width: 12),
-                            Expanded(child: _field('CVV', null)),
+                            Expanded(child: _field(context, 'CVV', null)),
                           ],
                         ),
                       ],
@@ -197,12 +200,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   Widget _paymentRow({
+    required BuildContext context,
     required int index,
     required IconData icon,
     required String label,
     required String subtitle,
     required Color color,
   }) {
+    final c = AppColors.of(context);
     final selected = _selectedMethod == index;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -219,17 +224,17 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 children: [
                   Text(
                     label,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      color: c.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(
-                        fontSize: 12, color: AppColors.textSecondary),
+                    style: TextStyle(
+                        fontSize: 12, color: c.textSecondary),
                   ),
                 ],
               ),
@@ -241,7 +246,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: selected ? color : AppColors.textHint,
+                  color: selected ? color : c.textHint,
                   width: 2,
                 ),
               ),
@@ -262,30 +267,28 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
-  static Widget _field(String hint, IconData? prefix) {
+  Widget _field(BuildContext context, String hint, IconData? prefix) {
+    final c = AppColors.of(context);
     return TextField(
-      style: const TextStyle(color: AppColors.textPrimary, fontSize: 15),
+      style: TextStyle(color: c.textPrimary, fontSize: 15),
       decoration: InputDecoration(
         hintText: hint,
         filled: true,
-        fillColor: AppColors.surfaceLight,
+        fillColor: c.surfaceLight,
         prefixIcon: prefix != null
-            ? Icon(prefix, size: 20, color: AppColors.textHint)
+            ? Icon(prefix, size: 20, color: c.textHint)
             : null,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide:
-              const BorderSide(color: AppColors.inputBorder, width: 1),
+          borderSide: BorderSide(color: c.inputBorder, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide:
-              const BorderSide(color: AppColors.inputBorder, width: 1),
+          borderSide: BorderSide(color: c.inputBorder, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide:
-              const BorderSide(color: AppColors.accent, width: 1.5),
+          borderSide: BorderSide(color: c.accent, width: 1.5),
         ),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

@@ -35,6 +35,7 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final s = AppStrings.of(context);
 
     final navItems = [
@@ -51,8 +52,8 @@ class _AppShellState extends State<AppShell> {
         children: _pages,
       ),
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
+        decoration: BoxDecoration(
+          color: c.surface,
         ),
         child: SafeArea(
           child: Padding(
@@ -72,6 +73,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   Widget _navItem(int index, IconData icon, String label) {
+    final c = AppColors.of(context);
     final active = _currentIndex == index;
     final isAi = index == 4;
 
@@ -88,15 +90,15 @@ class _AppShellState extends State<AppShell> {
                     width: 44,
                     height: 32,
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [AppColors.accent, AppColors.accentLight],
+                      gradient: LinearGradient(
+                        colors: [c.accent, c.accentLight],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(10),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.accent.withValues(alpha: 0.25),
+                          color: c.accent.withValues(alpha: 0.25),
                           blurRadius: 10,
                           offset: const Offset(0, 3),
                         ),
@@ -113,14 +115,14 @@ class _AppShellState extends State<AppShell> {
                     height: 32,
                     decoration: BoxDecoration(
                       color: active
-                          ? AppColors.accent.withValues(alpha: 0.08)
+                          ? c.accent.withValues(alpha: 0.08)
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
                       icon,
                       size: 22,
-                      color: active ? AppColors.accent : AppColors.textHint,
+                      color: active ? c.accent : c.textHint,
                     ),
                   ),
             const SizedBox(height: 4),
@@ -130,10 +132,10 @@ class _AppShellState extends State<AppShell> {
                 fontSize: 10,
                 fontWeight: (active || isAi) ? FontWeight.w600 : FontWeight.w400,
                 color: isAi
-                    ? AppColors.accent
+                    ? c.accent
                     : active
-                        ? AppColors.accent
-                        : AppColors.textHint,
+                        ? c.accent
+                        : c.textHint,
               ),
             ),
           ],

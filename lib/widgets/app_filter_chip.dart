@@ -6,7 +6,7 @@ class AppFilterChip extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
 
-  const AppFilterChip({
+  AppFilterChip({
     super.key,
     required this.label,
     required this.isSelected,
@@ -15,6 +15,7 @@ class AppFilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -24,11 +25,11 @@ class AppFilterChip extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
           color: isSelected
-              ? AppColors.accent.withValues(alpha: 0.08)
-              : AppColors.surfaceLight,
+              ? c.accent.withValues(alpha: 0.08)
+              : c.surfaceLight,
           border: Border.all(
             color: isSelected
-                ? AppColors.accent.withValues(alpha: 0.3)
+                ? c.accent.withValues(alpha: 0.3)
                 : Colors.transparent,
             width: 1,
           ),
@@ -38,7 +39,7 @@ class AppFilterChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 13,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            color: isSelected ? AppColors.accent : AppColors.textSecondary,
+            color: isSelected ? c.accent : c.textSecondary,
           ),
         ),
       ),

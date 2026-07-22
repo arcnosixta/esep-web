@@ -14,17 +14,18 @@ class AdminPanelScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       body: SafeArea(
         bottom: false,
         child: Column(
           children: [
             Container(
               width: double.infinity,
-              color: AppColors.surface,
+              color: c.surface,
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
-              child: const Column(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
@@ -32,33 +33,33 @@ class AdminPanelScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 36,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
+                      color: c.textPrimary,
                       letterSpacing: -0.5,
                       height: 1.1,
                     ),
                   ),
-                  SizedBox(height: 6),
+                  const SizedBox(height: 6),
                   Text(
                     'Обзор статистики платформы',
-                    style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                    style: TextStyle(fontSize: 14, color: c.textSecondary),
                   ),
                 ],
               ),
             ),
             Container(
               width: double.infinity,
-              color: AppColors.paper,
+              color: c.paper,
               padding: const EdgeInsets.fromLTRB(24, 24, 16, 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'СТАТИСТИКА',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 1.2,
-                      color: AppColors.textSecondary,
+                      color: c.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -73,8 +74,8 @@ class AdminPanelScreen extends StatelessWidget {
                             content: _stats[0].value,
                             name: _stats[0].label,
                             icon: Icons.people_rounded,
-                            valueColor: AppColors.accent,
-                            backgroundColor: AppColors.surface,
+                            valueColor: c.accent,
+                            backgroundColor: c.surface,
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -84,8 +85,8 @@ class AdminPanelScreen extends StatelessWidget {
                             content: _stats[1].value,
                             name: _stats[1].label,
                             icon: Icons.description_rounded,
-                            valueColor: AppColors.info,
-                            backgroundColor: AppColors.surface,
+                            valueColor: c.info,
+                            backgroundColor: c.surface,
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -95,8 +96,8 @@ class AdminPanelScreen extends StatelessWidget {
                             content: _stats[2].value,
                             name: _stats[2].label,
                             icon: Icons.engineering_rounded,
-                            valueColor: AppColors.success,
-                            backgroundColor: AppColors.surface,
+                            valueColor: c.success,
+                            backgroundColor: c.surface,
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -106,8 +107,8 @@ class AdminPanelScreen extends StatelessWidget {
                             content: _stats[3].value,
                             name: _stats[3].label,
                             icon: Icons.payments_rounded,
-                            valueColor: AppColors.warning,
-                            backgroundColor: AppColors.surface,
+                            valueColor: c.warning,
+                            backgroundColor: c.surface,
                           ),
                         ),
                       ],
@@ -118,18 +119,18 @@ class AdminPanelScreen extends StatelessWidget {
             ),
             Container(
               width: double.infinity,
-              color: AppColors.paper,
+              color: c.paper,
               padding: const EdgeInsets.fromLTRB(24, 28, 24, 28),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'ГРАФИК АКТИВНОСТИ',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 1.2,
-                      color: AppColors.textSecondary,
+                      color: c.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -137,9 +138,9 @@ class AdminPanelScreen extends StatelessWidget {
                     width: double.infinity,
                     height: 180,
                     decoration: BoxDecoration(
-                      color: AppColors.muted.withValues(alpha: 0.3),
+                      color: c.muted.withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppColors.muted, width: 1),
+                      border: Border.all(color: c.muted, width: 1),
                     ),
                     child: Center(
                       child: Column(
@@ -148,12 +149,12 @@ class AdminPanelScreen extends StatelessWidget {
                           Icon(
                             Icons.bar_chart_rounded,
                             size: 40,
-                            color: AppColors.textSecondary.withValues(alpha: 0.4),
+                            color: c.textSecondary.withValues(alpha: 0.4),
                           ),
                           const SizedBox(height: 8),
-                          const Text(
+                          Text(
                             'fl_chart подключится позже',
-                            style: TextStyle(fontSize: 12, color: AppColors.textHint),
+                            style: TextStyle(fontSize: 12, color: c.textHint),
                           ),
                         ],
                       ),

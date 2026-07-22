@@ -62,23 +62,24 @@ class _CasesListScreenState extends State<CasesListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final filtered = _filteredApplications;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-              child: const Text(
+              child: Text(
                 'Заявки',
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.5,
-                  color: AppColors.textPrimary,
+                  color: c.textPrimary,
                 ),
               ),
             ),
@@ -104,17 +105,17 @@ class _CasesListScreenState extends State<CasesListScreen> {
 
             Expanded(
               child: _loading
-                  ? const Center(
+                  ? Center(
                       child: CircularProgressIndicator(
-                        color: AppColors.accent,
+                        color: c.accent,
                         strokeWidth: 2,
                       ),
                     )
                   : filtered.isEmpty
-                      ? _buildEmptyState()
+                      ? _buildEmptyState(context)
                       : RefreshIndicator(
                           onRefresh: _loadApplications,
-                          color: AppColors.accent,
+                          color: c.accent,
                           child: ListView.separated(
                             physics: const AlwaysScrollableScrollPhysics(
                               parent: BouncingScrollPhysics(),
@@ -144,10 +145,10 @@ class _CasesListScreenState extends State<CasesListScreen> {
                                 child: Container(
                                   padding: const EdgeInsets.all(18),
                                   decoration: BoxDecoration(
-                                    color: AppColors.surface,
+                                    color: c.surface,
                                     borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
-                                        color: AppColors.border, width: 1),
+                                        color: c.border, width: 1),
                                     boxShadow: [
                                       BoxShadow(
                                         color: Colors.black
@@ -163,7 +164,7 @@ class _CasesListScreenState extends State<CasesListScreen> {
                                         width: 44,
                                         height: 44,
                                         decoration: BoxDecoration(
-                                          color: AppColors.accent
+                                          color: c.accent
                                               .withValues(alpha: 0.08),
                                           borderRadius:
                                               BorderRadius.circular(12),
@@ -171,10 +172,10 @@ class _CasesListScreenState extends State<CasesListScreen> {
                                         child: Center(
                                           child: Text(
                                             '#${(app['id'] ?? '').toString().substring(0, 4).toUpperCase()}',
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 12,
                                               fontWeight: FontWeight.w700,
-                                              color: AppColors.accent,
+                                              color: c.accent,
                                             ),
                                           ),
                                         ),
@@ -187,11 +188,11 @@ class _CasesListScreenState extends State<CasesListScreen> {
                                           children: [
                                             Text(
                                               propertyTypeLabel(context, propType),
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 fontSize: 15,
                                                 fontWeight: FontWeight.w600,
                                                 color:
-                                                    AppColors.textPrimary,
+                                                    c.textPrimary,
                                               ),
                                             ),
                                             const SizedBox(height: 4),
@@ -199,9 +200,9 @@ class _CasesListScreenState extends State<CasesListScreen> {
                                               area.isNotEmpty
                                                   ? '$area · $address'
                                                   : address,
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 fontSize: 12,
-                                                color: AppColors
+                                                color: c
                                                     .textSecondary,
                                               ),
                                               overflow:
@@ -231,7 +232,8 @@ class _CasesListScreenState extends State<CasesListScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
+    final c = AppColors.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -239,23 +241,23 @@ class _CasesListScreenState extends State<CasesListScreen> {
           Icon(
             Icons.folder_open_rounded,
             size: 56,
-            color: AppColors.muted,
+            color: c.muted,
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Нет заявок',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w500,
-              color: AppColors.textSecondary,
+              color: c.textSecondary,
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Создайте первую заявку на оценку',
             style: TextStyle(
               fontSize: 13,
-              color: AppColors.textHint,
+              color: c.textHint,
             ),
           ),
         ],

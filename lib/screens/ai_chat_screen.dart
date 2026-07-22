@@ -84,10 +84,11 @@ class _AiChatScreenState extends State<AiChatScreen> {
 
   void _showImageSourceSheet() {
     final canUseCamera = !Platform.isLinux;
+    final c = AppColors.of(context);
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.surface,
+      backgroundColor: c.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -102,17 +103,17 @@ class _AiChatScreenState extends State<AiChatScreen> {
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.muted,
+                    color: c.muted,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
                 const SizedBox(height: 20),
-                const Text(
+                Text(
                   'Добавить фото',
                   style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                    color: c.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -144,25 +145,26 @@ class _AiChatScreenState extends State<AiChatScreen> {
   }
 
   Widget _imageSourceOption(IconData icon, String label, VoidCallback onTap) {
+    final c = AppColors.of(context);
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: AppColors.inputFill,
+          color: c.inputFill,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           children: [
-            Icon(icon, color: AppColors.accent, size: 22),
+            Icon(icon, color: c.accent, size: 22),
             const SizedBox(width: 14),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
+                color: c.textPrimary,
               ),
             ),
           ],
@@ -258,18 +260,19 @@ class _AiChatScreenState extends State<AiChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: c.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         leading: GestureDetector(
           onTap: () => Navigator.pop(context),
-          child: const Icon(
+          child: Icon(
             Icons.arrow_back_ios_new_rounded,
             size: 20,
-            color: AppColors.textPrimary,
+            color: c.textPrimary,
           ),
         ),
         leadingWidth: 40,
@@ -279,8 +282,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppColors.accent, AppColors.accentLight],
+                gradient: LinearGradient(
+                  colors: [c.accent, c.accentLight],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -299,7 +302,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
               ),
             ),
             const SizedBox(width: 12),
-            const Column(
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
@@ -307,7 +310,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                    color: c.textPrimary,
                   ),
                 ),
                 Text(
@@ -315,7 +318,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w400,
-                    color: AppColors.textHint,
+                    color: c.textHint,
                   ),
                 ),
               ],
@@ -324,7 +327,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: AppColors.border),
+          child: Container(height: 1, color: c.border),
         ),
       ),
       body: Column(
@@ -340,6 +343,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
   }
 
   Widget _buildEmptyState() {
+    final c = AppColors.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -350,15 +354,15 @@ class _AiChatScreenState extends State<AiChatScreen> {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppColors.accent, AppColors.accentLight],
+                gradient: LinearGradient(
+                  colors: [c.accent, c.accentLight],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.accent.withValues(alpha: 0.2),
+                    color: c.accent.withValues(alpha: 0.2),
                     blurRadius: 24,
                     offset: const Offset(0, 8),
                   ),
@@ -377,21 +381,21 @@ class _AiChatScreenState extends State<AiChatScreen> {
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'Чем могу помочь?',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+                color: c.textPrimary,
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Задайте вопрос об оценке недвижимости,\nотправьте фото объекта для анализа',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
-                color: AppColors.textSecondary,
+                color: c.textSecondary,
                 height: 1.5,
               ),
             ),
@@ -408,16 +412,16 @@ class _AiChatScreenState extends State<AiChatScreen> {
                       vertical: 10,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: c.surface,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.border),
+                      border: Border.all(color: c.border),
                     ),
                     child: Text(
                       q,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: AppColors.textPrimary,
+                        color: c.textPrimary,
                       ),
                     ),
                   ),
@@ -463,12 +467,13 @@ class _AiChatScreenState extends State<AiChatScreen> {
   }
 
   Widget _buildAvatar() {
+    final c = AppColors.of(context);
     return Container(
       width: 32,
       height: 32,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.accent, AppColors.accentLight],
+        gradient: LinearGradient(
+          colors: [c.accent, c.accentLight],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -489,11 +494,12 @@ class _AiChatScreenState extends State<AiChatScreen> {
   }
 
   Widget _buildUserAvatar() {
+    final c = AppColors.of(context);
     return Container(
       width: 32,
       height: 32,
       decoration: BoxDecoration(
-        color: AppColors.gold,
+        color: c.gold,
         borderRadius: BorderRadius.circular(9),
       ),
       child: const Center(
@@ -503,6 +509,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
   }
 
   Widget _buildUserBubble(ChatMessage msg) {
+    final c = AppColors.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
@@ -511,7 +518,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: AppColors.accent,
+              color: c.accent,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Text(
@@ -529,21 +536,22 @@ class _AiChatScreenState extends State<AiChatScreen> {
   }
 
   Widget _buildAssistantBubble(ChatMessage msg) {
+    final c = AppColors.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: c.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: c.border),
       ),
       child: msg.text.isEmpty && msg.isStreaming
           ? _buildTypingIndicator()
           : Text.rich(
               _parseFormatting(msg.text),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w400,
-                color: AppColors.textPrimary,
+                color: c.textPrimary,
                 height: 1.5,
               ),
             ),
@@ -572,6 +580,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
   }
 
   TextSpan _parseFormatting(String text) {
+    final c = AppColors.of(context);
     final spans = <TextSpan>[];
     final lines = text.split('\n');
 
@@ -580,7 +589,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
 
       if (line.startsWith('• ') || line.startsWith('- ')) {
         spans.add(TextSpan(children: [
-          const TextSpan(text: '  ', style: TextStyle(color: AppColors.accent)),
+          TextSpan(text: '  ', style: TextStyle(color: c.accent)),
           TextSpan(text: line),
         ]));
       } else if (line.startsWith('**') && line.endsWith('**')) {
@@ -614,6 +623,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
   }
 
   Widget _buildImagePreview() {
+    final c = AppColors.of(context);
     return Container(
       height: 80,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -642,7 +652,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
                     width: 20,
                     height: 20,
                     decoration: BoxDecoration(
-                      color: AppColors.error,
+                      color: c.error,
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -661,6 +671,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
   }
 
   Widget _buildInputArea() {
+    final c = AppColors.of(context);
     return Container(
       padding: EdgeInsets.only(
         left: 12,
@@ -668,9 +679,9 @@ class _AiChatScreenState extends State<AiChatScreen> {
         top: 10,
         bottom: MediaQuery.of(context).padding.bottom + 10,
       ),
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(top: BorderSide(color: AppColors.border, width: 1)),
+      decoration: BoxDecoration(
+        color: c.surface,
+        border: Border(top: BorderSide(color: c.border, width: 1)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -681,13 +692,13 @@ class _AiChatScreenState extends State<AiChatScreen> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: AppColors.inputFill,
+                color: c.inputFill,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.inputBorder),
+                border: Border.all(color: c.inputBorder),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.photo_camera_rounded,
-                color: AppColors.textSecondary,
+                color: c.textSecondary,
                 size: 21,
               ),
             ),
@@ -697,9 +708,9 @@ class _AiChatScreenState extends State<AiChatScreen> {
             child: Container(
               constraints: const BoxConstraints(minHeight: 44),
               decoration: BoxDecoration(
-                color: AppColors.inputFill,
+                color: c.inputFill,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.inputBorder),
+                border: Border.all(color: c.inputBorder),
               ),
               child: TextField(
                 controller: _controller,
@@ -707,16 +718,16 @@ class _AiChatScreenState extends State<AiChatScreen> {
                 maxLines: 4,
                 minLines: 1,
                 textInputAction: TextInputAction.newline,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
-                  color: AppColors.textPrimary,
+                  color: c.textPrimary,
                 ),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: 'Задайте вопрос...',
-                  hintStyle: TextStyle(color: AppColors.textHint),
+                  hintStyle: TextStyle(color: c.textHint),
                   border: InputBorder.none,
                   contentPadding:
-                      EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
                 onSubmitted: _sendMessage,
               ),
@@ -735,8 +746,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
                 color: _isStreaming ||
                         (_controller.text.trim().isEmpty &&
                             _pendingImageBase64.isEmpty)
-                    ? AppColors.muted
-                    : AppColors.accent,
+                    ? c.muted
+                    : c.accent,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
@@ -798,6 +809,7 @@ class _DotState extends State<_Dot> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return AnimatedBuilder(
       animation: _anim,
       builder: (context, _) {
@@ -806,8 +818,8 @@ class _DotState extends State<_Dot> with SingleTickerProviderStateMixin {
           child: Container(
             width: 7,
             height: 7,
-            decoration: const BoxDecoration(
-              color: AppColors.accent,
+            decoration: BoxDecoration(
+              color: c.accent,
               shape: BoxShape.circle,
             ),
           ),

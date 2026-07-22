@@ -9,7 +9,7 @@ class CaseCard extends StatelessWidget {
   final double borderRadius;
   final Color? backgroundColor;
 
-  const CaseCard({
+  CaseCard({
     super.key,
     required this.child,
     this.padding = const EdgeInsets.all(16),
@@ -21,15 +21,16 @@ class CaseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin: margin ?? const EdgeInsets.only(bottom: 12),
         padding: padding,
         decoration: BoxDecoration(
-          color: backgroundColor ?? AppColors.surface,
+          color: backgroundColor ?? c.surface,
           borderRadius: BorderRadius.circular(borderRadius),
-          border: Border.all(color: AppColors.border, width: 1),
+          border: Border.all(color: c.border, width: 1),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.04),

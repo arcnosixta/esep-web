@@ -34,15 +34,20 @@ IconData propertyTypeIcon(String type) => switch (type) {
       _ => Icons.location_on_rounded,
     };
 
-Color propertyTypeColor(String type) => switch (type) {
-      'apartment' => AppColors.accent,
-      'house' => AppColors.info,
-      'land' => AppColors.success,
-      'commercial' => AppColors.warning,
-      _ => AppColors.textSecondary,
-    };
+Color propertyTypeColor(BuildContext context, String type) {
+  final c = AppColors.of(context);
+  return switch (type) {
+    'apartment' => c.accent,
+    'house' => c.info,
+    'land' => c.success,
+    'commercial' => c.warning,
+    _ => c.textSecondary,
+  };
+}
 
-Widget infoRow(String label, String value, {bool highlight = false}) {
+Widget infoRow(BuildContext context, String label, String value,
+    {bool highlight = false}) {
+  final c = AppColors.of(context);
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 12),
     child: Row(
@@ -50,9 +55,9 @@ Widget infoRow(String label, String value, {bool highlight = false}) {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
-            color: AppColors.textSecondary,
+            color: c.textSecondary,
           ),
         ),
         Text(
@@ -60,7 +65,7 @@ Widget infoRow(String label, String value, {bool highlight = false}) {
           style: TextStyle(
             fontSize: 14,
             fontWeight: highlight ? FontWeight.w700 : FontWeight.w500,
-            color: highlight ? AppColors.accent : AppColors.textPrimary,
+            color: highlight ? c.accent : c.textPrimary,
           ),
         ),
       ],
@@ -68,7 +73,10 @@ Widget infoRow(String label, String value, {bool highlight = false}) {
   );
 }
 
-Widget divider() => Container(height: 1, color: AppColors.divider);
+Widget divider(BuildContext context) {
+  final c = AppColors.of(context);
+  return Container(height: 1, color: c.divider);
+}
 
 BadgeStatus badgeStatusFromKey(String status) => switch (status) {
       'new' => BadgeStatus.pending,

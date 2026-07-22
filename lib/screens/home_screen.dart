@@ -56,14 +56,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final s = AppStrings.of(context);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _loadData,
-          color: AppColors.accent,
+          color: c.accent,
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(
               parent: ClampingScrollPhysics(),
@@ -80,19 +81,19 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           Text(
                             '${greeting(context)},',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w400,
-                              color: AppColors.textSecondary,
+                              color: c.textSecondary,
                             ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             _userName.isNotEmpty ? _userName : 'ESEP',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.w800,
-                              color: AppColors.textPrimary,
+                              color: c.textPrimary,
                               letterSpacing: -0.5,
                             ),
                           ),
@@ -104,8 +105,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Container(
                           width: 44,
                           height: 44,
-                          decoration: const BoxDecoration(
-                            color: AppColors.accent,
+                          decoration: BoxDecoration(
+                            color: c.accent,
                             shape: BoxShape.circle,
                           ),
                           child: Center(
@@ -137,9 +138,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: AppColors.surface,
+                          color: c.surface,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.border, width: 1),
+                          border: Border.all(color: c.border, width: 1),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withValues(alpha: 0.04),
@@ -156,10 +157,10 @@ class _HomeScreenState extends State<HomeScreen> {
                               children: [
                                 Text(
                                   s.homeCurrentApplication,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
-                                    color: AppColors.textSecondary,
+                                    color: c.textSecondary,
                                   ),
                                 ),
                                 StatusBadge(
@@ -179,18 +180,18 @@ class _HomeScreenState extends State<HomeScreen> {
                               caseNumber(
                                 (_recentApps.first['id'] ?? '').toString(),
                               ),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
+                                color: c.textPrimary,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               _buildCaseSubtitle(_recentApps.first),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
-                                color: AppColors.textSecondary,
+                                color: c.textSecondary,
                               ),
                             ),
                             const SizedBox(height: 16),
@@ -211,10 +212,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
                   child: Text(
                     s.homeContinueWork,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textSecondary,
+                      color: c.textSecondary,
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -230,7 +231,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: _quickAction(
                           Icons.add_location_alt_rounded,
                           s.homeNewApplication,
-                          AppColors.accent,
+                          c.accent,
                           () => AppNavigator.push(
                               context, const NewApplicationScreen()),
                         ),
@@ -240,7 +241,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: _quickAction(
                           Icons.description_rounded,
                           s.homeDocuments,
-                          AppColors.warning,
+                          c.warning,
                           widget.onDocumentsTap ?? () {},
                         ),
                       ),
@@ -249,7 +250,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: _quickAction(
                           Icons.payments_rounded,
                           s.homePayment,
-                          AppColors.success,
+                          c.success,
                           () => AppNavigator.push(
                               context, const PaymentScreen()),
                         ),
@@ -259,7 +260,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: _quickAction(
                           Icons.auto_awesome_rounded,
                           s.homeEvaluate,
-                          AppColors.gold,
+                          c.gold,
                           () => AppNavigator.push(
                               context, const AiChatScreen()),
                         ),
@@ -277,10 +278,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       Text(
                         s.homeRecentApplications,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textSecondary,
+                          color: c.textSecondary,
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -291,10 +292,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         child: Text(
                           s.homeAll,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
-                            color: AppColors.accent,
+                            color: c.accent,
                           ),
                         ),
                       ),
@@ -307,9 +308,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   ? SliverToBoxAdapter(
                       child: Padding(
                         padding: const EdgeInsets.all(40),
-                        child: const Center(
+                        child: Center(
                           child: CircularProgressIndicator(
-                              color: AppColors.accent, strokeWidth: 2),
+                              color: c.accent, strokeWidth: 2),
                         ),
                       ),
                     )
@@ -320,17 +321,17 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Center(
                               child: Column(
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.folder_open_rounded,
                                     size: 48,
-                                    color: AppColors.muted,
+                                    color: c.muted,
                                   ),
                                   const SizedBox(height: 12),
                                   Text(
                                     s.homeNoApplications,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 14,
-                                      color: AppColors.textHint,
+                                      color: c.textHint,
                                     ),
                                   ),
                                 ],
@@ -343,10 +344,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
                             child: Container(
                               decoration: BoxDecoration(
-                                color: AppColors.surface,
+                                color: c.surface,
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
-                                    color: AppColors.border, width: 1),
+                                    color: c.border, width: 1),
                               ),
                                child: Column(
                                 children: [
@@ -378,7 +379,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                               width: 42,
                                               height: 42,
                                               decoration: BoxDecoration(
-                                                color: AppColors.accent
+                                                color: c.accent
                                                     .withValues(alpha: 0.08),
                                                 borderRadius:
                                                     BorderRadius.circular(12),
@@ -386,11 +387,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                               child: Center(
                                                 child: Text(
                                                   '#${(app['id'] ?? '').toString().substring(0, 4).toUpperCase()}',
-                                                  style: const TextStyle(
+                                                  style: TextStyle(
                                                     fontSize: 12,
                                                     fontWeight:
                                                         FontWeight.w700,
-                                                    color: AppColors.accent,
+                                                    color: c.accent,
                                                   ),
                                                 ),
                                               ),
@@ -404,21 +405,19 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   Text(
                                                     propertyTypeLabel(
                                                         context, propType),
-                                                    style: const TextStyle(
+                                                    style: TextStyle(
                                                       fontSize: 15,
                                                       fontWeight:
                                                           FontWeight.w600,
-                                                      color: AppColors
-                                                          .textPrimary,
+                                                      color: c.textPrimary,
                                                     ),
                                                   ),
                                                   const SizedBox(height: 3),
                                                   Text(
                                                     detail,
-                                                    style: const TextStyle(
+                                                    style: TextStyle(
                                                       fontSize: 12,
-                                                      color: AppColors
-                                                          .textSecondary,
+                                                      color: c.textSecondary,
                                                     ),
                                                     overflow:
                                                         TextOverflow.ellipsis,
@@ -479,14 +478,15 @@ class _HomeScreenState extends State<HomeScreen> {
     Color color,
     VoidCallback onTap,
   ) {
+    final c = AppColors.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 20),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: c.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border, width: 1),
+          border: Border.all(color: c.border, width: 1),
         ),
         child: Column(
           children: [
@@ -502,10 +502,10 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 10),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: c.textPrimary,
               ),
               textAlign: TextAlign.center,
             ),

@@ -68,8 +68,10 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -80,12 +82,12 @@ class _SplashScreenState extends State<SplashScreen>
                 position: _logoSlide,
                 child: FadeTransition(
                   opacity: _logoOpacity,
-                  child: const Text(
+                  child: Text(
                     'ESEP',
                     style: TextStyle(
                       fontSize: 48,
                       fontWeight: FontWeight.w900,
-                      color: AppColors.textPrimary,
+                      color: c.textPrimary,
                       letterSpacing: 8,
                     ),
                   ),
@@ -101,7 +103,7 @@ class _SplashScreenState extends State<SplashScreen>
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textSecondary.withValues(alpha: 0.7),
+                      color: c.textSecondary.withValues(alpha: 0.7),
                       letterSpacing: 4,
                     ),
                   ),
@@ -115,7 +117,7 @@ class _SplashScreenState extends State<SplashScreen>
                   child: Container(
                     width: 60,
                     height: 1,
-                    color: AppColors.gold,
+                    color: c.gold,
                   ),
                 ),
               ),
@@ -135,7 +137,7 @@ class _SplashScreenState extends State<SplashScreen>
                             const LoginScreen(),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.accent,
+                            backgroundColor: c.accent,
                             foregroundColor: Colors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
@@ -161,9 +163,9 @@ class _SplashScreenState extends State<SplashScreen>
                             const RegistrationScreen(),
                           ),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.textPrimary,
-                            side: const BorderSide(
-                                color: AppColors.muted, width: 1),
+                            foregroundColor: c.textPrimary,
+                            side: BorderSide(
+                                color: c.muted, width: 1),
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),

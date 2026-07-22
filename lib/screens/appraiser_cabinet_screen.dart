@@ -79,8 +79,9 @@ class _AppraiserCabinetScreenState extends State<AppraiserCabinetScreen>
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       appBar: AppBar(
         title: const Text('Кабинет оценщика'),
         leading: IconButton(
@@ -89,11 +90,11 @@ class _AppraiserCabinetScreenState extends State<AppraiserCabinetScreen>
         ),
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: AppColors.accent,
+          indicatorColor: c.accent,
           indicatorWeight: 2,
           indicatorSize: TabBarIndicatorSize.label,
-          labelColor: AppColors.textPrimary,
-          unselectedLabelColor: AppColors.textHint,
+          labelColor: c.textPrimary,
+          unselectedLabelColor: c.textHint,
           labelStyle: const TextStyle(
               fontSize: 14, fontWeight: FontWeight.w600),
           unselectedLabelStyle: const TextStyle(
@@ -117,10 +118,11 @@ class _AppraiserCabinetScreenState extends State<AppraiserCabinetScreen>
   }
 
   Widget _jobList(List<_AppraiserJob> jobs) {
+    final c = AppColors.of(context);
     if (jobs.isEmpty) {
-      return const Center(
+      return Center(
         child: Text('Нет заявок',
-            style: TextStyle(color: AppColors.textHint)),
+            style: TextStyle(color: c.textHint)),
       );
     }
     return ListView.builder(
@@ -133,7 +135,7 @@ class _AppraiserCabinetScreenState extends State<AppraiserCabinetScreen>
           children: [
             Container(
               width: double.infinity,
-              color: AppColors.surface,
+              color: c.surface,
               padding: const EdgeInsets.fromLTRB(24, 18, 16, 18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -149,19 +151,19 @@ class _AppraiserCabinetScreenState extends State<AppraiserCabinetScreen>
                               height: 28,
                               padding: EdgeInsets.zero,
                               borderRadius: 8,
-                              backgroundColor: AppColors.accent.withValues(alpha: 0.08),
-                              borderColor: AppColors.accent.withValues(alpha: 0.15),
-                              child: const Icon(Icons.location_on_rounded,
-                                  size: 14, color: AppColors.accent),
+                              backgroundColor: c.accent.withValues(alpha: 0.08),
+                              borderColor: c.accent.withValues(alpha: 0.15),
+                              child: Icon(Icons.location_on_rounded,
+                                  size: 14, color: c.accent),
                             ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 job.address,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary,
+                                  color: c.textPrimary,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -192,7 +194,7 @@ class _AppraiserCabinetScreenState extends State<AppraiserCabinetScreen>
             ),
             Container(
               height: 1,
-              color: AppColors.border,
+              color: c.border,
             ),
           ],
         );
@@ -201,13 +203,14 @@ class _AppraiserCabinetScreenState extends State<AppraiserCabinetScreen>
   }
 
   Widget _meta(IconData icon, String text) {
+    final c = AppColors.of(context);
     return Row(
       children: [
-        Icon(icon, size: 14, color: AppColors.textHint),
+        Icon(icon, size: 14, color: c.textHint),
         const SizedBox(width: 4),
         Text(text,
-            style: const TextStyle(
-                fontSize: 12, color: AppColors.textSecondary)),
+            style: TextStyle(
+                fontSize: 12, color: c.textSecondary)),
       ],
     );
   }

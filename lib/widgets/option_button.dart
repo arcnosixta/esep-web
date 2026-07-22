@@ -9,7 +9,7 @@ class OptionButton extends StatelessWidget {
   final Color? textColor;
   final VoidCallback? onTap;
 
-  const OptionButton({
+  OptionButton({
     super.key,
     required this.text,
     required this.icon,
@@ -21,7 +21,8 @@ class OptionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = backgroundColor ?? AppColors.accent;
+    final c = AppColors.of(context);
+    final bg = backgroundColor ?? c.accent;
     final fg = textColor ?? Colors.white;
 
     return GestureDetector(

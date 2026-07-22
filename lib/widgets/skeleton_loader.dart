@@ -6,7 +6,7 @@ class SkeletonLoader extends StatefulWidget {
   final double height;
   final double borderRadius;
 
-  const SkeletonLoader({
+  SkeletonLoader({
     super.key,
     required this.width,
     required this.height,
@@ -43,6 +43,7 @@ class _SkeletonLoaderState extends State<SkeletonLoader>
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, child) {
@@ -51,8 +52,8 @@ class _SkeletonLoaderState extends State<SkeletonLoader>
           height: widget.height,
           decoration: BoxDecoration(
             color: Color.lerp(
-              AppColors.skeletonBase,
-              AppColors.skeletonShimmer,
+              c.skeletonBase,
+              c.skeletonShimmer,
               _animation.value,
             ),
             borderRadius: BorderRadius.circular(widget.borderRadius),
@@ -64,21 +65,22 @@ class _SkeletonLoaderState extends State<SkeletonLoader>
 }
 
 class SkeletonCard extends StatelessWidget {
-  const SkeletonCard({super.key});
+  SkeletonCard({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: c.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border, width: 1),
+        border: Border.all(color: c.border, width: 1),
       ),
       child: Row(
         children: [
-          const SkeletonLoader(width: 44, height: 44, borderRadius: 12),
+          SkeletonLoader(width: 44, height: 44, borderRadius: 12),
           const SizedBox(width: 14),
           Expanded(
             child: Column(

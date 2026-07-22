@@ -8,7 +8,7 @@ class StatusBadge extends StatelessWidget {
   final String label;
   final bool small;
 
-  const StatusBadge({
+  StatusBadge({
     super.key,
     required this.status,
     required this.label,
@@ -17,11 +17,12 @@ class StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final color = switch (status) {
-      BadgeStatus.pending => AppColors.warning,
-      BadgeStatus.inProgress => AppColors.info,
-      BadgeStatus.completed => AppColors.success,
-      BadgeStatus.rejected => AppColors.error,
+      BadgeStatus.pending => c.warning,
+      BadgeStatus.inProgress => c.info,
+      BadgeStatus.completed => c.success,
+      BadgeStatus.rejected => c.error,
     };
 
     return Container(

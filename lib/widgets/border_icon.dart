@@ -10,7 +10,7 @@ class BorderIcon extends StatelessWidget {
   final double borderRadius;
   final VoidCallback? onTap;
 
-  const BorderIcon({
+  BorderIcon({
     super.key,
     required this.child,
     this.padding,
@@ -24,14 +24,15 @@ class BorderIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     final widget = Container(
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: backgroundColor ?? AppColors.surface,
+        color: backgroundColor ?? c.surface,
         borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
         border: Border.all(
-          color: borderColor ?? AppColors.border,
+          color: borderColor ?? c.border,
           width: 1,
         ),
       ),

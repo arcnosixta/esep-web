@@ -7,7 +7,7 @@ class CaseProgressBar extends StatelessWidget {
   final Color? backgroundColor;
   final Color? fillColor;
 
-  const CaseProgressBar({
+  CaseProgressBar({
     super.key,
     required this.progress,
     this.height = 4,
@@ -17,6 +17,7 @@ class CaseProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return ClipRRect(
       borderRadius: BorderRadius.circular(height / 2),
       child: SizedBox(
@@ -25,14 +26,14 @@ class CaseProgressBar extends StatelessWidget {
           children: [
             Container(
               width: double.infinity,
-              color: backgroundColor ?? AppColors.surfaceLight,
+              color: backgroundColor ?? c.surfaceLight,
             ),
             FractionallySizedBox(
               widthFactor: progress.clamp(0.0, 1.0),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 600),
                 curve: Curves.easeOutCubic,
-                color: fillColor ?? AppColors.accent,
+                color: fillColor ?? c.accent,
               ),
             ),
           ],

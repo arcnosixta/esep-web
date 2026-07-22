@@ -47,6 +47,7 @@ class _EgovScreenState extends State<EgovScreen> {
   }
 
   Future<void> _connectEcp() async {
+    final c = AppColors.of(context);
     final pinController = TextEditingController();
 
     final result = await showDialog<bool>(
@@ -61,10 +62,10 @@ class _EgovScreenState extends State<EgovScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withValues(alpha: 0.08),
+                  color: c.accent.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: AppColors.accent.withValues(alpha: 0.2),
+                    color: c.accent.withValues(alpha: 0.2),
                     width: 1,
                   ),
                 ),
@@ -73,23 +74,23 @@ class _EgovScreenState extends State<EgovScreen> {
                     Icon(
                       Icons.upload_file_rounded,
                       size: 36,
-                      color: AppColors.accent.withValues(alpha: 0.7),
+                      color: c.accent.withValues(alpha: 0.7),
                     ),
                     const SizedBox(height: 12),
-                    const Text(
+                    Text(
                       'Загрузите файл ЭЦП',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                        color: c.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 6),
-                    const Text(
+                    Text(
                       'Форматы: .p12, .pfx',
                       style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.textSecondary,
+                        color: c.textSecondary,
                       ),
                     ),
                   ],
@@ -99,7 +100,7 @@ class _EgovScreenState extends State<EgovScreen> {
               TextField(
                 controller: pinController,
                 obscureText: true,
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: c.textPrimary),
                 decoration: const InputDecoration(
                   hintText: 'PIN-код ЭЦП',
                   prefixIcon: Icon(Icons.lock_outline, size: 18),
@@ -111,13 +112,13 @@ class _EgovScreenState extends State<EgovScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Отмена',
-                style: TextStyle(color: AppColors.textSecondary)),
+            child: Text('Отмена',
+                style: TextStyle(color: c.textSecondary)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Подключить',
-                style: TextStyle(color: AppColors.accent)),
+            child: Text('Подключить',
+                style: TextStyle(color: c.accent)),
           ),
         ],
       ),
@@ -135,7 +136,7 @@ class _EgovScreenState extends State<EgovScreen> {
             SnackBar(
               content: const Text('Файл не выбран',
                   style: TextStyle(color: Colors.white)),
-              backgroundColor: AppColors.error,
+              backgroundColor: AppColors.of(context).error,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
@@ -152,7 +153,7 @@ class _EgovScreenState extends State<EgovScreen> {
             SnackBar(
               content: Text(ecpResult.error!,
                   style: const TextStyle(color: Colors.white)),
-              backgroundColor: AppColors.error,
+              backgroundColor: AppColors.of(context).error,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
@@ -182,7 +183,7 @@ class _EgovScreenState extends State<EgovScreen> {
               'ЭЦП подключён! ${ecpResult.ownerName ?? ""}',
               style: const TextStyle(color: Colors.white),
             ),
-            backgroundColor: AppColors.success,
+            backgroundColor: AppColors.of(context).success,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12)),
@@ -193,24 +194,25 @@ class _EgovScreenState extends State<EgovScreen> {
   }
 
   Future<void> _disconnectEcp() async {
+    final c = AppColors.of(context);
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Отключить ЭЦП?'),
-        content: const Text(
+        content: Text(
           'Все данные EGOV будут удалены из приложения',
-          style: TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: c.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Отмена',
-                style: TextStyle(color: AppColors.textSecondary)),
+            child: Text('Отмена',
+                style: TextStyle(color: c.textSecondary)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Отключить',
-                style: TextStyle(color: AppColors.error)),
+            child: Text('Отключить',
+                style: TextStyle(color: c.error)),
           ),
         ],
       ),
@@ -236,18 +238,20 @@ class _EgovScreenState extends State<EgovScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+
     if (_loading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator(color: AppColors.accent)),
+      return Scaffold(
+        body: Center(child: CircularProgressIndicator(color: c.accent)),
       );
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _loadData,
-          color: AppColors.accent,
+          color: c.accent,
           child: CustomScrollView(
             physics:
                 const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
@@ -259,19 +263,19 @@ class _EgovScreenState extends State<EgovScreen> {
                     children: [
                       GestureDetector(
                         onTap: () => Navigator.pop(context),
-                        child: const Icon(
+                        child: Icon(
                           Icons.arrow_back_ios_new_rounded,
                           size: 20,
-                          color: AppColors.textPrimary,
+                          color: c.textPrimary,
                         ),
                       ),
                       const SizedBox(width: 12),
-                      const Text(
+                      Text(
                         'ЭЦП и EGOV',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
+                          color: c.textPrimary,
                         ),
                       ),
                     ],
@@ -285,9 +289,9 @@ class _EgovScreenState extends State<EgovScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: c.surface,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border, width: 1),
+                      border: Border.all(color: c.border, width: 1),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: 0.04),
@@ -304,10 +308,10 @@ class _EgovScreenState extends State<EgovScreen> {
                             children: [
                               Text(
                                 _ecpConnected ? 'ЭЦП подключён' : 'ЭЦП не подключён',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
+                                  color: c.textPrimary,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -315,9 +319,9 @@ class _EgovScreenState extends State<EgovScreen> {
                                 _ecpConnected
                                     ? 'Данные EGOV доступны'
                                     : 'Подключите ЭЦП для доступа к данным',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 13,
-                                  color: AppColors.textSecondary,
+                                  color: c.textSecondary,
                                 ),
                               ),
                             ],
@@ -328,8 +332,8 @@ class _EgovScreenState extends State<EgovScreen> {
                               horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
                             color: (_ecpConnected
-                                    ? AppColors.success
-                                    : AppColors.muted)
+                                    ? c.success
+                                    : c.muted)
                                 .withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -339,8 +343,8 @@ class _EgovScreenState extends State<EgovScreen> {
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                               color: _ecpConnected
-                                  ? AppColors.success
-                                  : AppColors.textHint,
+                                  ? c.success
+                                  : c.textHint,
                             ),
                           ),
                         ),
@@ -359,19 +363,19 @@ class _EgovScreenState extends State<EgovScreen> {
                         ? OutlinedButton(
                             onPressed: _disconnectEcp,
                             style: OutlinedButton.styleFrom(
-                              side: const BorderSide(
-                                  color: AppColors.error, width: 1),
+                              side: BorderSide(
+                                  color: c.error, width: 1),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               padding: const EdgeInsets.symmetric(vertical: 12),
                             ),
-                            child: const Text(
+                            child: Text(
                               'Отключить ЭЦП',
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.error,
+                                color: c.error,
                               ),
                             ),
                           )
@@ -391,9 +395,9 @@ class _EgovScreenState extends State<EgovScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
+                        color: c.surface,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.border, width: 1),
+                        border: Border.all(color: c.border, width: 1),
                       ),
                       child: Row(
                         children: [
@@ -401,17 +405,17 @@ class _EgovScreenState extends State<EgovScreen> {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: AppColors.accent.withValues(alpha: 0.08),
+                              color: c.accent.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.fingerprint_rounded,
-                              color: AppColors.accent,
+                              color: c.accent,
                               size: 20,
                             ),
                           ),
                           const SizedBox(width: 14),
-                          const Expanded(
+                          Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -420,15 +424,15 @@ class _EgovScreenState extends State<EgovScreen> {
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary,
+                                    color: c.textPrimary,
                                   ),
                                 ),
-                                SizedBox(height: 2),
+                                const SizedBox(height: 2),
                                 Text(
                                   'Требовать отпечаток/лицо для ЭЦП',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: AppColors.textSecondary,
+                                    color: c.textSecondary,
                                   ),
                                 ),
                               ],
@@ -437,9 +441,9 @@ class _EgovScreenState extends State<EgovScreen> {
                           Switch(
                             value: _biometricEnabled,
                             onChanged: _toggleBiometric,
-                            activeThumbColor: AppColors.accent,
+                            activeThumbColor: c.accent,
                             activeTrackColor:
-                                AppColors.accent.withValues(alpha: 0.3),
+                                c.accent.withValues(alpha: 0.3),
                           ),
                         ],
                       ),
@@ -451,12 +455,12 @@ class _EgovScreenState extends State<EgovScreen> {
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-                    child: const Text(
+                    child: Text(
                       'ЛИЧНЫЕ ДАННЫЕ',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
+                        color: c.textSecondary,
                         letterSpacing: 0.8,
                       ),
                     ),
@@ -468,9 +472,9 @@ class _EgovScreenState extends State<EgovScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
+                        color: c.surface,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.border, width: 1),
+                        border: Border.all(color: c.border, width: 1),
                       ),
                       child: Column(
                         children: [
@@ -497,20 +501,20 @@ class _EgovScreenState extends State<EgovScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'НЕДВИЖИМОСТЬ',
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textSecondary,
+                            color: c.textSecondary,
                             letterSpacing: 0.8,
                           ),
                         ),
                         Text(
                           '${_properties.length} объектов',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
-                            color: AppColors.textSecondary,
+                            color: c.textSecondary,
                           ),
                         ),
                       ],
@@ -522,9 +526,9 @@ class _EgovScreenState extends State<EgovScreen> {
                     padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
+                        color: c.surface,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.border, width: 1),
+                        border: Border.all(color: c.border, width: 1),
                       ),
                       child: Column(
                         children: _properties.map((prop) {
@@ -538,13 +542,13 @@ class _EgovScreenState extends State<EgovScreen> {
                                       width: 40,
                                       height: 40,
                                       decoration: BoxDecoration(
-                                        color: AppColors.accent
+                                        color: c.accent
                                             .withValues(alpha: 0.08),
                                         borderRadius: BorderRadius.circular(10),
                                       ),
-                                      child: const Icon(
+                                      child: Icon(
                                         Icons.apartment_rounded,
-                                        color: AppColors.accent,
+                                        color: c.accent,
                                         size: 18,
                                       ),
                                     ),
@@ -556,46 +560,47 @@ class _EgovScreenState extends State<EgovScreen> {
                                         children: [
                                           Text(
                                             prop.type,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 14,
                                               fontWeight: FontWeight.w600,
-                                              color: AppColors.textPrimary,
+                                              color: c.textPrimary,
                                             ),
                                           ),
                                           const SizedBox(height: 2),
                                           Text(
                                             prop.address,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 12,
-                                              color: AppColors.textSecondary,
+                                              color: c.textSecondary,
                                             ),
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                           const SizedBox(height: 6),
                                           Row(
                                             children: [
-                                              _miniStat('${prop.area} м²',
-                                                  AppColors.accent),
+                                              _miniStat(context, '${prop.area} м²',
+                                                  c.accent),
                                               const SizedBox(width: 8),
                                               _miniStat(
+                                                  context,
                                                   'Кадастр: ${prop.cadastralNumber}',
-                                                  AppColors.textSecondary),
+                                                  c.textSecondary),
                                             ],
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
                                             '${prop.ownershipType} · ${prop.registrationDate}',
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 11,
-                                              color: AppColors.textHint,
+                                              color: c.textHint,
                                             ),
                                           ),
                                         ],
                                       ),
                                     ),
-                                    const Icon(
+                                    Icon(
                                       Icons.chevron_right_rounded,
-                                      color: AppColors.textHint,
+                                      color: c.textHint,
                                       size: 20,
                                     ),
                                   ],
@@ -605,7 +610,7 @@ class _EgovScreenState extends State<EgovScreen> {
                                 Container(
                                   height: 1,
                                   margin: const EdgeInsets.only(left: 68),
-                                  color: AppColors.divider,
+                                  color: c.divider,
                                 ),
                             ],
                           );
@@ -620,12 +625,12 @@ class _EgovScreenState extends State<EgovScreen> {
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-                    child: const Text(
+                    child: Text(
                       'ДОКУМЕНТЫ',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
+                        color: c.textSecondary,
                         letterSpacing: 0.8,
                       ),
                     ),
@@ -636,9 +641,9 @@ class _EgovScreenState extends State<EgovScreen> {
                     padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
+                        color: c.surface,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.border, width: 1),
+                        border: Border.all(color: c.border, width: 1),
                       ),
                       child: Column(
                         children: _documents.map((doc) {
@@ -648,10 +653,10 @@ class _EgovScreenState extends State<EgovScreen> {
                                   ? Icons.badge_rounded
                                   : Icons.description_rounded;
                           final color = doc.type == 'certificate'
-                              ? AppColors.success
+                              ? c.success
                               : doc.type == 'passport'
-                                  ? AppColors.info
-                                  : AppColors.accent;
+                                  ? c.info
+                                  : c.accent;
                           return Column(
                             children: [
                               Padding(
@@ -676,26 +681,26 @@ class _EgovScreenState extends State<EgovScreen> {
                                         children: [
                                           Text(
                                             doc.name,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 13,
                                               fontWeight: FontWeight.w500,
-                                              color: AppColors.textPrimary,
+                                              color: c.textPrimary,
                                             ),
                                           ),
                                           const SizedBox(height: 2),
                                           Text(
                                             '${doc.date} · ${doc.status}',
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 11,
-                                              color: AppColors.textSecondary,
+                                              color: c.textSecondary,
                                             ),
                                           ),
                                         ],
                                       ),
                                     ),
-                                    const Icon(
+                                    Icon(
                                       Icons.chevron_right_rounded,
-                                      color: AppColors.textHint,
+                                      color: c.textHint,
                                       size: 18,
                                     ),
                                   ],
@@ -705,7 +710,7 @@ class _EgovScreenState extends State<EgovScreen> {
                                 Container(
                                   height: 1,
                                   margin: const EdgeInsets.only(left: 68),
-                                  color: AppColors.divider,
+                                  color: c.divider,
                                 ),
                             ],
                           );
@@ -720,12 +725,12 @@ class _EgovScreenState extends State<EgovScreen> {
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-                    child: const Text(
+                    child: Text(
                       'СВЕДЕНИЯ О СОБСТВЕННИКЕ',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
+                        color: c.textSecondary,
                         letterSpacing: 0.8,
                       ),
                     ),
@@ -737,9 +742,9 @@ class _EgovScreenState extends State<EgovScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
+                        color: c.surface,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.border, width: 1),
+                        border: Border.all(color: c.border, width: 1),
                       ),
                       child: Column(
                         children: _owners.map((owner) {
@@ -774,15 +779,15 @@ class _EgovScreenState extends State<EgovScreen> {
                           Icon(
                             Icons.vpn_key_off_rounded,
                             size: 64,
-                            color: AppColors.textHint.withValues(alpha: 0.4),
+                            color: c.textHint.withValues(alpha: 0.4),
                           ),
                           const SizedBox(height: 16),
-                          const Text(
+                          Text(
                             'Подключите ЭЦП\nдля доступа к данным EGOV',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 15,
-                              color: AppColors.textSecondary,
+                              color: c.textSecondary,
                               height: 1.5,
                             ),
                           ),
@@ -801,22 +806,23 @@ class _EgovScreenState extends State<EgovScreen> {
   }
 
   Widget _dataRow(String label, String value) {
+    final c = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label,
-              style: const TextStyle(
-                  fontSize: 13, color: AppColors.textSecondary)),
+              style: TextStyle(
+                  fontSize: 13, color: c.textSecondary)),
           const SizedBox(width: 12),
           Flexible(
             child: Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
+                color: c.textPrimary,
               ),
               textAlign: TextAlign.end,
             ),
@@ -826,7 +832,7 @@ class _EgovScreenState extends State<EgovScreen> {
     );
   }
 
-  Widget _miniStat(String text, Color color) {
+  Widget _miniStat(BuildContext context, String text, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -844,6 +850,8 @@ class _EgovScreenState extends State<EgovScreen> {
     );
   }
 
-  Widget _thinDivider() =>
-      Container(height: 1, color: AppColors.divider);
+  Widget _thinDivider() {
+    final c = AppColors.of(context);
+    return Container(height: 1, color: c.divider);
+  }
 }

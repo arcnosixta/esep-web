@@ -10,8 +10,9 @@ class ReportScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       body: SafeArea(
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
@@ -23,19 +24,19 @@ class ReportScreen extends StatelessWidget {
                   children: [
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
-                      child: const Icon(
+                      child: Icon(
                         Icons.arrow_back_ios_new_rounded,
                         size: 20,
-                        color: AppColors.textPrimary,
+                        color: c.textPrimary,
                       ),
                     ),
                     const SizedBox(width: 12),
-                    const Text(
+                    Text(
                       'Отчёт об оценке',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                        color: c.textPrimary,
                       ),
                     ),
                   ],
@@ -49,9 +50,9 @@ class ReportScreen extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: c.surface,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.border, width: 1),
+                    border: Border.all(color: c.border, width: 1),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.04),
@@ -63,22 +64,22 @@ class ReportScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'ИТОГОВАЯ СТОИМОСТЬ',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 1.2,
-                          color: AppColors.textSecondary,
+                          color: c.textSecondary,
                         ),
                       ),
                       const SizedBox(height: 12),
-                      const Text(
+                      Text(
                         '42 500 000 ₸',
                         style: TextStyle(
                           fontSize: 40,
                           fontWeight: FontWeight.w900,
-                          color: AppColors.textPrimary,
+                          color: c.textPrimary,
                           letterSpacing: -1,
                           height: 1.0,
                         ),
@@ -90,22 +91,22 @@ class ReportScreen extends StatelessWidget {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: AppColors.accent.withValues(alpha: 0.08),
+                              color: c.accent.withValues(alpha: 0.08),
                               shape: BoxShape.circle,
                             ),
-                            child: const Center(
+                            child: Center(
                               child: Text(
                                 '92%',
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
-                                  color: AppColors.accent,
+                                  color: c.accent,
                                 ),
                               ),
                             ),
                           ),
                           const SizedBox(width: 12),
-                          const Expanded(
+                          Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -114,10 +115,10 @@ class ReportScreen extends StatelessWidget {
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary,
+                                    color: c.textPrimary,
                                   ),
                                 ),
-                                SizedBox(height: 4),
+                                const SizedBox(height: 4),
                                 CaseProgressBar(progress: 0.92),
                               ],
                             ),
@@ -136,23 +137,23 @@ class ReportScreen extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: c.surface,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border, width: 1),
+                    border: Border.all(color: c.border, width: 1),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Диапазон оценки',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
-                          color: AppColors.textSecondary,
+                          color: c.textSecondary,
                         ),
                       ),
                       const SizedBox(height: 8),
-                      const Row(
+                      Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
@@ -160,7 +161,7 @@ class ReportScreen extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
+                              color: c.textPrimary,
                             ),
                           ),
                           Text(
@@ -168,7 +169,7 @@ class ReportScreen extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
+                              color: c.textPrimary,
                             ),
                           ),
                         ],
@@ -184,12 +185,12 @@ class ReportScreen extends StatelessWidget {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-                child: const Text(
+                child: Text(
                   'Данные объекта',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
+                    color: c.textSecondary,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -206,19 +207,19 @@ class ReportScreen extends StatelessWidget {
                       content: '85',
                       name: 'Площадь м²',
                       icon: Icons.square_foot_rounded,
-                      valueColor: AppColors.textPrimary,
+                      valueColor: c.textPrimary,
                     ),
                     InformationTile(
                       content: '3',
                       name: 'Комнаты',
                       icon: Icons.meeting_room_rounded,
-                      valueColor: AppColors.info,
+                      valueColor: c.info,
                     ),
                     InformationTile(
                       content: '12',
                       name: 'Этаж',
                       icon: Icons.layers_rounded,
-                      valueColor: AppColors.warning,
+                      valueColor: c.warning,
                     ),
                   ],
                 ),
@@ -231,17 +232,17 @@ class ReportScreen extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: c.surface,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.border, width: 1),
+                    border: Border.all(color: c.border, width: 1),
                   ),
                   child: Column(
                     children: [
-                      infoRow('Адрес', 'г. Алматы, ул. Абая 52'),
-                      divider(),
-                      infoRow('Дата оценки', '15 января 2026'),
-                      divider(),
-                      infoRow('Тип', 'Квартира'),
+                      infoRow(context, 'Адрес', 'г. Алматы, ул. Абая 52'),
+                      divider(context),
+                      infoRow(context, 'Дата оценки', '15 января 2026'),
+                      divider(context),
+                      infoRow(context, 'Тип', 'Квартира'),
                     ],
                   ),
                 ),
@@ -251,12 +252,12 @@ class ReportScreen extends StatelessWidget {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-                child: const Text(
+                child: Text(
                   'Рекомендации',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
+                    color: c.textSecondary,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -269,19 +270,21 @@ class ReportScreen extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: c.surface,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.border, width: 1),
+                    border: Border.all(color: c.border, width: 1),
                   ),
                   child: Column(
                     children: [
                       _recItem(
+                        context,
                         Icons.trending_up_rounded,
                         'Рынок стабилен',
                         'Рост +3.2% за 6 месяцев',
                       ),
-                      divider(),
+                      divider(context),
                       _recItem(
+                        context,
                         Icons.home_rounded,
                         'Выгодное расположение',
                         'Престижный район, развитая инфраструктура',
@@ -310,7 +313,7 @@ class ReportScreen extends StatelessWidget {
                         text: 'Поделиться',
                         icon: Icons.share_rounded,
                         backgroundColor: Colors.transparent,
-                        textColor: AppColors.accent,
+                        textColor: c.accent,
                         onTap: () {},
                       ),
                     ),
@@ -324,13 +327,14 @@ class ReportScreen extends StatelessWidget {
     );
   }
 
-  static Widget _recItem(IconData icon, String title, String subtitle) {
+  Widget _recItem(BuildContext context, IconData icon, String title, String subtitle) {
+    final c = AppColors.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: AppColors.accent, size: 22),
+          Icon(icon, color: c.accent, size: 22),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -338,18 +342,18 @@ class ReportScreen extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: c.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   subtitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textSecondary,
+                    color: c.textSecondary,
                     height: 1.4,
                   ),
                 ),

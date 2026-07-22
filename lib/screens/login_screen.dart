@@ -31,7 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final password = _passwordController.text;
 
     if (email.isEmpty || password.isEmpty) {
-      _showError('Заполните все поля');
+      _showError(context, 'Заполните все поля');
       return;
     }
 
@@ -44,18 +44,19 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       if (mounted) {
-        _showError(e.toString());
+        _showError(context, e.toString());
       }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
-  void _showError(String message) {
+  void _showError(BuildContext context, String message) {
+    final c = AppColors.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message, style: const TextStyle(color: Colors.white)),
-        backgroundColor: AppColors.error,
+        backgroundColor: c.error,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
@@ -64,8 +65,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -74,30 +77,30 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Вход',
                   style: TextStyle(
                     fontSize: 42,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
+                    color: c.textPrimary,
                     letterSpacing: -1.5,
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Войдите в свой аккаунт ESEP',
                   style: TextStyle(
                     fontSize: 15,
-                    color: AppColors.textSecondary,
+                    color: c.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 40),
                 Container(
                   padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: c.surface,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.border, width: 1),
+                    border: Border.all(color: c.border, width: 1),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.03),
@@ -111,8 +114,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       TextField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
+                        style: TextStyle(
+                          color: c.textPrimary,
                           fontSize: 15,
                         ),
                         decoration: const InputDecoration(
@@ -123,8 +126,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       TextField(
                         controller: _passwordController,
                         obscureText: _obscure,
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
+                        style: TextStyle(
+                          color: c.textPrimary,
                           fontSize: 15,
                         ),
                         decoration: InputDecoration(
@@ -137,7 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ? Icons.visibility_off_outlined
                                   : Icons.visibility_outlined,
                               size: 20,
-                              color: AppColors.textHint,
+                              color: c.textHint,
                             ),
                           ),
                         ),
@@ -153,11 +156,11 @@ class _LoginScreenState extends State<LoginScreen> {
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
-                          child: const Text(
+                          child: Text(
                             'Забыли пароль?',
                             style: TextStyle(
                               fontSize: 13,
-                              color: AppColors.gold,
+                              color: c.gold,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -179,17 +182,17 @@ class _LoginScreenState extends State<LoginScreen> {
                       const RegistrationScreen(),
                     ),
                     child: RichText(
-                      text: const TextSpan(
+                      text: TextSpan(
                         text: 'Нет аккаунта? ',
                         style: TextStyle(
                           fontSize: 14,
-                          color: AppColors.textSecondary,
+                          color: c.textSecondary,
                         ),
                         children: [
                           TextSpan(
                             text: 'Зарегистрироваться',
                             style: TextStyle(
-                              color: AppColors.accent,
+                              color: c.accent,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
