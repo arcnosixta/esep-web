@@ -17,11 +17,11 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
 
-  final _pages = const [
-    HomeScreen(),
-    CasesListScreen(),
-    DocumentUploadScreen(),
-    ProfileScreen(),
+  late final List<Widget> _pages = [
+    HomeScreen(onDocumentsTap: () => setState(() => _currentIndex = 2)),
+    const CasesListScreen(),
+    const DocumentUploadScreen(),
+    const ProfileScreen(),
   ];
 
   void _onNavTap(int index) {

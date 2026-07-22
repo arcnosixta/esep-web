@@ -13,7 +13,9 @@ import 'payment_screen.dart';
 import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final VoidCallback? onDocumentsTap;
+
+  const HomeScreen({super.key, this.onDocumentsTap});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -235,10 +237,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           Icons.description_rounded,
                           'Документы',
                           AppColors.warning,
-                          () {
-                            Navigator.of(context)
-                                .popUntil((route) => route.isFirst);
-                          },
+                          widget.onDocumentsTap ?? () {},
                         ),
                       ),
                       const SizedBox(width: 10),

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../main.dart';
 
@@ -167,6 +169,33 @@ class SupabaseService {
   // DOCUMENTS
   // ============================================
 
+  static const _storageBucket = 'user-docs';
+
+  static String _storagePath(String fileName) {
+    return '$userId/$fileName';
+  }
+
+  static Future<void> ensureStorageBucket() async {
+    try {
+      await supabase.storage.getBucket(_storageBucket);
+    } catch (_) {
+      try {
+        await supabase.storage.createBucket(
+          _storageBucket,
+          BucketOptions(
+            public: false,
+            fileSizeLimit: '10485760',
+            allowedMimeTypes: ['application/pdf', 'image/jpeg', 'image/png'],
+          ),
+        );
+      } catch (e) {
+        throw Exception(
+          'Не удалось создать хранилище. Создай bucket "user-docs" вручную в Supabase Dashboard → Storage → New bucket.',
+        );
+      }
+    }
+  }
+
   static Future<List<Map<String, dynamic>>> getDocuments() async {
     if (userId == null) return [];
     final data = await supabase
@@ -177,26 +206,51 @@ class SupabaseService {
     return List<Map<String, dynamic>>.from(data);
   }
 
-  static Future<Map<String, dynamic>> addDocument({
-    String? propertyId,
-    required String name,
-    required String fileUrl,
-    required String fileType,
-    double? fileSize,
-  }) async {
-    final data = await supabase.from('documents').insert({
-      'user_id': userId,
-      'property_id': propertyId,
-      'name': name,
-      'file_url': fileUrl,
-      'file_type': fileType,
-      'file_size': fileSize,
-    }).select().single();
+  static Future<Map<String, dynamic>> uploadDocument(File file) async {
+    if (userId == null) throw Exception('Не авторизован');
+
+    final originalName = file.uri.pathSegments.last;
+    final ext = originalName.contains('.')
+        ? originalName.substring(originalName.lastIndexOf('.'))
+        : '';
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final safeName = '$timestamp$ext';
+    final path = _storagePath(safeName);
+
+    await supabase.storage.from(_storageBucket).upload(
+      path,
+      file,
+      fileOptions: const FileOptions(upsert: true),
+    );
+
+    final fileSize = await file.length();
+    final fileType = ext.replaceFirst('.', '').toLowerCase();
+
+    final data = await supabase
+        .from('documents')
+        .insert({
+          'user_id': userId!,
+          'name': originalName,
+          'file_url': path,
+          'file_type': fileType,
+          'file_size': fileSize,
+        })
+        .select()
+        .single();
     return data;
   }
 
-  static Future<void> deleteDocument(String id) async {
+  static Future<void> deleteDocument(String id, {String? filePath}) async {
+    if (filePath != null) {
+      try {
+        await supabase.storage.from(_storageBucket).remove([filePath]);
+      } catch (_) {}
+    }
     await supabase.from('documents').delete().eq('id', id);
+  }
+
+  static String getDocumentUrl(String filePath) {
+    return supabase.storage.from(_storageBucket).getPublicUrl(filePath);
   }
 
   // ============================================
