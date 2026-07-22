@@ -5,6 +5,7 @@ import '../widgets/status_badge.dart';
 import '../services/supabase_service.dart';
 import '../utils/formatters.dart';
 import 'egov_screen.dart';
+import 'settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -13,7 +14,10 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends State<ProfileScreen>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
+
   Map<String, dynamic>? _profile;
   List<Map<String, dynamic>> _properties = [];
   List<Map<String, dynamic>> _documents = [];
@@ -23,7 +27,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
     _loadData();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -58,6 +69,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return name.substring(0, name.length.clamp(0, 2)).toUpperCase();
   }
 
+  void _openEditProfile() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _EditProfileSheet(
+        profile: _profile,
+        onSaved: () {
+          _loadData();
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -83,18 +108,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _loadData,
-          color: AppColors.accent,
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics(),
-            ),
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-                  child: const Text(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
                     'Профиль',
                     style: TextStyle(
                       fontSize: 32,
@@ -103,169 +124,448 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       letterSpacing: -0.5,
                     ),
                   ),
-                ),
-              ),
-
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
+                  const SizedBox(height: 16),
+                  Container(
                     decoration: BoxDecoration(
                       color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: AppColors.border, width: 1),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
-                        ),
+                    ),
+                    child: TabBar(
+                      controller: _tabController,
+                      labelColor: AppColors.accent,
+                      unselectedLabelColor: AppColors.textSecondary,
+                      indicatorColor: AppColors.accent,
+                      indicatorSize: TabBarIndicatorSize.tab,
+                      indicatorPadding: const EdgeInsets.all(3),
+                      indicator: BoxDecoration(
+                        color: AppColors.accent.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(9),
+                      ),
+                      labelStyle: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      unselectedLabelStyle: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                      ),
+                      dividerColor: Colors.transparent,
+                      tabs: const [
+                        Tab(text: 'Профиль'),
+                        Tab(text: 'Настройки'),
                       ],
                     ),
-                    child: Row(
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  RefreshIndicator(
+                    onRefresh: _loadData,
+                    color: AppColors.accent,
+                    child: ListView(
+                      physics: const AlwaysScrollableScrollPhysics(
+                        parent: BouncingScrollPhysics(),
+                      ),
+                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
                       children: [
-                        Container(
-                          width: 64,
-                          height: 64,
-                          decoration: const BoxDecoration(
-                            color: AppColors.accent,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: Text(
-                              _getInitials(),
-                              style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                              ),
+                        GestureDetector(
+                          onTap: _openEditProfile,
+                          child: Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                  color: AppColors.border, width: 1),
+                              boxShadow: [
+                                BoxShadow(
+                                  color:
+                                      Colors.black.withValues(alpha: 0.04),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 64,
+                                  height: 64,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.accent,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      _getInitials(),
+                                      style: const TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        name,
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        role,
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 5),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.gold
+                                        .withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.verified_rounded,
+                                          size: 14,
+                                          color: AppColors.gold),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        'Верифицирован',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.gold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
+
+                        const SizedBox(height: 4),
+                        GestureDetector(
+                          onTap: _openEditProfile,
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.edit_rounded,
+                                    size: 14, color: AppColors.accent),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Редактировать профиль',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.accent,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            InformationTile(
+                              content: '${_properties.length}',
+                              name: 'Объектов',
+                              icon: Icons.home_rounded,
+                              valueColor: AppColors.accent,
+                            ),
+                            InformationTile(
+                              content: '${_documents.length}',
+                              name: 'Документов',
+                              icon: Icons.folder_rounded,
+                              valueColor: AppColors.warning,
+                            ),
+                            InformationTile(
+                              content: '${_history.length}',
+                              name: 'Оценок',
+                              icon: Icons.assessment_rounded,
+                              valueColor: AppColors.success,
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 24),
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                                color: AppColors.border, width: 1),
+                          ),
+                          child: Column(
+                            children: [
+                              infoRow('ИИН', iin),
+                              divider(),
+                              infoRow('Телефон', phone),
+                              divider(),
+                              infoRow('Email', email),
+                              divider(),
+                              infoRow('Роль', role),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                                color: AppColors.border, width: 1),
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                name,
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                role,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: AppColors.gold.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.verified_rounded,
-                                  size: 14, color: AppColors.gold),
-                              SizedBox(width: 4),
-                              Text(
-                                'Верифицирован',
+                              const Text(
+                                'ГОСУСЛУГИ (EGOV)',
                                 style: TextStyle(
                                   fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.gold,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textSecondary,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.info
+                                          .withValues(alpha: 0.1),
+                                      borderRadius:
+                                          BorderRadius.circular(10),
+                                    ),
+                                    child: const Icon(
+                                      Icons.account_balance_rounded,
+                                      color: AppColors.info,
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  const Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'ЭЦП статус',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.textPrimary,
+                                          ),
+                                        ),
+                                        SizedBox(height: 2),
+                                        Text(
+                                          'Подключение к Госуслугам',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color:
+                                                AppColors.textSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton(
+                                  onPressed: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (_) =>
+                                            const EgovScreen()),
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(
+                                        color: AppColors.info, width: 1),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(12),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 24, vertical: 12),
+                                  ),
+                                  child: const Text(
+                                    'Открыть',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.info,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
 
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      InformationTile(
-                        content: '${_properties.length}',
-                        name: 'Объектов',
-                        icon: Icons.home_rounded,
-                        valueColor: AppColors.accent,
-                      ),
-                      InformationTile(
-                        content: '${_documents.length}',
-                        name: 'Документов',
-                        icon: Icons.folder_rounded,
-                        valueColor: AppColors.warning,
-                      ),
-                      InformationTile(
-                        content: '${_history.length}',
-                        name: 'Оценок',
-                        icon: Icons.assessment_rounded,
-                        valueColor: AppColors.success,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+                        const SizedBox(height: 24),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'МОЁ ИМУЩЕСТВО',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textSecondary,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                            Text(
+                              '${_properties.length} объектов',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (_properties.isEmpty)
+                          const Padding(
+                            padding: EdgeInsets.only(top: 14),
+                            child: Text(
+                              'Пока нет имущества',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppColors.textHint,
+                              ),
+                            ),
+                          )
+                        else
+                          Padding(
+                            padding: const EdgeInsets.only(top: 12),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: AppColors.surface,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                    color: AppColors.border, width: 1),
+                              ),
+                              child: Column(
+                                children: [
+                                  for (int i = 0;
+                                      i < _properties.length;
+                                      i++) ...[
+                                    _buildPropertyRow(_properties[i]),
+                                    if (i < _properties.length - 1)
+                                      Container(
+                                        height: 1,
+                                        margin: const EdgeInsets.only(
+                                            left: 72),
+                                        color: AppColors.divider,
+                                      ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
 
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border, width: 1),
-                    ),
-                    child: Column(
-                      children: [
-                        infoRow('ИИН', iin),
-                        divider(),
-                        infoRow('Телефон', phone),
-                        divider(),
-                        infoRow('Email', email),
-                        divider(),
-                        infoRow('Роль', role),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+                        const SizedBox(height: 24),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'МОИ ДОКУМЕНТЫ',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textSecondary,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                            Text(
+                              '${_documents.length} файлов',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (_documents.isEmpty)
+                          const Padding(
+                            padding: EdgeInsets.only(top: 14),
+                            child: Text(
+                              'Пока нет документов',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppColors.textHint,
+                              ),
+                            ),
+                          )
+                        else
+                          Padding(
+                            padding: const EdgeInsets.only(top: 12),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: AppColors.surface,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                    color: AppColors.border, width: 1),
+                              ),
+                              child: Column(
+                                children: [
+                                  for (int i = 0;
+                                      i < _documents.length;
+                                      i++) ...[
+                                    _buildDocumentRow(_documents[i]),
+                                    if (i < _documents.length - 1)
+                                      Container(
+                                        height: 1,
+                                        margin: const EdgeInsets.only(
+                                            left: 72),
+                                        color: AppColors.divider,
+                                      ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
 
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border, width: 1),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                        const SizedBox(height: 24),
                         const Text(
-                          'ГОСУСЛУГИ (EGOV)',
+                          'ИСТОРИЯ ОЦЕНОК',
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
@@ -273,311 +573,85 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             letterSpacing: 0.8,
                           ),
                         ),
-                        const SizedBox(height: 14),
-                        Row(
-                          children: [
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: AppColors.info.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: const Icon(
-                                Icons.account_balance_rounded,
-                                color: AppColors.info,
-                                size: 20,
+                        if (_history.isEmpty)
+                          const Padding(
+                            padding: EdgeInsets.only(top: 14),
+                            child: Text(
+                              'Пока нет оценок',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppColors.textHint,
                               ),
                             ),
-                            const SizedBox(width: 14),
-                            const Expanded(
+                          )
+                        else
+                          Padding(
+                            padding: const EdgeInsets.only(top: 12),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: AppColors.surface,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                    color: AppColors.border, width: 1),
+                              ),
                               child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    'ЭЦП статус',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                  SizedBox(height: 2),
-                                  Text(
-                                    'Подключение к Госуслугам',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
+                                  for (int i = 0;
+                                      i < _history.length;
+                                      i++) ...[
+                                    _buildHistoryRow(_history[i]),
+                                    if (i < _history.length - 1)
+                                      Container(
+                                        height: 1,
+                                        margin: const EdgeInsets.only(
+                                            left: 72),
+                                        color: AppColors.divider,
+                                      ),
+                                  ],
                                 ],
                               ),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton(
-                            onPressed: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const EgovScreen()),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(
-                                  color: AppColors.info, width: 1),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                          ),
+
+                        const SizedBox(height: 28),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                                color: AppColors.border, width: 1),
+                          ),
+                          child: Column(
+                            children: [
+                              _settingsRow(
+                                  Icons.help_rounded, 'Помощь'),
+                              Container(
+                                height: 1,
+                                margin: const EdgeInsets.only(left: 52),
+                                color: AppColors.divider,
                               ),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 24, vertical: 12),
-                            ),
-                            child: const Text(
-                              'Открыть',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.info,
+                              _settingsRow(Icons.info_outline_rounded,
+                                  'О приложении'),
+                              Container(
+                                height: 1,
+                                margin: const EdgeInsets.only(left: 52),
+                                color: AppColors.divider,
                               ),
-                            ),
+                              _settingsRow(
+                                  Icons.logout_rounded, 'Выйти',
+                                  color: AppColors.error,
+                                  onTap: _signOut),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
-                ),
+                  const SettingsScreen(),
+                ],
               ),
-
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'МОЁ ИМУЩЕСТВО',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textSecondary,
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                      Text(
-                        '${_properties.length} объектов',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              if (_properties.isEmpty)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
-                    child: const Text(
-                      'Пока нет имущества',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textHint,
-                      ),
-                    ),
-                  ),
-                )
-              else
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.border, width: 1),
-                      ),
-                      child: Column(
-                        children: [
-                          for (int i = 0; i < _properties.length; i++) ...[
-                            _buildPropertyRow(_properties[i]),
-                            if (i < _properties.length - 1)
-                              Container(
-                                height: 1,
-                                margin: const EdgeInsets.only(left: 72),
-                                color: AppColors.divider,
-                              ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'МОИ ДОКУМЕНТЫ',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textSecondary,
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                      Text(
-                        '${_documents.length} файлов',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              if (_documents.isEmpty)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
-                    child: const Text(
-                      'Пока нет документов',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textHint,
-                      ),
-                    ),
-                  ),
-                )
-              else
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.border, width: 1),
-                      ),
-                      child: Column(
-                        children: [
-                          for (int i = 0; i < _documents.length; i++) ...[
-                            _buildDocumentRow(_documents[i]),
-                            if (i < _documents.length - 1)
-                              Container(
-                                height: 1,
-                                margin: const EdgeInsets.only(left: 72),
-                                color: AppColors.divider,
-                              ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-                  child: const Text(
-                    'ИСТОРИЯ ОЦЕНОК',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textSecondary,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                ),
-              ),
-              if (_history.isEmpty)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
-                    child: const Text(
-                      'Пока нет оценок',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textHint,
-                      ),
-                    ),
-                  ),
-                )
-              else
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.border, width: 1),
-                      ),
-                      child: Column(
-                        children: [
-                          for (int i = 0; i < _history.length; i++) ...[
-                            _buildHistoryRow(_history[i]),
-                            if (i < _history.length - 1)
-                              Container(
-                                height: 1,
-                                margin: const EdgeInsets.only(left: 72),
-                                color: AppColors.divider,
-                              ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border, width: 1),
-                    ),
-                    child: Column(
-                      children: [
-                        _settingsRow(Icons.settings_rounded, 'Настройки'),
-                        Container(
-                          height: 1,
-                          margin: const EdgeInsets.only(left: 52),
-                          color: AppColors.divider,
-                        ),
-                        _settingsRow(Icons.help_rounded, 'Помощь'),
-                        Container(
-                          height: 1,
-                          margin: const EdgeInsets.only(left: 52),
-                          color: AppColors.divider,
-                        ),
-                        _settingsRow(
-                            Icons.info_outline_rounded, 'О приложении'),
-                        Container(
-                          height: 1,
-                          margin: const EdgeInsets.only(left: 52),
-                          color: AppColors.divider,
-                        ),
-                        _settingsRow(Icons.logout_rounded, 'Выйти',
-                            color: AppColors.error, onTap: _signOut),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 40),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -825,5 +899,218 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (confirm == true && mounted) {
       await SupabaseService.signOut();
     }
+  }
+}
+
+// ============================================
+// EDIT PROFILE SHEET
+// ============================================
+
+class _EditProfileSheet extends StatefulWidget {
+  final Map<String, dynamic>? profile;
+  final VoidCallback onSaved;
+
+  const _EditProfileSheet({required this.profile, required this.onSaved});
+
+  @override
+  State<_EditProfileSheet> createState() => _EditProfileSheetState();
+}
+
+class _EditProfileSheetState extends State<_EditProfileSheet> {
+  late final TextEditingController _nameController;
+  late final TextEditingController _phoneController;
+  late final TextEditingController _iinController;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(
+        text: widget.profile?['full_name'] ?? '');
+    _phoneController = TextEditingController(
+        text: widget.profile?['phone'] ?? '');
+    _iinController = TextEditingController(
+        text: widget.profile?['iin'] ?? '');
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    _iinController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Введите ФИО')),
+      );
+      return;
+    }
+
+    setState(() => _saving = true);
+
+    try {
+      await SupabaseService.updateProfile(
+        fullName: name,
+        phone: _phoneController.text.trim(),
+        iin: _iinController.text.trim(),
+      );
+      if (mounted) {
+        widget.onSaved();
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Профиль обновлён')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Редактировать профиль',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 24),
+              _buildField(
+                controller: _nameController,
+                label: 'ФИО',
+                icon: Icons.person_rounded,
+                keyboardType: TextInputType.name,
+              ),
+              const SizedBox(height: 16),
+              _buildField(
+                controller: _phoneController,
+                label: 'Телефон',
+                icon: Icons.phone_rounded,
+                keyboardType: TextInputType.phone,
+              ),
+              const SizedBox(height: 16),
+              _buildField(
+                controller: _iinController,
+                label: 'ИИН',
+                icon: Icons.badge_rounded,
+                keyboardType: TextInputType.number,
+                maxLength: 12,
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: _saving ? null : _save,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.accent,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: _saving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          'Сохранить',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    TextInputType? keyboardType,
+    int? maxLength,
+  }) {
+    return TextField(
+      controller: controller,
+      keyboardType: keyboardType,
+      maxLength: maxLength,
+      style: const TextStyle(
+        fontSize: 15,
+        color: AppColors.textPrimary,
+      ),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(
+          fontSize: 14,
+          color: AppColors.textSecondary,
+        ),
+        prefixIcon: Icon(icon, size: 20, color: AppColors.textSecondary),
+        counterText: '',
+        filled: true,
+        fillColor: AppColors.background,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
+        ),
+      ),
+    );
   }
 }
