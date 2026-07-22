@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
-import '../widgets/border_icon.dart';
 import '../widgets/primary_button.dart';
 import '../navigation/app_navigator.dart';
 import '../services/supabase_service.dart';
@@ -95,8 +94,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.paper,
-      appBar: AppBar(backgroundColor: AppColors.paper, elevation: 0),
+      backgroundColor: AppColors.background,
+      appBar: AppBar(backgroundColor: AppColors.background, elevation: 0),
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -104,21 +103,21 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Padding(
-                padding: EdgeInsets.fromLTRB(24, 8, 16, 0),
+                padding: EdgeInsets.fromLTRB(24, 8, 24, 0),
                 child: Text(
                   'Регистрация',
                   style: TextStyle(
-                    fontSize: 40,
+                    fontSize: 42,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,
-                    letterSpacing: -0.5,
+                    letterSpacing: -1.5,
                     height: 1.1,
                   ),
                 ),
               ),
               const SizedBox(height: 4),
               const Padding(
-                padding: EdgeInsets.fromLTRB(24, 0, 16, 0),
+                padding: EdgeInsets.fromLTRB(24, 0, 24, 0),
                 child: Text(
                   'Создайте аккаунт для оценки недвижимости',
                   style: TextStyle(
@@ -128,11 +127,21 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 ),
               ),
               const SizedBox(height: 32),
-              BorderIcon(
-                borderRadius: 0,
-                padding: const EdgeInsets.fromLTRB(24, 28, 16, 28),
-                backgroundColor: AppColors.surface,
-                borderColor: Colors.transparent,
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 24),
+                padding: const EdgeInsets.fromLTRB(20, 28, 20, 28),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.border, width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

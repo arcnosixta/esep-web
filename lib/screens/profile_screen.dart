@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
-import '../widgets/border_icon.dart';
 import '../widgets/information_tile.dart';
 import '../widgets/status_badge.dart';
 import '../services/supabase_service.dart';
@@ -92,15 +91,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               parent: BouncingScrollPhysics(),
             ),
             slivers: [
-              // ── Title ──
               SliverToBoxAdapter(
-                child: Container(
-                  color: AppColors.surface,
-                  padding: const EdgeInsets.fromLTRB(24, 20, 16, 20),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
                   child: const Text(
-                    'ПРОФИЛЬ',
+                    'Профиль',
                     style: TextStyle(
-                      fontSize: 36,
+                      fontSize: 32,
                       fontWeight: FontWeight.w800,
                       color: AppColors.textPrimary,
                       letterSpacing: -0.5,
@@ -109,36 +106,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
 
-              // ── Profile card ──
               SliverToBoxAdapter(
-                child: Container(
-                  color: AppColors.surface,
-                  padding: const EdgeInsets.fromLTRB(24, 0, 16, 20),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
                   child: Container(
-                    padding: const EdgeInsets.only(bottom: 20),
-                    decoration: const BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: AppColors.divider,
-                          width: 1,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.border, width: 1),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
                         ),
-                      ),
+                      ],
                     ),
                     child: Row(
                       children: [
-                        BorderIcon(
-                          width: 56,
-                          height: 56,
-                          padding: EdgeInsets.zero,
-                          borderRadius: 28,
-                          backgroundColor: AppColors.accent,
-                          borderColor: AppColors.accent,
-                          child: Text(
-                            _getInitials(),
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
+                        Container(
+                          width: 64,
+                          height: 64,
+                          decoration: const BoxDecoration(
+                            color: AppColors.accent,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              _getInitials(),
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ),
@@ -150,7 +151,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               Text(
                                 name,
                                 style: const TextStyle(
-                                  fontSize: 17,
+                                  fontSize: 18,
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.textPrimary,
                                 ),
@@ -170,21 +171,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
-                            color: AppColors.success.withValues(alpha: 0.1),
+                            color: AppColors.gold.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(Icons.verified_rounded,
-                                  size: 14, color: AppColors.success),
+                                  size: 14, color: AppColors.gold),
                               SizedBox(width: 4),
                               Text(
                                 'Верифицирован',
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.success,
+                                  color: AppColors.gold,
                                 ),
                               ),
                             ],
@@ -196,11 +197,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
 
-              // ── Stats ──
               SliverToBoxAdapter(
-                child: Container(
-                  color: AppColors.surface,
-                  padding: const EdgeInsets.fromLTRB(24, 0, 16, 20),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
@@ -227,76 +226,63 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
 
-              // ── Personal info ──
               SliverToBoxAdapter(
-                child: Container(
-                  color: AppColors.paper,
-                  padding: const EdgeInsets.fromLTRB(24, 20, 16, 20),
-                  child: Column(
-                    children: [
-                      infoRow('ИИН', iin),
-                      divider(),
-                      infoRow('Телефон', phone),
-                      divider(),
-                      infoRow('Email', email),
-                      divider(),
-                      infoRow('Роль', role),
-                    ],
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.border, width: 1),
+                    ),
+                    child: Column(
+                      children: [
+                        infoRow('ИИН', iin),
+                        divider(),
+                        infoRow('Телефон', phone),
+                        divider(),
+                        infoRow('Email', email),
+                        divider(),
+                        infoRow('Роль', role),
+                      ],
+                    ),
                   ),
                 ),
               ),
 
-              // ── EGOV ──
               SliverToBoxAdapter(
-                child: Container(
-                  color: AppColors.surface,
-                  padding: const EdgeInsets.fromLTRB(24, 20, 16, 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'ГОСУСЛУГИ (EGOV)',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textSecondary,
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border(
-                            left: BorderSide(
-                              color: AppColors.info,
-                              width: 3,
-                            ),
-                            top: BorderSide(
-                              color: AppColors.divider,
-                              width: 1,
-                            ),
-                            right: BorderSide(
-                              color: AppColors.divider,
-                              width: 1,
-                            ),
-                            bottom: BorderSide(
-                              color: AppColors.divider,
-                              width: 1,
-                            ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.border, width: 1),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'ГОСУСЛУГИ (EGOV)',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textSecondary,
+                            letterSpacing: 0.8,
                           ),
                         ),
-                        child: Row(
+                        const SizedBox(height: 14),
+                        Row(
                           children: [
-                            BorderIcon(
+                            Container(
                               width: 40,
                               height: 40,
-                              padding: EdgeInsets.zero,
-                              borderRadius: 10,
-                              backgroundColor: AppColors.info.withValues(alpha: 0.1),
-                              borderColor: AppColors.info.withValues(alpha: 0.2),
+                              decoration: BoxDecoration(
+                                color: AppColors.info.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                               child: const Icon(
                                 Icons.account_balance_rounded,
                                 color: AppColors.info,
@@ -329,45 +315,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ],
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const EgovScreen()),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(
-                                color: AppColors.info, width: 1),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                        const SizedBox(height: 14),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const EgovScreen()),
                             ),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 24, vertical: 12),
-                          ),
-                          child: const Text(
-                            'Открыть',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.info,
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(
+                                  color: AppColors.info, width: 1),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 24, vertical: 12),
+                            ),
+                            child: const Text(
+                              'Открыть',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.info,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
 
-              // ── Properties ──
               SliverToBoxAdapter(
-                child: Container(
-                  color: AppColors.paper,
-                  padding: const EdgeInsets.fromLTRB(24, 20, 16, 0),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -393,9 +377,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               if (_properties.isEmpty)
                 SliverToBoxAdapter(
-                  child: Container(
-                    color: AppColors.paper,
-                    padding: const EdgeInsets.fromLTRB(24, 16, 16, 20),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
                     child: const Text(
                       'Пока нет имущества',
                       style: TextStyle(
@@ -407,25 +390,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 )
               else
                 SliverToBoxAdapter(
-                  child: Container(
-                    color: AppColors.paper,
-                    padding: const EdgeInsets.fromLTRB(24, 12, 16, 0),
-                    child: Column(
-                      children: [
-                        for (int i = 0; i < _properties.length; i++) ...[
-                          if (i > 0) divider(),
-                          _buildPropertyRow(_properties[i]),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.border, width: 1),
+                      ),
+                      child: Column(
+                        children: [
+                          for (int i = 0; i < _properties.length; i++) ...[
+                            _buildPropertyRow(_properties[i]),
+                            if (i < _properties.length - 1)
+                              Container(
+                                height: 1,
+                                margin: const EdgeInsets.only(left: 72),
+                                color: AppColors.divider,
+                              ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   ),
                 ),
 
-              // ── Documents ──
               SliverToBoxAdapter(
-                child: Container(
-                  color: AppColors.surface,
-                  padding: const EdgeInsets.fromLTRB(24, 20, 16, 0),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -451,9 +443,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               if (_documents.isEmpty)
                 SliverToBoxAdapter(
-                  child: Container(
-                    color: AppColors.surface,
-                    padding: const EdgeInsets.fromLTRB(24, 16, 16, 20),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
                     child: const Text(
                       'Пока нет документов',
                       style: TextStyle(
@@ -465,25 +456,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 )
               else
                 SliverToBoxAdapter(
-                  child: Container(
-                    color: AppColors.surface,
-                    padding: const EdgeInsets.fromLTRB(24, 12, 16, 0),
-                    child: Column(
-                      children: [
-                        for (int i = 0; i < _documents.length; i++) ...[
-                          if (i > 0) divider(),
-                          _buildDocumentRow(_documents[i]),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.border, width: 1),
+                      ),
+                      child: Column(
+                        children: [
+                          for (int i = 0; i < _documents.length; i++) ...[
+                            _buildDocumentRow(_documents[i]),
+                            if (i < _documents.length - 1)
+                              Container(
+                                height: 1,
+                                margin: const EdgeInsets.only(left: 72),
+                                color: AppColors.divider,
+                              ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   ),
                 ),
 
-              // ── History ──
               SliverToBoxAdapter(
-                child: Container(
-                  color: AppColors.paper,
-                  padding: const EdgeInsets.fromLTRB(24, 20, 16, 0),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
                   child: const Text(
                     'ИСТОРИЯ ОЦЕНОК',
                     style: TextStyle(
@@ -497,9 +497,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               if (_history.isEmpty)
                 SliverToBoxAdapter(
-                  child: Container(
-                    color: AppColors.paper,
-                    padding: const EdgeInsets.fromLTRB(24, 16, 16, 20),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
                     child: const Text(
                       'Пока нет оценок',
                       style: TextStyle(
@@ -511,41 +510,71 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 )
               else
                 SliverToBoxAdapter(
-                  child: Container(
-                    color: AppColors.paper,
-                    padding: const EdgeInsets.fromLTRB(24, 12, 16, 0),
-                    child: Column(
-                      children: [
-                        for (int i = 0; i < _history.length; i++) ...[
-                          if (i > 0) divider(),
-                          _buildHistoryRow(_history[i]),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.border, width: 1),
+                      ),
+                      child: Column(
+                        children: [
+                          for (int i = 0; i < _history.length; i++) ...[
+                            _buildHistoryRow(_history[i]),
+                            if (i < _history.length - 1)
+                              Container(
+                                height: 1,
+                                margin: const EdgeInsets.only(left: 72),
+                                color: AppColors.divider,
+                              ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   ),
                 ),
 
-              // ── Settings ──
               SliverToBoxAdapter(
-                child: Container(
-                  color: AppColors.muted,
-                  padding: const EdgeInsets.fromLTRB(24, 20, 16, 40),
-                  child: Column(
-                    children: [
-                      _settingsRow(
-                          Icons.settings_rounded, 'Настройки'),
-                      divider(),
-                      _settingsRow(
-                          Icons.help_rounded, 'Помощь'),
-                      divider(),
-                      _settingsRow(
-                          Icons.info_outline_rounded, 'О приложении'),
-                      divider(),
-                      _settingsRow(Icons.logout_rounded, 'Выйти',
-                          color: AppColors.error, onTap: _signOut),
-                    ],
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.border, width: 1),
+                    ),
+                    child: Column(
+                      children: [
+                        _settingsRow(Icons.settings_rounded, 'Настройки'),
+                        Container(
+                          height: 1,
+                          margin: const EdgeInsets.only(left: 52),
+                          color: AppColors.divider,
+                        ),
+                        _settingsRow(Icons.help_rounded, 'Помощь'),
+                        Container(
+                          height: 1,
+                          margin: const EdgeInsets.only(left: 52),
+                          color: AppColors.divider,
+                        ),
+                        _settingsRow(
+                            Icons.info_outline_rounded, 'О приложении'),
+                        Container(
+                          height: 1,
+                          margin: const EdgeInsets.only(left: 52),
+                          color: AppColors.divider,
+                        ),
+                        _settingsRow(Icons.logout_rounded, 'Выйти',
+                            color: AppColors.error, onTap: _signOut),
+                      ],
+                    ),
                   ),
                 ),
+              ),
+
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 40),
               ),
             ],
           ),
@@ -557,16 +586,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildPropertyRow(Map<String, dynamic> item) {
     final type = item['type'] ?? '';
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       child: Row(
         children: [
-          BorderIcon(
+          Container(
             width: 40,
             height: 40,
-            padding: EdgeInsets.zero,
-            borderRadius: 10,
-            backgroundColor: propertyTypeColor(type).withValues(alpha: 0.1),
-            borderColor: propertyTypeColor(type).withValues(alpha: 0.2),
+            decoration: BoxDecoration(
+              color: propertyTypeColor(type).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
             child: Icon(
               propertyTypeIcon(type),
               color: propertyTypeColor(type),
@@ -621,16 +650,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ? Icons.photo_rounded
             : Icons.image_rounded;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       child: Row(
         children: [
-          BorderIcon(
+          Container(
             width: 40,
             height: 40,
-            padding: EdgeInsets.zero,
-            borderRadius: 10,
-            backgroundColor: color.withValues(alpha: 0.1),
-            borderColor: color.withValues(alpha: 0.2),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
             child: Icon(icon, color: color, size: 18),
           ),
           const SizedBox(width: 12),
@@ -675,16 +704,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final priceStr =
         price != null ? '${price.toStringAsFixed(0)} ₸' : 'Не оценено';
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       child: Row(
         children: [
-          BorderIcon(
+          Container(
             width: 40,
             height: 40,
-            padding: EdgeInsets.zero,
-            borderRadius: 10,
-            backgroundColor: AppColors.accent.withValues(alpha: 0.1),
-            borderColor: AppColors.accent.withValues(alpha: 0.2),
+            decoration: BoxDecoration(
+              color: AppColors.accent.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
             child: Center(
               child: Text(
                 '#${(item['id'] ?? '').toString().substring(0, 4).toUpperCase()}',
@@ -743,7 +772,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Row(
           children: [
             Icon(icon, size: 20, color: effectiveColor),

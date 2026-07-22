@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
 import '../widgets/status_badge.dart';
 
 String statusLabel(String status) => switch (status) {
@@ -27,30 +28,32 @@ IconData propertyTypeIcon(String type) => switch (type) {
     };
 
 Color propertyTypeColor(String type) => switch (type) {
-      'apartment' => const Color(0xFF2563EB),
-      'house' => const Color(0xFF0284C7),
-      'land' => const Color(0xFF16A34A),
-      'commercial' => const Color(0xFFD97706),
-      _ => const Color(0xFF6B7280),
+      'apartment' => AppColors.accent,
+      'house' => AppColors.info,
+      'land' => AppColors.success,
+      'commercial' => AppColors.warning,
+      _ => AppColors.textSecondary,
     };
 
 Widget infoRow(String label, String value, {bool highlight = false}) {
   return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 10),
+    padding: const EdgeInsets.symmetric(vertical: 12),
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label,
-            style: const TextStyle(
-                fontSize: 14, color: AppColorsUtils.textSecondary)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            color: AppColors.textSecondary,
+          ),
+        ),
         Text(
           value,
           style: TextStyle(
             fontSize: 14,
             fontWeight: highlight ? FontWeight.w700 : FontWeight.w500,
-            color: highlight
-                ? AppColorsUtils.accent
-                : AppColorsUtils.textPrimary,
+            color: highlight ? AppColors.accent : AppColors.textPrimary,
           ),
         ),
       ],
@@ -58,7 +61,7 @@ Widget infoRow(String label, String value, {bool highlight = false}) {
   );
 }
 
-Widget divider() => Container(height: 1, color: AppColorsUtils.divider);
+Widget divider() => Container(height: 1, color: AppColors.divider);
 
 BadgeStatus badgeStatusFromKey(String status) => switch (status) {
       'new' => BadgeStatus.pending,
@@ -68,10 +71,14 @@ BadgeStatus badgeStatusFromKey(String status) => switch (status) {
       _ => BadgeStatus.pending,
     };
 
-class AppColorsUtils {
-  AppColorsUtils._();
-  static const Color accent = Color(0xFF2563EB);
-  static const Color textPrimary = Color(0xFF1A1A2E);
-  static const Color textSecondary = Color(0xFF6B7280);
-  static const Color divider = Color(0xFFF0F0F3);
+String greeting() {
+  final hour = DateTime.now().hour;
+  if (hour < 12) return 'Доброе утро';
+  if (hour < 18) return 'Добрый день';
+  return 'Добрый вечер';
+}
+
+String caseNumber(String id) {
+  final short = id.length >= 4 ? id.substring(0, 4).toUpperCase() : id.toUpperCase();
+  return 'Case №$short';
 }

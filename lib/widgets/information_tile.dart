@@ -24,7 +24,7 @@ class InformationTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context).textTheme;
-    final tileSize = size ?? MediaQuery.of(context).size.width * 0.20;
+    final tileSize = size ?? MediaQuery.of(context).size.width * 0.22;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -40,7 +40,7 @@ class InformationTile extends StatelessWidget {
                   content,
                   style: theme.headlineSmall?.copyWith(
                     color: valueColor,
-                    fontSize: 18,
+                    fontSize: 20,
                   ),
                 ),
         ),

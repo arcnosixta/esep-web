@@ -54,8 +54,9 @@ class _SplashScreenState extends State<SplashScreen>
     );
 
     _logoController.forward();
-    Future.delayed(
-        const Duration(milliseconds: 500), () => _contentController.forward());
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) _contentController.forward();
+    });
   }
 
   @override
@@ -68,7 +69,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.paper,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -114,7 +115,7 @@ class _SplashScreenState extends State<SplashScreen>
                   child: Container(
                     width: 60,
                     height: 1,
-                    color: AppColors.muted,
+                    color: AppColors.gold,
                   ),
                 ),
               ),
@@ -127,7 +128,7 @@ class _SplashScreenState extends State<SplashScreen>
                     children: [
                       SizedBox(
                         width: double.infinity,
-                        height: 52,
+                        height: 56,
                         child: ElevatedButton(
                           onPressed: () => AppNavigator.push(
                             context,
@@ -138,13 +139,13 @@ class _SplashScreenState extends State<SplashScreen>
                             foregroundColor: Colors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(14),
                             ),
                           ),
                           child: const Text(
                             'Войти',
                             style: TextStyle(
-                              fontSize: 15,
+                              fontSize: 16,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -153,7 +154,7 @@ class _SplashScreenState extends State<SplashScreen>
                       const SizedBox(height: 14),
                       SizedBox(
                         width: double.infinity,
-                        height: 52,
+                        height: 56,
                         child: OutlinedButton(
                           onPressed: () => AppNavigator.push(
                             context,
@@ -165,13 +166,13 @@ class _SplashScreenState extends State<SplashScreen>
                                 color: AppColors.muted, width: 1),
                             elevation: 0,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(14),
                             ),
                           ),
                           child: const Text(
                             'Зарегистрироваться',
                             style: TextStyle(
-                              fontSize: 15,
+                              fontSize: 16,
                               fontWeight: FontWeight.w600,
                             ),
                           ),

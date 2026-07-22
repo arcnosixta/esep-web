@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 
-class GlassCard extends StatelessWidget {
+class CaseCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final EdgeInsetsGeometry? margin;
@@ -9,7 +9,7 @@ class GlassCard extends StatelessWidget {
   final double borderRadius;
   final Color? backgroundColor;
 
-  const GlassCard({
+  const CaseCard({
     super.key,
     required this.child,
     this.padding = const EdgeInsets.all(16),
@@ -33,8 +33,8 @@ class GlassCard extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
             ),
           ],
         ),

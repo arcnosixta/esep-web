@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
-import '../widgets/border_icon.dart';
 import '../widgets/primary_button.dart';
 import '../navigation/app_navigator.dart';
 import '../services/supabase_service.dart';
@@ -66,19 +65,19 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.paper,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 40, 16, 32),
+            padding: const EdgeInsets.fromLTRB(24, 40, 24, 32),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
                   'Вход',
                   style: TextStyle(
-                    fontSize: 40,
+                    fontSize: 42,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,
                     letterSpacing: -1.5,
@@ -93,11 +92,20 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 40),
-                BorderIcon(
-                  borderRadius: 14,
+                Container(
                   padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
-                  backgroundColor: AppColors.surface,
-                  borderColor: AppColors.divider,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.border, width: 1),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
                   child: Column(
                     children: [
                       TextField(
@@ -149,7 +157,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             'Забыли пароль?',
                             style: TextStyle(
                               fontSize: 13,
-                              color: AppColors.accent,
+                              color: AppColors.gold,
                               fontWeight: FontWeight.w500,
                             ),
                           ),

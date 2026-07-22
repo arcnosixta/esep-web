@@ -5,6 +5,8 @@ import 'theme/app_theme.dart';
 import 'screens/splash_screen.dart';
 import 'screens/app_shell.dart';
 
+const openRouterApiKey = 'YOUR_OPENROUTER_API_KEY';
+
 const supabaseUrl = 'https://rphsqxhwfrkavvxzvnuv.supabase.co';
 const supabaseAnonKey =
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwaHNxeGh3ZnJrYXZ2eHp2bnV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ0NTQ4ODcsImV4cCI6MjEwMDAzMDg4N30.dFa8Py2xK0Jw7OSCJSRlPwAgwRGlTYzq8JfSBUkh_TU';
@@ -21,7 +23,7 @@ Future<void> main() async {
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
-      systemNavigationBarColor: Color(0xFFFAFAFA),
+      systemNavigationBarColor: Color(0xFFFAF8F5),
       systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );

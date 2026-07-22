@@ -32,15 +32,15 @@ class DocumentUploadScreen extends StatelessWidget {
           physics: const BouncingScrollPhysics(),
           slivers: [
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(24, 20, 16, 0),
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
               sliver: SliverToBoxAdapter(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'ДОКУМЕНТЫ',
+                      'Документы',
                       style: TextStyle(
-                        fontSize: 36,
+                        fontSize: 32,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
                         letterSpacing: -0.5,
@@ -60,17 +60,18 @@ class DocumentUploadScreen extends StatelessWidget {
             ),
 
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 16, 0),
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
               sliver: SliverToBoxAdapter(
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 40),
                   decoration: BoxDecoration(
-                    color: AppColors.paper,
+                    color: AppColors.surface,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: AppColors.accent.withValues(alpha: 0.3),
-                      width: 1,
+                      color: AppColors.accent.withValues(alpha: 0.2),
+                      width: 1.5,
+                      style: BorderStyle.solid,
                     ),
                   ),
                   child: Column(
@@ -79,7 +80,7 @@ class DocumentUploadScreen extends StatelessWidget {
                         width: 56,
                         height: 56,
                         decoration: BoxDecoration(
-                          color: AppColors.accent.withValues(alpha: 0.1),
+                          color: AppColors.accent.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: const Icon(
@@ -114,7 +115,7 @@ class DocumentUploadScreen extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
-                              color: AppColors.paper,
+                              color: AppColors.surfaceLight,
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -135,107 +136,96 @@ class DocumentUploadScreen extends StatelessWidget {
             ),
 
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(24, 28, 16, 0),
+              padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
               sliver: SliverToBoxAdapter(
-                child: Container(
-                  width: double.infinity,
-                  color: AppColors.surface,
-                  padding: const EdgeInsets.fromLTRB(24, 18, 16, 18),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'ЗАГРУЖЕННЫЕ ФАЙЛЫ',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textSecondary,
-                          letterSpacing: 0.8,
-                        ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Загруженные файлы',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 0.5,
                       ),
-                      Text(
-                        '${_files.length} файлов',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: AppColors.textSecondary,
-                        ),
+                    ),
+                    Text(
+                      '${_files.length} файлов',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
 
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(24, 0, 16, 0),
+              padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
               sliver: SliverList(
                 delegate: SliverChildListDelegate(
                   List.generate(_files.length, (i) {
                     final file = _files[i];
-                    return Column(
-                      children: [
-                        Container(
-                          width: double.infinity,
-                          color: AppColors.surface,
-                          padding: const EdgeInsets.fromLTRB(24, 14, 16, 14),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: _fileColor(file.type)
-                                      .withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Icon(
-                                  _fileIcon(file.type),
-                                  color: _fileColor(file.type),
-                                  size: 20,
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      file.name,
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                        color: AppColors.textPrimary,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 3),
-                                    Text(
-                                      file.size,
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: AppColors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.delete_outline_rounded,
-                                  size: 20,
-                                  color: AppColors.error,
-                                ),
-                                onPressed: () {},
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (i < _files.length - 1)
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.border, width: 1),
+                      ),
+                      child: Row(
+                        children: [
                           Container(
-                            height: 1,
-                            margin: const EdgeInsets.only(left: 78),
-                            color: AppColors.border,
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: _fileColor(file.type)
+                                  .withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(
+                              _fileIcon(file.type),
+                              color: _fileColor(file.type),
+                              size: 20,
+                            ),
                           ),
-                      ],
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  file.name,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  file.size,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.delete_outline_rounded,
+                              size: 20,
+                              color: AppColors.error,
+                            ),
+                            onPressed: () {},
+                          ),
+                        ],
+                      ),
                     );
                   }),
                 ),
@@ -243,7 +233,7 @@ class DocumentUploadScreen extends StatelessWidget {
             ),
 
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 16, 0),
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
               sliver: SliverToBoxAdapter(
                 child: PrimaryButton(
                   label: 'Продолжить',

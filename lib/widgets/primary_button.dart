@@ -14,7 +14,7 @@ class PrimaryButton extends StatefulWidget {
     required this.label,
     this.onPressed,
     this.width,
-    this.height = 52,
+    this.height = 56,
     this.outlined = false,
     this.icon,
   });
@@ -80,7 +80,7 @@ class _PrimaryButtonState extends State<PrimaryButton>
       decoration: widget.outlined
           ? BoxDecoration(
               color: Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: enabled
                     ? AppColors.accent
@@ -90,13 +90,13 @@ class _PrimaryButtonState extends State<PrimaryButton>
             )
           : BoxDecoration(
               color: enabled ? AppColors.accent : AppColors.surfaceLight,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(14),
               boxShadow: enabled
                   ? [
                       BoxShadow(
                         color: AppColors.accent.withValues(alpha: 0.2),
-                        blurRadius: 16,
-                        offset: const Offset(0, 6),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
                       ),
                     ]
                   : null,
@@ -104,7 +104,7 @@ class _PrimaryButtonState extends State<PrimaryButton>
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           splashColor: Colors.white.withValues(alpha: 0.1),
           highlightColor: Colors.white.withValues(alpha: 0.05),
           onTap: widget.onPressed,
@@ -121,11 +121,10 @@ class _PrimaryButtonState extends State<PrimaryButton>
                 Text(
                   widget.label,
                   style: TextStyle(
-                    fontSize: 15,
+                    fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: enabled
-                        ? Colors.white
-                        : AppColors.textHint,
+                    color:
+                        enabled ? Colors.white : AppColors.textHint,
                   ),
                 ),
               ],

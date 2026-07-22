@@ -27,12 +27,11 @@ class StatusBadge extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: small ? 8 : 10,
-        vertical: small ? 3 : 5,
+        vertical: small ? 4 : 5,
       ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         label,

@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../utils/formatters.dart';
-import '../widgets/border_icon.dart';
-import '../widgets/information_tile.dart';
+import '../widgets/case_progress_bar.dart';
 import '../widgets/status_badge.dart';
 import '../navigation/app_navigator.dart';
 import '../services/supabase_service.dart';
-import 'payment_screen.dart';
-import 'application_card_screen.dart';
-import 'my_applications_screen.dart';
+import 'ai_chat_screen.dart';
+import 'case_detail_screen.dart';
+import 'cases_list_screen.dart';
 import 'new_application_screen.dart';
+import 'payment_screen.dart';
 import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -20,9 +20,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  Map<String, int> _stats = {'total': 0, 'inProgress': 0, 'completed': 0};
   List<Map<String, dynamic>> _recentApps = [];
   bool _loading = true;
+  String _userName = '';
 
   @override
   void initState() {
@@ -33,15 +33,16 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadData() async {
     try {
       final results = await Future.wait([
-        SupabaseService.getStats(),
         SupabaseService.getApplications(),
+        SupabaseService.getProfile(),
       ]);
       if (mounted) {
+        final profile = results[1] as Map<String, dynamic>?;
         setState(() {
-          _stats = results[0] as Map<String, int>;
-          _recentApps = (results[1] as List<Map<String, dynamic>>)
+          _recentApps = (results[0] as List<Map<String, dynamic>>)
               .take(3)
               .toList();
+          _userName = (profile?['full_name'] ?? '').toString().split(' ').first;
           _loading = false;
         });
       }
@@ -63,38 +64,52 @@ class _HomeScreenState extends State<HomeScreen> {
               parent: ClampingScrollPhysics(),
             ),
             slivers: [
-              // ── Header ──
               SliverToBoxAdapter(
-                child: Container(
-                  color: AppColors.surface,
-                  padding: const EdgeInsets.fromLTRB(24, 20, 16, 20),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'ESEP',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary,
-                          letterSpacing: -0.5,
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${greeting()},',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _userName.isNotEmpty ? _userName : 'ESEP',
+                            style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textPrimary,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                        ],
                       ),
                       GestureDetector(
                         onTap: () =>
                             AppNavigator.push(context, const ProfileScreen()),
                         child: Container(
-                          width: 40,
-                          height: 40,
+                          width: 44,
+                          height: 44,
                           decoration: const BoxDecoration(
                             color: AppColors.accent,
                             shape: BoxShape.circle,
                           ),
-                          child: const Center(
+                          child: Center(
                             child: Text(
-                              'A',
-                              style: TextStyle(
-                                fontSize: 16,
+                              _userName.isNotEmpty
+                                  ? _userName[0].toUpperCase()
+                                  : 'E',
+                              style: const TextStyle(
+                                fontSize: 17,
                                 fontWeight: FontWeight.w700,
                                 color: Colors.white,
                               ),
@@ -107,207 +122,169 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
-              // ── Stats strip ──
-              SliverToBoxAdapter(
-                child: Container(
-                  color: AppColors.paper,
-                  padding: const EdgeInsets.fromLTRB(24, 24, 16, 28),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'ЗАЯВКИ',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textSecondary.withValues(alpha: 0.7),
-                          letterSpacing: 2,
+              if (!_loading && _recentApps.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
+                    child: GestureDetector(
+                      onTap: () => AppNavigator.push(
+                          context, const CaseDetailScreen()),
+                      child: Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.border, width: 1),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.04),
+                              blurRadius: 20,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Текущая заявка',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                                StatusBadge(
+                                  status: badgeStatusFromKey(
+                                    _recentApps.first['status'] ?? 'new',
+                                  ),
+                                  label: statusLabel(
+                                    _recentApps.first['status'] ?? 'new',
+                                  ),
+                                  small: true,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              caseNumber(
+                                (_recentApps.first['id'] ?? '').toString(),
+                              ),
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _buildCaseSubtitle(_recentApps.first),
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            CaseProgressBar(
+                              progress: _getProgress(
+                                _recentApps.first['status'] ?? 'new',
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          GestureDetector(
-                            onTap: () => AppNavigator.push(
-                              context,
-                              const MyApplicationsScreen(initialFilter: 0),
-                            ),
-                            child: InformationTile(
-                              content: '${_stats['total'] ?? 0}',
-                              name: 'Всего',
-                              icon: Icons.description_rounded,
-                              valueColor: AppColors.textPrimary,
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () => AppNavigator.push(
-                              context,
-                              const MyApplicationsScreen(initialFilter: 1),
-                            ),
-                            child: InformationTile(
-                              content: '${_stats['inProgress'] ?? 0}',
-                              name: 'В работе',
-                              icon: Icons.pending_actions_rounded,
-                              valueColor: AppColors.info,
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () => AppNavigator.push(
-                              context,
-                              const MyApplicationsScreen(initialFilter: 2),
-                            ),
-                            child: InformationTile(
-                              content: '${_stats['completed'] ?? 0}',
-                              name: 'Готово',
-                              icon: Icons.check_circle_outline_rounded,
-                              valueColor: AppColors.success,
-                            ),
-                          ),
-                        ],
+                    ),
+                  ),
+                ),
+
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
+                  child: const Text(
+                    'Продолжить работу',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              ),
+
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _quickAction(
+                          Icons.add_location_alt_rounded,
+                          'Новая заявка',
+                          AppColors.accent,
+                          () => AppNavigator.push(
+                              context, const NewApplicationScreen()),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _quickAction(
+                          Icons.description_rounded,
+                          'Документы',
+                          AppColors.warning,
+                          () {
+                            Navigator.of(context)
+                                .popUntil((route) => route.isFirst);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _quickAction(
+                          Icons.payments_rounded,
+                          'Оплата',
+                          AppColors.success,
+                          () => AppNavigator.push(
+                              context, const PaymentScreen()),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _quickAction(
+                          Icons.auto_awesome_rounded,
+                          'Оценить',
+                          AppColors.gold,
+                          () => AppNavigator.push(
+                              context, const AiChatScreen()),
+                        ),
                       ),
                     ],
                   ),
                 ),
               ),
 
-              // ── Quick Actions strip ──
               SliverToBoxAdapter(
-                child: Container(
-                  color: AppColors.surface,
-                  padding: const EdgeInsets.fromLTRB(24, 24, 16, 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'БЫСТРЫЕ ДЕЙСТВИЯ',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textSecondary.withValues(alpha: 0.7),
-                          letterSpacing: 2,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _actionItem(
-                              Icons.add_location_alt_rounded,
-                              'Новая заявка',
-                              'Создать оценку',
-                              AppColors.accent,
-                              () => AppNavigator.push(
-                                  context, const NewApplicationScreen()),
-                            ),
-                          ),
-                          Container(
-                            width: 1,
-                            height: 64,
-                            color: AppColors.border,
-                          ),
-                          Expanded(
-                            child: _actionItem(
-                              Icons.smart_toy_rounded,
-                              'AI помощник',
-                              'Задать вопрос',
-                              AppColors.info,
-                              () {
-                                Navigator.of(context).popUntil(
-                                    (route) => route.isFirst);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: const Text(
-                                      'Перейдите во вкладку AI внизу экрана',
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                    backgroundColor: AppColors.accent,
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      Container(
-                        width: double.infinity,
-                        height: 1,
-                        color: AppColors.border,
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _actionItem(
-                              Icons.upload_file_rounded,
-                              'Документы',
-                              'Загрузить файлы',
-                              AppColors.warning,
-                              () {
-                                Navigator.of(context).popUntil(
-                                    (route) => route.isFirst);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: const Text(
-                                      'Перейдите во вкладку Документы внизу экрана',
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                    backgroundColor: AppColors.accent,
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                          Container(
-                            width: 1,
-                            height: 64,
-                            color: AppColors.border,
-                          ),
-                          Expanded(
-                            child: _actionItem(
-                              Icons.payments_rounded,
-                              'Оплата',
-                              'Оплатить услугу',
-                              AppColors.success,
-                              () => AppNavigator.push(
-                                  context, const PaymentScreen()),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // ── Recent Applications strip ──
-              SliverToBoxAdapter(
-                child: Container(
-                  color: AppColors.paper,
-                  padding: const EdgeInsets.fromLTRB(24, 24, 16, 0),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'ПОСЛЕДНИЕ ЗАЯВКИ',
+                      const Text(
+                        'Последние заявки',
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textSecondary.withValues(alpha: 0.7),
-                          letterSpacing: 2,
+                          color: AppColors.textSecondary,
+                          letterSpacing: 0.5,
                         ),
                       ),
                       GestureDetector(
                         onTap: () => AppNavigator.push(
                           context,
-                          const MyApplicationsScreen(),
+                          const CasesListScreen(),
                         ),
                         child: const Text(
                           'Все →',
@@ -325,8 +302,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               _loading
                   ? SliverToBoxAdapter(
-                      child: Container(
-                        color: AppColors.paper,
+                      child: Padding(
                         padding: const EdgeInsets.all(40),
                         child: const Center(
                           child: CircularProgressIndicator(
@@ -336,126 +312,134 @@ class _HomeScreenState extends State<HomeScreen> {
                     )
                   : _recentApps.isEmpty
                       ? SliverToBoxAdapter(
-                          child: Container(
-                            color: AppColors.paper,
+                          child: Padding(
                             padding: const EdgeInsets.all(40),
-                            child: const Center(
-                              child: Text(
-                                'Пока нет заявок',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: AppColors.textHint,
-                                ),
+                            child: Center(
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.folder_open_rounded,
+                                    size: 48,
+                                    color: AppColors.muted,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  const Text(
+                                    'Пока нет заявок',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: AppColors.textHint,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
                         )
                       : SliverToBoxAdapter(
-                          child: Container(
-                            color: AppColors.paper,
-                            padding: const EdgeInsets.fromLTRB(24, 16, 16, 0),
-                            child: Column(
-                              children: [
-                                ..._recentApps.map((app) {
-                                  final prop = app['properties'];
-                                  final propType =
-                                      prop != null ? (prop['type'] ?? '') : '';
-                                  final address = prop != null
-                                      ? (prop['address'] ?? '')
-                                      : '';
-                                  final area = prop != null
-                                      ? '${prop['area'] ?? 0} м²'
-                                      : '';
-                                  final status = app['status'] ?? 'new';
-                                  final detail = area.isNotEmpty
-                                      ? '$area · $address'
-                                      : address;
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: AppColors.surface,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                    color: AppColors.border, width: 1),
+                              ),
+                               child: Column(
+                                children: [
+                                  ..._recentApps.map((app) {
+                                    final prop = app['properties'];
+                                    final propType =
+                                        prop != null ? (prop['type'] ?? '') : '';
+                                    final address = prop != null
+                                        ? (prop['address'] ?? '')
+                                        : '';
+                                    final area = prop != null
+                                        ? '${prop['area'] ?? 0} м²'
+                                        : '';
+                                    final status = app['status'] ?? 'new';
+                                    final detail = area.isNotEmpty
+                                        ? '$area · $address'
+                                        : address;
 
-                                  return GestureDetector(
-                                    onTap: () => AppNavigator.push(
-                                        context, const ApplicationCardScreen()),
-                                    child: Column(
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 14),
-                                          child: Row(
-                                            children: [
-                                              Container(
-                                                width: 40,
-                                                height: 40,
-                                                decoration: BoxDecoration(
-                                                  color: AppColors.accent
-                                                      .withValues(alpha: 0.08),
-                                                  borderRadius:
-                                                      BorderRadius.circular(10),
-                                                ),
-                                                child: Center(
-                                                  child: Text(
-                                                    '#${(app['id'] ?? '').toString().substring(0, 4).toUpperCase()}',
-                                                    style: const TextStyle(
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.w700,
-                                                      color: AppColors.accent,
-                                                    ),
+                                    return GestureDetector(
+                                      onTap: () => AppNavigator.push(
+                                          context, const CaseDetailScreen()),
+                                      behavior: HitTestBehavior.opaque,
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 20, vertical: 16),
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              width: 42,
+                                              height: 42,
+                                              decoration: BoxDecoration(
+                                                color: AppColors.accent
+                                                    .withValues(alpha: 0.08),
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                              ),
+                                              child: Center(
+                                                child: Text(
+                                                  '#${(app['id'] ?? '').toString().substring(0, 4).toUpperCase()}',
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight:
+                                                        FontWeight.w700,
+                                                    color: AppColors.accent,
                                                   ),
                                                 ),
                                               ),
-                                              const SizedBox(width: 14),
-                                              Expanded(
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      propertyTypeLabel(
-                                                          propType),
-                                                      style: const TextStyle(
-                                                        fontSize: 14,
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                        color: AppColors
-                                                            .textPrimary,
-                                                      ),
+                                            ),
+                                            const SizedBox(width: 14),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    propertyTypeLabel(
+                                                        propType),
+                                                    style: const TextStyle(
+                                                      fontSize: 15,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: AppColors
+                                                          .textPrimary,
                                                     ),
-                                                    const SizedBox(height: 3),
-                                                    Text(
-                                                      detail,
-                                                      style: const TextStyle(
-                                                        fontSize: 12,
-                                                        color: AppColors
-                                                            .textSecondary,
-                                                      ),
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
+                                                  ),
+                                                  const SizedBox(height: 3),
+                                                  Text(
+                                                    detail,
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                      color: AppColors
+                                                          .textSecondary,
                                                     ),
-                                                  ],
-                                                ),
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ],
                                               ),
-                                              StatusBadge(
-                                                status:
-                                                    badgeStatusFromKey(status),
-                                                label: statusLabel(status),
-                                                small: true,
-                                              ),
-                                            ],
-                                          ),
+                                            ),
+                                            StatusBadge(
+                                              status:
+                                                  badgeStatusFromKey(status),
+                                              label: statusLabel(status),
+                                              small: true,
+                                            ),
+                                          ],
                                         ),
-                                        Container(
-                                          height: 1,
-                                          color: AppColors.muted,
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                }),
-                              ],
+                                      ),
+                                    );
+                                  }),
+                                ],
+                              ),
                             ),
                           ),
                         ),
 
-              // Bottom padding
               const SliverToBoxAdapter(
                 child: SizedBox(height: 32),
               ),
@@ -466,52 +450,60 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _actionItem(
+  String _buildCaseSubtitle(Map<String, dynamic> app) {
+    final prop = app['properties'];
+    if (prop == null) return '';
+    final type = propertyTypeLabel(prop['type'] ?? '');
+    final address = prop['address'] ?? '';
+    return '$type · $address';
+  }
+
+  double _getProgress(String status) {
+    return switch (status) {
+      'new' => 0.15,
+      'in_progress' => 0.55,
+      'completed' => 1.0,
+      'paid' => 1.0,
+      'rejected' => 0.0,
+      _ => 0.15,
+    };
+  }
+
+  Widget _quickAction(
     IconData icon,
-    String title,
-    String subtitle,
+    String label,
     Color color,
     VoidCallback onTap,
   ) {
     return GestureDetector(
-      behavior: HitTestBehavior.opaque,
       onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: Row(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border, width: 1),
+        ),
+        child: Column(
           children: [
-            BorderIcon(
+            Container(
               width: 40,
               height: 40,
-              padding: EdgeInsets.zero,
-              backgroundColor: color.withValues(alpha: 0.08),
-              borderColor: color.withValues(alpha: 0.15),
-              borderRadius: 12,
-              child: Icon(icon, color: color, size: 18),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textHint,
-                    ),
-                  ),
-                ],
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
               ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),

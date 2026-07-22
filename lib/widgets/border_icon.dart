@@ -18,7 +18,7 @@ class BorderIcon extends StatelessWidget {
     this.height,
     this.backgroundColor,
     this.borderColor,
-    this.borderRadius = 15,
+    this.borderRadius = 14,
     this.onTap,
   });
 
@@ -32,7 +32,7 @@ class BorderIcon extends StatelessWidget {
         borderRadius: BorderRadius.all(Radius.circular(borderRadius)),
         border: Border.all(
           color: borderColor ?? AppColors.border,
-          width: 1.5,
+          width: 1,
         ),
       ),
       padding: padding ?? const EdgeInsets.all(8),
