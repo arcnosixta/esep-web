@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../main.dart';
 import '../services/egov_service.dart';
 import '../theme/app_colors.dart';
+import '../l10n/app_strings.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -14,8 +16,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsEnabled = true;
   bool _biometricEnabled = false;
   bool _biometricAvailable = false;
-  String _selectedLanguage = 'Русский';
-  ThemeMode _selectedTheme = ThemeMode.system;
 
   @override
   void initState() {
@@ -32,6 +32,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+    final currentTheme = appSettings.themeMode;
+    final currentLangCode = appSettings.localeCode;
+
+    final themeLabel = switch (currentTheme) {
+      ThemeMode.system => s.themeSystem,
+      ThemeMode.light => s.themeLight,
+      ThemeMode.dark => s.themeDark,
+    };
+
+    final langLabel = switch (currentLangCode) {
+      'kk' => s.langKazakh,
+      'en' => s.langEnglish,
+      _ => s.langRussian,
+    };
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -41,9 +57,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
               sliver: SliverToBoxAdapter(
-                child: const Text(
-                  'Настройки',
-                  style: TextStyle(
+                child: Text(
+                  s.settingsTitle,
+                  style: const TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,
@@ -56,7 +72,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
               sliver: SliverToBoxAdapter(
-                child: _sectionHeader('Общие'),
+                child: _sectionHeader(s.settingsGeneral),
               ),
             ),
             SliverPadding(
@@ -67,8 +83,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _switchRow(
                       icon: Icons.notifications_rounded,
                       iconColor: AppColors.accent,
-                      title: 'Уведомления',
-                      subtitle: 'Push-уведомления о статусе заявок',
+                      title: s.settingsNotifications,
+                      subtitle: s.settingsNotificationsSubtitle,
                       value: _notificationsEnabled,
                       onChanged: (v) => setState(() => _notificationsEnabled = v),
                     ),
@@ -76,9 +92,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _tapRow(
                       icon: Icons.language_rounded,
                       iconColor: AppColors.info,
-                      title: 'Язык',
+                      title: s.settingsLanguage,
                       trailing: Text(
-                        _selectedLanguage,
+                        langLabel,
                         style: const TextStyle(
                           fontSize: 14,
                           color: AppColors.textSecondary,
@@ -90,9 +106,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _tapRow(
                       icon: Icons.palette_rounded,
                       iconColor: AppColors.gold,
-                      title: 'Тема',
+                      title: s.settingsTheme,
                       trailing: Text(
-                        _themeLabel(_selectedTheme),
+                        themeLabel,
                         style: const TextStyle(
                           fontSize: 14,
                           color: AppColors.textSecondary,
@@ -109,7 +125,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
                 sliver: SliverToBoxAdapter(
-                  child: _sectionHeader('Безопасность'),
+                  child: _sectionHeader(s.settingsSecurity),
                 ),
               ),
               SliverPadding(
@@ -120,8 +136,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       _switchRow(
                         icon: Icons.fingerprint_rounded,
                         iconColor: AppColors.success,
-                        title: 'Биометрия',
-                        subtitle: 'Вход по отпечатку / Face ID',
+                        title: s.settingsBiometrics,
+                        subtitle: s.settingsBiometricsSubtitle,
                         value: _biometricEnabled,
                         onChanged: (v) => setState(() => _biometricEnabled = v),
                       ),
@@ -134,7 +150,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
               sliver: SliverToBoxAdapter(
-                child: _sectionHeader('О приложении'),
+                child: _sectionHeader(s.settingsAbout),
               ),
             ),
             SliverPadding(
@@ -145,7 +161,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _tapRow(
                       icon: Icons.info_outline_rounded,
                       iconColor: AppColors.textSecondary,
-                      title: 'Версия',
+                      title: s.settingsVersion,
                       trailing: const Text(
                         '1.0.0',
                         style: TextStyle(
@@ -159,14 +175,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _tapRow(
                       icon: Icons.description_rounded,
                       iconColor: AppColors.textSecondary,
-                      title: 'Условия использования',
+                      title: s.settingsTerms,
                       onTap: () {},
                     ),
                     _divider(),
                     _tapRow(
                       icon: Icons.shield_rounded,
                       iconColor: AppColors.textSecondary,
-                      title: 'Политика конфиденциальности',
+                      title: s.settingsPrivacy,
                       onTap: () {},
                     ),
                   ],
@@ -177,7 +193,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
               sliver: SliverToBoxAdapter(
-                child: _sectionHeader('Аккаунт'),
+                child: _sectionHeader(s.settingsAccount),
               ),
             ),
             SliverPadding(
@@ -188,7 +204,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _tapRow(
                       icon: Icons.delete_outline_rounded,
                       iconColor: AppColors.error,
-                      title: 'Удалить аккаунт',
+                      title: s.settingsDeleteAccount,
                       titleColor: AppColors.error,
                       onTap: _deleteAccount,
                     ),
@@ -205,20 +221,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showLanguageDialog() {
-    final languages = ['Русский', 'Қазақша', 'English'];
+    final s = AppStrings.of(context);
+    final languages = [
+      (code: 'ru', label: s.langRussian),
+      (code: 'kk', label: s.langKazakh),
+      (code: 'en', label: s.langEnglish),
+    ];
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Язык'),
+        title: Text(s.settingsLanguage),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: languages.map((lang) {
-            final selected = lang == _selectedLanguage;
+            final selected = lang.code == appSettings.localeCode;
             return ListTile(
               title: Text(
-                lang,
+                lang.label,
                 style: TextStyle(
                   fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                   color: selected ? AppColors.accent : AppColors.textPrimary,
@@ -228,7 +249,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ? const Icon(Icons.check_rounded, color: AppColors.accent, size: 20)
                   : null,
               onTap: () {
-                setState(() => _selectedLanguage = lang);
+                appSettings.setLocale(AppStrings.localeFromCode(lang.code));
                 Navigator.pop(ctx);
               },
             );
@@ -239,24 +260,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showThemeDialog() {
+    final s = AppStrings.of(context);
     final themes = [
-      (ThemeMode.system, 'Системная'),
-      (ThemeMode.light, 'Светлая'),
-      (ThemeMode.dark, 'Тёмная'),
+      (mode: ThemeMode.system, label: s.themeSystem),
+      (mode: ThemeMode.light, label: s.themeLight),
+      (mode: ThemeMode.dark, label: s.themeDark),
     ];
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Тема'),
+        title: Text(s.settingsTheme),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: themes.map((t) {
-            final selected = t.$1 == _selectedTheme;
+            final selected = t.mode == appSettings.themeMode;
             return ListTile(
               title: Text(
-                t.$2,
+                t.label,
                 style: TextStyle(
                   fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                   color: selected ? AppColors.accent : AppColors.textPrimary,
@@ -266,7 +288,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ? const Icon(Icons.check_rounded, color: AppColors.accent, size: 20)
                   : null,
               onTap: () {
-                setState(() => _selectedTheme = t.$1);
+                appSettings.setThemeMode(t.mode);
                 Navigator.pop(ctx);
               },
             );
@@ -276,31 +298,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  String _themeLabel(ThemeMode mode) => switch (mode) {
-        ThemeMode.system => 'Системная',
-        ThemeMode.light => 'Светлая',
-        ThemeMode.dark => 'Тёмная',
-      };
-
   Future<void> _deleteAccount() async {
+    final s = AppStrings.of(context);
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Удалить аккаунт?'),
-        content: const Text(
-          'Это действие необратимо. Все ваши данные будут удалены.',
-          style: TextStyle(color: AppColors.textSecondary),
+        title: Text(s.settingsDeleteAccountTitle),
+        content: Text(
+          s.settingsDeleteAccountContent,
+          style: const TextStyle(color: AppColors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Отмена'),
+            child: Text(s.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Удалить', style: TextStyle(color: AppColors.error)),
+            child: Text(s.delete, style: const TextStyle(color: AppColors.error)),
           ),
         ],
       ),
@@ -308,7 +325,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     if (confirm == true && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Функция будет доступна в следующем обновлении')),
+        SnackBar(content: Text(s.settingsDeleteAccountComingSoon)),
       );
     }
   }

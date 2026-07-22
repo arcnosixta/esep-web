@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../l10n/app_strings.dart';
 import '../navigation/app_navigator.dart';
 import 'ai_chat_screen.dart';
 import 'home_screen.dart';
@@ -34,6 +35,16 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+
+    final navItems = [
+      (index: 0, icon: Icons.home_rounded, label: s.navHome),
+      (index: 1, icon: Icons.folder_rounded, label: s.navCases),
+      (index: 4, icon: Icons.auto_awesome_rounded, label: s.navAi),
+      (index: 2, icon: Icons.description_rounded, label: s.navDocuments),
+      (index: 3, icon: Icons.person_rounded, label: s.navProfile),
+    ];
+
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
@@ -48,13 +59,11 @@ class _AppShellState extends State<AppShell> {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _navItem(0, Icons.home_rounded, 'Главная'),
-                _navItem(1, Icons.folder_rounded, 'Заявки'),
-                _navItem(4, Icons.auto_awesome_rounded, 'AI'),
-                _navItem(2, Icons.description_rounded, 'Документы'),
-                _navItem(3, Icons.person_rounded, 'Профиль'),
-              ],
+              children: navItems.map((item) => _navItem(
+                item.index,
+                item.icon,
+                item.label,
+              )).toList(),
             ),
           ),
         ),

@@ -1,23 +1,30 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../widgets/status_badge.dart';
+import '../l10n/app_strings.dart';
 
-String statusLabel(String status) => switch (status) {
-      'new' => 'Новая',
-      'in_progress' => 'В работе',
-      'completed' => 'Завершена',
-      'rejected' => 'Отклонена',
-      'paid' => 'Оплачена',
-      _ => status,
-    };
+String statusLabel(BuildContext context, String status) {
+  final s = AppStrings.of(context);
+  return switch (status) {
+    'new' => s.statusNew,
+    'in_progress' => s.statusInProgress,
+    'completed' => s.statusCompleted,
+    'rejected' => s.statusRejected,
+    'paid' => s.statusPaid,
+    _ => status,
+  };
+}
 
-String propertyTypeLabel(String type) => switch (type) {
-      'apartment' => 'Квартира',
-      'house' => 'Дом',
-      'land' => 'Участок',
-      'commercial' => 'Коммерческая',
-      _ => type,
-    };
+String propertyTypeLabel(BuildContext context, String type) {
+  final s = AppStrings.of(context);
+  return switch (type) {
+    'apartment' => s.propertyApartment,
+    'house' => s.propertyHouse,
+    'land' => s.propertyLand,
+    'commercial' => s.propertyCommercial,
+    _ => type,
+  };
+}
 
 IconData propertyTypeIcon(String type) => switch (type) {
       'apartment' => Icons.apartment_rounded,
@@ -71,11 +78,12 @@ BadgeStatus badgeStatusFromKey(String status) => switch (status) {
       _ => BadgeStatus.pending,
     };
 
-String greeting() {
+String greeting(BuildContext context) {
+  final s = AppStrings.of(context);
   final hour = DateTime.now().hour;
-  if (hour < 12) return 'Доброе утро';
-  if (hour < 18) return 'Добрый день';
-  return 'Добрый вечер';
+  if (hour < 12) return s.homeGreetingMorning;
+  if (hour < 18) return s.homeGreetingAfternoon;
+  return s.homeGreetingEvening;
 }
 
 String caseNumber(String id) {

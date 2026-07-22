@@ -3,6 +3,7 @@ import '../theme/app_colors.dart';
 import '../utils/formatters.dart';
 import '../widgets/case_progress_bar.dart';
 import '../widgets/status_badge.dart';
+import '../l10n/app_strings.dart';
 import '../navigation/app_navigator.dart';
 import '../services/supabase_service.dart';
 import 'ai_chat_screen.dart';
@@ -55,6 +56,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -76,7 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '${greeting()},',
+                            '${greeting(context)},',
                             style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w400,
@@ -151,9 +154,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text(
-                                  'Текущая заявка',
-                                  style: TextStyle(
+                                Text(
+                                  s.homeCurrentApplication,
+                                  style: const TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.textSecondary,
@@ -164,6 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     _recentApps.first['status'] ?? 'new',
                                   ),
                                   label: statusLabel(
+                                    context,
                                     _recentApps.first['status'] ?? 'new',
                                   ),
                                   small: true,
@@ -205,9 +209,9 @@ class _HomeScreenState extends State<HomeScreen> {
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
-                  child: const Text(
-                    'Продолжить работу',
-                    style: TextStyle(
+                  child: Text(
+                    s.homeContinueWork,
+                    style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textSecondary,
@@ -225,7 +229,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Expanded(
                         child: _quickAction(
                           Icons.add_location_alt_rounded,
-                          'Новая заявка',
+                          s.homeNewApplication,
                           AppColors.accent,
                           () => AppNavigator.push(
                               context, const NewApplicationScreen()),
@@ -235,7 +239,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Expanded(
                         child: _quickAction(
                           Icons.description_rounded,
-                          'Документы',
+                          s.homeDocuments,
                           AppColors.warning,
                           widget.onDocumentsTap ?? () {},
                         ),
@@ -244,7 +248,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Expanded(
                         child: _quickAction(
                           Icons.payments_rounded,
-                          'Оплата',
+                          s.homePayment,
                           AppColors.success,
                           () => AppNavigator.push(
                               context, const PaymentScreen()),
@@ -254,7 +258,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Expanded(
                         child: _quickAction(
                           Icons.auto_awesome_rounded,
-                          'Оценить',
+                          s.homeEvaluate,
                           AppColors.gold,
                           () => AppNavigator.push(
                               context, const AiChatScreen()),
@@ -271,9 +275,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Последние заявки',
-                        style: TextStyle(
+                      Text(
+                        s.homeRecentApplications,
+                        style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textSecondary,
@@ -285,9 +289,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           context,
                           const CasesListScreen(),
                         ),
-                        child: const Text(
-                          'Все →',
-                          style: TextStyle(
+                        child: Text(
+                          s.homeAll,
+                          style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
                             color: AppColors.accent,
@@ -316,15 +320,15 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Center(
                               child: Column(
                                 children: [
-                                  Icon(
+                                  const Icon(
                                     Icons.folder_open_rounded,
                                     size: 48,
                                     color: AppColors.muted,
                                   ),
                                   const SizedBox(height: 12),
-                                  const Text(
-                                    'Пока нет заявок',
-                                    style: TextStyle(
+                                  Text(
+                                    s.homeNoApplications,
+                                    style: const TextStyle(
                                       fontSize: 14,
                                       color: AppColors.textHint,
                                     ),
@@ -399,7 +403,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 children: [
                                                   Text(
                                                     propertyTypeLabel(
-                                                        propType),
+                                                        context, propType),
                                                     style: const TextStyle(
                                                       fontSize: 15,
                                                       fontWeight:
@@ -425,7 +429,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                             StatusBadge(
                                               status:
                                                   badgeStatusFromKey(status),
-                                              label: statusLabel(status),
+                                              label: statusLabel(
+                                                  context, status),
                                               small: true,
                                             ),
                                           ],
@@ -452,7 +457,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String _buildCaseSubtitle(Map<String, dynamic> app) {
     final prop = app['properties'];
     if (prop == null) return '';
-    final type = propertyTypeLabel(prop['type'] ?? '');
+    final type = propertyTypeLabel(context, prop['type'] ?? '');
     final address = prop['address'] ?? '';
     return '$type · $address';
   }

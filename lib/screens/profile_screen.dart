@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../l10n/app_strings.dart';
 import '../widgets/information_tile.dart';
 import '../widgets/status_badge.dart';
 import '../services/supabase_service.dart';
@@ -85,6 +86,8 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+
     if (_loading) {
       return const Scaffold(
         body: Center(
@@ -93,17 +96,18 @@ class _ProfileScreenState extends State<ProfileScreen>
       );
     }
 
-    final name = _profile?['full_name'] ?? 'Без имени';
-    final iin = _profile?['iin'] ?? 'Не указан';
-    final phone = _profile?['phone'] ?? 'Не указан';
+    final name = _profile?['full_name'] ?? '';
+    final iin = _profile?['iin'] ?? '';
+    final phone = _profile?['phone'] ?? '';
     final email = _profile?['email'] ??
         SupabaseService.currentUser?.email ??
-        'Не указан';
-    final role = _profile?['role'] == 'appraiser'
-        ? 'Оценщик'
-        : _profile?['role'] == 'admin'
-            ? 'Администратор'
-            : 'Клиент';
+        '';
+    final roleKey = _profile?['role'];
+    final role = roleKey == 'appraiser'
+        ? s.profileRoleAppraiser
+        : roleKey == 'admin'
+            ? s.profileRoleAdmin
+            : s.profileRoleClient;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -115,9 +119,9 @@ class _ProfileScreenState extends State<ProfileScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Профиль',
-                    style: TextStyle(
+                  Text(
+                    s.profileTitle,
+                    style: const TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.w800,
                       color: AppColors.textPrimary,
@@ -151,9 +155,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                         fontWeight: FontWeight.w400,
                       ),
                       dividerColor: Colors.transparent,
-                      tabs: const [
-                        Tab(text: 'Профиль'),
-                        Tab(text: 'Настройки'),
+                      tabs: [
+                        Tab(text: s.profileTab),
+                        Tab(text: s.settingsTab),
                       ],
                     ),
                   ),
@@ -218,7 +222,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        name,
+                                        name.isNotEmpty ? name : '—',
                                         style: const TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.w700,
@@ -244,16 +248,16 @@ class _ProfileScreenState extends State<ProfileScreen>
                                         .withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                  child: const Row(
+                                  child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(Icons.verified_rounded,
+                                      const Icon(Icons.verified_rounded,
                                           size: 14,
                                           color: AppColors.gold),
-                                      SizedBox(width: 4),
+                                      const SizedBox(width: 4),
                                       Text(
-                                        'Верифицирован',
-                                        style: TextStyle(
+                                        s.profileVerified,
+                                        style: const TextStyle(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w600,
                                           color: AppColors.gold,
@@ -270,17 +274,17 @@ class _ProfileScreenState extends State<ProfileScreen>
                         const SizedBox(height: 4),
                         GestureDetector(
                           onTap: _openEditProfile,
-                          child: const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 8),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.edit_rounded,
+                                const Icon(Icons.edit_rounded,
                                     size: 14, color: AppColors.accent),
-                                SizedBox(width: 6),
+                                const SizedBox(width: 6),
                                 Text(
-                                  'Редактировать профиль',
-                                  style: TextStyle(
+                                  s.profileEdit,
+                                  style: const TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.accent,
@@ -297,19 +301,19 @@ class _ProfileScreenState extends State<ProfileScreen>
                           children: [
                             InformationTile(
                               content: '${_properties.length}',
-                              name: 'Объектов',
+                              name: s.profileObjects,
                               icon: Icons.home_rounded,
                               valueColor: AppColors.accent,
                             ),
                             InformationTile(
                               content: '${_documents.length}',
-                              name: 'Документов',
+                              name: s.profileDocuments,
                               icon: Icons.folder_rounded,
                               valueColor: AppColors.warning,
                             ),
                             InformationTile(
                               content: '${_history.length}',
-                              name: 'Оценок',
+                              name: s.profileEvaluations,
                               icon: Icons.assessment_rounded,
                               valueColor: AppColors.success,
                             ),
@@ -327,13 +331,13 @@ class _ProfileScreenState extends State<ProfileScreen>
                           ),
                           child: Column(
                             children: [
-                              infoRow('ИИН', iin),
+                              infoRow(s.profileIin, iin),
                               divider(),
-                              infoRow('Телефон', phone),
+                              infoRow(s.profilePhone, phone),
                               divider(),
                               infoRow('Email', email),
                               divider(),
-                              infoRow('Роль', role),
+                              infoRow(s.profileRole, role),
                             ],
                           ),
                         ),
@@ -350,9 +354,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'ГОСУСЛУГИ (EGOV)',
-                                style: TextStyle(
+                              Text(
+                                s.profileEgovTitle,
+                                style: const TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.textSecondary,
@@ -378,12 +382,12 @@ class _ProfileScreenState extends State<ProfileScreen>
                                     ),
                                   ),
                                   const SizedBox(width: 14),
-                                  const Expanded(
+                                  Expanded(
                                     child: Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Text(
+                                        const Text(
                                           'ЭЦП статус',
                                           style: TextStyle(
                                             fontSize: 14,
@@ -391,10 +395,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                                             color: AppColors.textPrimary,
                                           ),
                                         ),
-                                        SizedBox(height: 2),
+                                        const SizedBox(height: 2),
                                         Text(
-                                          'Подключение к Госуслугам',
-                                          style: TextStyle(
+                                          s.profileEgovSubtitle,
+                                          style: const TextStyle(
                                             fontSize: 12,
                                             color:
                                                 AppColors.textSecondary,
@@ -425,9 +429,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 24, vertical: 12),
                                   ),
-                                  child: const Text(
-                                    'Открыть',
-                                    style: TextStyle(
+                                  child: Text(
+                                    s.profileEgovOpen,
+                                    style: const TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
                                       color: AppColors.info,
@@ -443,9 +447,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
-                              'МОЁ ИМУЩЕСТВО',
-                              style: TextStyle(
+                            Text(
+                              s.profileMyProperty,
+                              style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.textSecondary,
@@ -453,7 +457,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                               ),
                             ),
                             Text(
-                              '${_properties.length} объектов',
+                              '${_properties.length}',
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textSecondary,
@@ -462,11 +466,11 @@ class _ProfileScreenState extends State<ProfileScreen>
                           ],
                         ),
                         if (_properties.isEmpty)
-                          const Padding(
-                            padding: EdgeInsets.only(top: 14),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 14),
                             child: Text(
-                              'Пока нет имущества',
-                              style: TextStyle(
+                              s.profileNoProperty,
+                              style: const TextStyle(
                                 fontSize: 14,
                                 color: AppColors.textHint,
                               ),
@@ -487,7 +491,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                                   for (int i = 0;
                                       i < _properties.length;
                                       i++) ...[
-                                    _buildPropertyRow(_properties[i]),
+                                    _buildPropertyRow(context, _properties[i]),
                                     if (i < _properties.length - 1)
                                       Container(
                                         height: 1,
@@ -505,9 +509,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
-                              'МОИ ДОКУМЕНТЫ',
-                              style: TextStyle(
+                            Text(
+                              s.profileMyDocuments,
+                              style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.textSecondary,
@@ -515,7 +519,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                               ),
                             ),
                             Text(
-                              '${_documents.length} файлов',
+                              '${_documents.length}',
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textSecondary,
@@ -524,11 +528,11 @@ class _ProfileScreenState extends State<ProfileScreen>
                           ],
                         ),
                         if (_documents.isEmpty)
-                          const Padding(
-                            padding: EdgeInsets.only(top: 14),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 14),
                             child: Text(
-                              'Пока нет документов',
-                              style: TextStyle(
+                              s.profileNoDocuments,
+                              style: const TextStyle(
                                 fontSize: 14,
                                 color: AppColors.textHint,
                               ),
@@ -564,9 +568,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                           ),
 
                         const SizedBox(height: 24),
-                        const Text(
-                          'ИСТОРИЯ ОЦЕНОК',
-                          style: TextStyle(
+                        Text(
+                          s.profileHistory,
+                          style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             color: AppColors.textSecondary,
@@ -574,11 +578,11 @@ class _ProfileScreenState extends State<ProfileScreen>
                           ),
                         ),
                         if (_history.isEmpty)
-                          const Padding(
-                            padding: EdgeInsets.only(top: 14),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 14),
                             child: Text(
-                              'Пока нет оценок',
-                              style: TextStyle(
+                              s.profileNoHistory,
+                              style: const TextStyle(
                                 fontSize: 14,
                                 color: AppColors.textHint,
                               ),
@@ -599,7 +603,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                                   for (int i = 0;
                                       i < _history.length;
                                       i++) ...[
-                                    _buildHistoryRow(_history[i]),
+                                    _buildHistoryRow(context, _history[i]),
                                     if (i < _history.length - 1)
                                       Container(
                                         height: 1,
@@ -624,21 +628,21 @@ class _ProfileScreenState extends State<ProfileScreen>
                           child: Column(
                             children: [
                               _settingsRow(
-                                  Icons.help_rounded, 'Помощь'),
+                                  Icons.help_rounded, s.profileHelp),
                               Container(
                                 height: 1,
                                 margin: const EdgeInsets.only(left: 52),
                                 color: AppColors.divider,
                               ),
                               _settingsRow(Icons.info_outline_rounded,
-                                  'О приложении'),
+                                  s.profileAbout),
                               Container(
                                 height: 1,
                                 margin: const EdgeInsets.only(left: 52),
                                 color: AppColors.divider,
                               ),
                               _settingsRow(
-                                  Icons.logout_rounded, 'Выйти',
+                                  Icons.logout_rounded, s.profileSignOut,
                                   color: AppColors.error,
                                   onTap: _signOut),
                             ],
@@ -657,7 +661,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
-  Widget _buildPropertyRow(Map<String, dynamic> item) {
+  Widget _buildPropertyRow(BuildContext context, Map<String, dynamic> item) {
     final type = item['type'] ?? '';
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
@@ -682,7 +686,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  propertyTypeLabel(type),
+                  propertyTypeLabel(context, type),
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -770,13 +774,13 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
-  Widget _buildHistoryRow(Map<String, dynamic> item) {
+  Widget _buildHistoryRow(BuildContext context, Map<String, dynamic> item) {
     final status = item['status'] ?? 'new';
     final prop = item['properties'];
     final propType = prop != null ? (prop['type'] ?? '') : '';
     final price = item['estimated_price'];
     final priceStr =
-        price != null ? '${price.toStringAsFixed(0)} ₸' : 'Не оценено';
+        price != null ? '${price.toStringAsFixed(0)} ₸' : '';
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       child: Row(
@@ -808,7 +812,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      propertyTypeLabel(propType),
+                      propertyTypeLabel(context, propType),
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -817,14 +821,14 @@ class _ProfileScreenState extends State<ProfileScreen>
                     ),
                     StatusBadge(
                       status: badgeStatusFromKey(status),
-                      label: statusLabel(status),
+                      label: statusLabel(context, status),
                       small: true,
                     ),
                   ],
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  priceStr,
+                  priceStr.isNotEmpty ? priceStr : '—',
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -874,24 +878,25 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   Future<void> _signOut() async {
+    final s = AppStrings.of(context);
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Выйти из аккаунта?',
-            style: TextStyle(color: AppColors.textPrimary)),
-        content: const Text('Вы сможете войти снова',
-            style: TextStyle(color: AppColors.textSecondary)),
+        title: Text(s.profileSignOutTitle,
+            style: const TextStyle(color: AppColors.textPrimary)),
+        content: Text(s.profileSignOutContent,
+            style: const TextStyle(color: AppColors.textSecondary)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Отмена',
-                style: TextStyle(color: AppColors.textSecondary)),
+            child: Text(s.cancel,
+                style: const TextStyle(color: AppColors.textSecondary)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Выйти',
-                style: TextStyle(color: AppColors.error)),
+            child: Text(s.profileSignOut,
+                style: const TextStyle(color: AppColors.error)),
           ),
         ],
       ),
@@ -942,10 +947,11 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
   }
 
   Future<void> _save() async {
+    final s = AppStrings.of(context);
     final name = _nameController.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Введите ФИО')),
+        SnackBar(content: Text(s.profileNameEmpty)),
       );
       return;
     }
@@ -962,13 +968,13 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
         widget.onSaved();
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Профиль обновлён')),
+          SnackBar(content: Text(s.profileUpdated)),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка: $e')),
+          SnackBar(content: Text('$e')),
         );
       }
     } finally {
@@ -978,6 +984,8 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
+
     return Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -1004,9 +1012,9 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
-                'Редактировать профиль',
-                style: TextStyle(
+              Text(
+                s.profileEditTitle,
+                style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
@@ -1015,21 +1023,21 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
               const SizedBox(height: 24),
               _buildField(
                 controller: _nameController,
-                label: 'ФИО',
+                label: s.profileName,
                 icon: Icons.person_rounded,
                 keyboardType: TextInputType.name,
               ),
               const SizedBox(height: 16),
               _buildField(
                 controller: _phoneController,
-                label: 'Телефон',
+                label: s.profilePhone,
                 icon: Icons.phone_rounded,
                 keyboardType: TextInputType.phone,
               ),
               const SizedBox(height: 16),
               _buildField(
                 controller: _iinController,
-                label: 'ИИН',
+                label: s.profileIin,
                 icon: Icons.badge_rounded,
                 keyboardType: TextInputType.number,
                 maxLength: 12,
@@ -1057,9 +1065,9 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                             color: Colors.white,
                           ),
                         )
-                      : const Text(
-                          'Сохранить',
-                          style: TextStyle(
+                      : Text(
+                          s.save,
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),

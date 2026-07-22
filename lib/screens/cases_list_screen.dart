@@ -186,7 +186,7 @@ class _CasesListScreenState extends State<CasesListScreen> {
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              propertyTypeLabel(propType),
+                                              propertyTypeLabel(context, propType),
                                               style: const TextStyle(
                                                 fontSize: 15,
                                                 fontWeight: FontWeight.w600,
@@ -214,7 +214,7 @@ class _CasesListScreenState extends State<CasesListScreen> {
                                       StatusBadge(
                                         status:
                                             badgeStatusFromKey(status),
-                                        label: statusLabel(status),
+                                        label: statusLabel(context, status),
                                         small: true,
                                       ),
                                     ],

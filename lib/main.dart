@@ -4,12 +4,16 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'theme/app_theme.dart';
 import 'screens/splash_screen.dart';
 import 'screens/app_shell.dart';
+import 'providers/app_settings.dart';
+import 'l10n/app_strings.dart';
 
 const openRouterApiKey = 'YOUR_OPENROUTER_API_KEY';
 
 const supabaseUrl = 'https://rphsqxhwfrkavvxzvnuv.supabase.co';
 const supabaseAnonKey =
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwaHNxeGh3ZnJrYXZ2eHp2bnV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ0NTQ4ODcsImV4cCI6MjEwMDAzMDg4N30.dFa8Py2xK0Jw7OSCJSRlPwAgwRGlTYzq8JfSBUkh_TU';
+
+final appSettings = AppSettings();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,6 +22,8 @@ Future<void> main() async {
     url: supabaseUrl,
     publishableKey: supabaseAnonKey,
   );
+
+  await appSettings.load();
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -37,11 +43,27 @@ class EsepApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'ESEP',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      home: const AuthGate(),
+    return ListenableBuilder(
+      listenable: appSettings,
+      builder: (context, _) {
+        return MaterialApp(
+          title: 'ESEP',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: appSettings.themeMode,
+          locale: appSettings.locale,
+          supportedLocales: const [
+            Locale('ru'),
+            Locale('kk'),
+            Locale('en'),
+          ],
+          localizationsDelegates: const [
+            AppStringsDelegate(),
+          ],
+          home: const AuthGate(),
+        );
+      },
     );
   }
 }
