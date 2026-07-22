@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
-import '../widgets/glass_card.dart';
+import '../utils/formatters.dart';
+import '../widgets/information_tile.dart';
+import '../widgets/option_button.dart';
 import '../widgets/status_badge.dart';
-import '../widgets/primary_button.dart';
 import '../navigation/app_navigator.dart';
 import 'report_screen.dart';
 
@@ -12,6 +13,7 @@ class ApplicationCardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Заявка №2847'),
         leading: IconButton(
@@ -21,13 +23,13 @@ class ApplicationCardScreen extends StatelessWidget {
       ),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Status
-            GlassCard(
-              padding: const EdgeInsets.all(20),
+            Container(
+              width: double.infinity,
+              color: AppColors.surface,
+              padding: const EdgeInsets.fromLTRB(24, 20, 16, 20),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -35,17 +37,19 @@ class ApplicationCardScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Статус заявки',
+                        'ЗАЯВКА №2847',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
                           color: AppColors.textSecondary,
+                          letterSpacing: 0.8,
                         ),
                       ),
                       const SizedBox(height: 4),
-                      const Text(
+                      Text(
                         'Создана 12 января 2026',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 13,
                           color: AppColors.textHint,
                         ),
                       ),
@@ -58,29 +62,58 @@ class ApplicationCardScreen extends StatelessWidget {
                 ],
               ),
             ),
-
-            // Details
-            const SizedBox(height: 4),
-            const Text(
-              'Детали объекта',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
+            Container(
+              height: 1,
+              color: AppColors.border,
             ),
-            const SizedBox(height: 12),
-            GlassCard(
-              padding: const EdgeInsets.all(16),
+
+            // ── Object info with InformationTile row ──
+            Container(
+              width: double.infinity,
+              color: AppColors.paper,
+              padding: const EdgeInsets.fromLTRB(24, 20, 16, 20),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _infoRow('Тип', 'Квартира'),
-                  _divider(),
-                  _infoRow('Адрес', 'г. Алматы, ул. Абая 52'),
-                  _divider(),
-                  _infoRow('Площадь', '85 м²'),
-                  _divider(),
-                  _infoRow(
+                  const Text(
+                    'ДЕТАЛИ ОБЪЕКТА',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      InformationTile(
+                        content: '85',
+                        name: 'Площадь м²',
+                        icon: Icons.square_foot_rounded,
+                        valueColor: AppColors.textPrimary,
+                      ),
+                      InformationTile(
+                        content: '3',
+                        name: 'Комнаты',
+                        icon: Icons.meeting_room_rounded,
+                        valueColor: AppColors.info,
+                      ),
+                      InformationTile(
+                        content: '12',
+                        name: 'Этаж',
+                        icon: Icons.layers_rounded,
+                        valueColor: AppColors.warning,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  infoRow('Тип', 'Квартира'),
+                  divider(),
+                  infoRow('Адрес', 'г. Алматы, ул. Абая 52'),
+                  divider(),
+                  infoRow(
                     'Стоимость',
                     '42 500 000 ₸',
                     highlight: true,
@@ -88,20 +121,29 @@ class ApplicationCardScreen extends StatelessWidget {
                 ],
               ),
             ),
+            Container(
+              height: 1,
+              color: AppColors.border,
+            ),
 
-            // History
-            const SizedBox(height: 20),
-            const Text(
-              'История статусов',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+            Container(
+              width: double.infinity,
+              color: AppColors.surface,
+              padding: const EdgeInsets.fromLTRB(24, 20, 16, 0),
+              child: const Text(
+                'ИСТОРИЯ СТАТУСОВ',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                  letterSpacing: 0.8,
+                ),
               ),
             ),
-            const SizedBox(height: 12),
-            GlassCard(
-              padding: const EdgeInsets.all(16),
+            Container(
+              width: double.infinity,
+              color: AppColors.surface,
+              padding: const EdgeInsets.fromLTRB(24, 16, 16, 24),
               child: Column(
                 children: [
                   _statusStep(
@@ -128,43 +170,27 @@ class ApplicationCardScreen extends StatelessWidget {
                 ],
               ),
             ),
+            Container(
+              height: 1,
+              color: AppColors.border,
+            ),
 
             const SizedBox(height: 24),
-            PrimaryButton(
-              label: 'Посмотреть отчёт',
-              icon: Icons.description_rounded,
-              onPressed: () =>
-                  AppNavigator.push(context, const ReportScreen()),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 16, 0),
+              child: OptionButton(
+                text: 'Посмотреть отчёт',
+                icon: Icons.description_rounded,
+                onTap: () =>
+                    AppNavigator.push(context, const ReportScreen()),
+              ),
             ),
+            const SizedBox(height: 32),
           ],
         ),
       ),
     );
   }
-
-  Widget _infoRow(String label, String value, {bool highlight = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label,
-              style: const TextStyle(
-                  fontSize: 14, color: AppColors.textSecondary)),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: highlight ? FontWeight.w700 : FontWeight.w500,
-              color: highlight ? AppColors.accent : AppColors.textPrimary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _divider() => Container(height: 0.5, color: AppColors.divider);
 
   Widget _statusStep({
     required String title,
@@ -182,8 +208,7 @@ class ApplicationCardScreen extends StatelessWidget {
               width: 24,
               height: 24,
               decoration: BoxDecoration(
-                gradient: done ? AppColors.accentGradient : null,
-                color: done ? null : AppColors.surfaceLight,
+                color: done ? AppColors.accent : AppColors.muted,
                 shape: BoxShape.circle,
               ),
               child: done
@@ -205,8 +230,8 @@ class ApplicationCardScreen extends StatelessWidget {
                 width: 1.5,
                 height: 32,
                 color: done
-                    ? AppColors.accent.withValues(alpha: 0.3)
-                    : AppColors.divider,
+                    ? AppColors.accent
+                    : AppColors.muted,
               ),
           ],
         ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../widgets/border_icon.dart';
 import '../widgets/primary_button.dart';
 import '../navigation/app_navigator.dart';
 import '../services/supabase_service.dart';
@@ -94,145 +95,188 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
+      backgroundColor: AppColors.paper,
+      appBar: AppBar(backgroundColor: AppColors.paper, elevation: 0),
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 8),
-              const Text(
-                'Регистрация',
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Создайте аккаунт для оценки недвижимости',
-                style: TextStyle(
-                  fontSize: 15,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 36),
-              TextField(
-                controller: _nameController,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 15,
-                ),
-                decoration: const InputDecoration(
-                  hintText: 'Имя',
-                  prefixIcon: Icon(Icons.person_outline_rounded,
-                      color: AppColors.textHint, size: 20),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 15,
-                ),
-                decoration: const InputDecoration(
-                  hintText: 'Телефон',
-                  prefixIcon: Icon(Icons.phone_outlined,
-                      color: AppColors.textHint, size: 20),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 15,
-                ),
-                decoration: const InputDecoration(
-                  hintText: 'Email',
-                  prefixIcon: Icon(Icons.mail_outline_rounded,
-                      color: AppColors.textHint, size: 20),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _passwordController,
-                obscureText: _obscure,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 15,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'Пароль',
-                  prefixIcon: const Icon(Icons.lock_outline_rounded,
-                      color: AppColors.textHint, size: 20),
-                  suffixIcon: GestureDetector(
-                    onTap: () => setState(() => _obscure = !_obscure),
-                    child: Icon(
-                      _obscure
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
-                      size: 20,
-                      color: AppColors.textHint,
-                    ),
+              const Padding(
+                padding: EdgeInsets.fromLTRB(24, 8, 16, 0),
+                child: Text(
+                  'Регистрация',
+                  style: TextStyle(
+                    fontSize: 40,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                    letterSpacing: -0.5,
+                    height: 1.1,
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
-              GestureDetector(
-                onTap: () => setState(() => _agreed = !_agreed),
-                child: Row(
+              const SizedBox(height: 4),
+              const Padding(
+                padding: EdgeInsets.fromLTRB(24, 0, 16, 0),
+                child: Text(
+                  'Создайте аккаунт для оценки недвижимости',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+              BorderIcon(
+                borderRadius: 0,
+                padding: const EdgeInsets.fromLTRB(24, 28, 16, 28),
+                backgroundColor: AppColors.surface,
+                borderColor: Colors.transparent,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      width: 22,
-                      height: 22,
-                      decoration: BoxDecoration(
-                        gradient: _agreed ? AppColors.accentGradient : null,
-                        color: _agreed ? null : Colors.transparent,
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: _agreed
-                              ? AppColors.accent
-                              : AppColors.inputBorder,
-                          width: 1.5,
+                    const _Label('ИМЯ'),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _nameController,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 15,
+                      ),
+                      decoration: const InputDecoration(
+                        hintText: 'Введите имя',
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const _Label('ТЕЛЕФОН'),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _phoneController,
+                      keyboardType: TextInputType.phone,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 15,
+                      ),
+                      decoration: const InputDecoration(
+                        hintText: '+7 (___) ___-__-__',
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const _Label('EMAIL'),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 15,
+                      ),
+                      decoration: const InputDecoration(
+                        hintText: 'example@mail.com',
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const _Label('ПАРОЛЬ'),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _passwordController,
+                      obscureText: _obscure,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 15,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Минимум 8 символов',
+                        suffixIcon: GestureDetector(
+                          onTap: () => setState(() => _obscure = !_obscure),
+                          child: Icon(
+                            _obscure
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                            size: 20,
+                            color: AppColors.textHint,
+                          ),
                         ),
                       ),
-                      child: _agreed
-                          ? const Icon(Icons.check_rounded,
-                              size: 14, color: Colors.white)
-                          : null,
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: RichText(
-                        text: const TextSpan(
-                          text: 'Я согласен с ',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: AppColors.textSecondary,
-                          ),
-                          children: [
-                            TextSpan(
-                              text: 'условиями использования',
-                              style: TextStyle(
-                                color: AppColors.accent,
-                                fontWeight: FontWeight.w500,
+                    const SizedBox(height: 24),
+                    GestureDetector(
+                      onTap: () => setState(() => _agreed = !_agreed),
+                      child: Row(
+                        children: [
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            width: 22,
+                            height: 22,
+                            decoration: BoxDecoration(
+                              color: _agreed ? AppColors.accent : Colors.transparent,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: _agreed
+                                    ? AppColors.accent
+                                    : AppColors.inputBorder,
+                                width: 1.5,
                               ),
                             ),
-                          ],
+                            child: _agreed
+                                ? const Icon(Icons.check_rounded,
+                                    size: 14, color: Colors.white)
+                                : null,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: RichText(
+                              text: const TextSpan(
+                                text: 'Я согласен с ',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.textSecondary,
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text: 'условиями использования',
+                                    style: TextStyle(
+                                      color: AppColors.accent,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    PrimaryButton(
+                      label: _loading ? 'Регистрация...' : 'Зарегистрироваться',
+                      onPressed: _loading ? null : _register,
+                    ),
+                    const SizedBox(height: 20),
+                    Center(
+                      child: GestureDetector(
+                        onTap: () => AppNavigator.push(
+                          context,
+                          const LoginScreen(),
+                        ),
+                        child: RichText(
+                          text: const TextSpan(
+                            text: 'Уже есть аккаунт? ',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: AppColors.textSecondary,
+                            ),
+                            children: [
+                              TextSpan(
+                                text: 'Войти',
+                                style: TextStyle(
+                                  color: AppColors.accent,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -240,41 +284,27 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 ),
               ),
               const SizedBox(height: 32),
-              PrimaryButton(
-                label: _loading ? 'Регистрация...' : 'Зарегистрироваться',
-                onPressed: _loading ? null : _register,
-              ),
-              const SizedBox(height: 20),
-              Center(
-                child: GestureDetector(
-                  onTap: () => AppNavigator.push(
-                    context,
-                    const LoginScreen(),
-                  ),
-                  child: RichText(
-                    text: const TextSpan(
-                      text: 'Уже есть аккаунт? ',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textSecondary,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: 'Войти',
-                          style: TextStyle(
-                            color: AppColors.accent,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 32),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _Label extends StatelessWidget {
+  final String text;
+  const _Label(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textSecondary,
+        letterSpacing: 0.8,
       ),
     );
   }

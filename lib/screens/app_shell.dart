@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../widgets/border_icon.dart';
 import 'home_screen.dart';
 import 'my_applications_screen.dart';
 import 'document_upload_screen.dart';
@@ -35,20 +36,20 @@ class _AppShellState extends State<AppShell> {
         decoration: const BoxDecoration(
           color: AppColors.surface,
           border: Border(
-            top: BorderSide(color: AppColors.border, width: 0.5),
+            top: BorderSide(color: AppColors.border, width: 1),
           ),
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _navItem(0, Icons.home_rounded, 'Главная'),
-                _navItem(1, Icons.smart_toy_rounded, 'AI'),
-                _navItem(2, Icons.description_rounded, 'Заявки'),
-                _navItem(3, Icons.folder_rounded, 'Документы'),
-                _navItem(4, Icons.person_rounded, 'Профиль'),
+                _navItem(0, Icons.home_rounded),
+                _navItem(1, Icons.chat_bubble_rounded),
+                _navItem(2, Icons.description_rounded),
+                _navItem(3, Icons.folder_rounded),
+                _navItem(4, Icons.person_rounded),
               ],
             ),
           ),
@@ -57,44 +58,24 @@ class _AppShellState extends State<AppShell> {
     );
   }
 
-  Widget _navItem(int index, IconData icon, String label) {
+  Widget _navItem(int index, IconData icon) {
     final active = _currentIndex == index;
     return GestureDetector(
       onTap: () => setState(() => _currentIndex = index),
       behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOutCubic,
-        padding: EdgeInsets.symmetric(
-          horizontal: active ? 18 : 14,
-          vertical: 8,
-        ),
-        decoration: BoxDecoration(
-          color: active
-              ? AppColors.accent.withValues(alpha: 0.12)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 22,
-              color: active ? AppColors.accent : AppColors.textHint,
-            ),
-            if (active) ...[
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.accent,
-                ),
-              ),
-            ],
-          ],
+      child: BorderIcon(
+        width: 44,
+        height: 38,
+        padding: EdgeInsets.zero,
+        borderRadius: 12,
+        backgroundColor: active
+            ? AppColors.accent.withValues(alpha: 0.08)
+            : Colors.transparent,
+        borderColor: Colors.transparent,
+        child: Icon(
+          icon,
+          size: 22,
+          color: active ? AppColors.accent : AppColors.textHint,
         ),
       ),
     );

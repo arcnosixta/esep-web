@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
-import '../widgets/glass_card.dart';
+import '../widgets/border_icon.dart';
+import '../widgets/option_button.dart';
 import '../widgets/status_badge.dart';
 
 class _AppraiserJob {
@@ -79,6 +80,7 @@ class _AppraiserCabinetScreenState extends State<AppraiserCabinetScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Кабинет оценщика'),
         leading: IconButton(
@@ -88,6 +90,7 @@ class _AppraiserCabinetScreenState extends State<AppraiserCabinetScreen>
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: AppColors.accent,
+          indicatorWeight: 2,
           indicatorSize: TabBarIndicatorSize.label,
           labelColor: AppColors.textPrimary,
           unselectedLabelColor: AppColors.textHint,
@@ -122,74 +125,76 @@ class _AppraiserCabinetScreenState extends State<AppraiserCabinetScreen>
     }
     return ListView.builder(
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       itemCount: jobs.length,
       itemBuilder: (context, index) {
         final job = jobs[index];
-        return GlassCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        return Column(
+          children: [
+            Container(
+              width: double.infinity,
+              color: AppColors.surface,
+              padding: const EdgeInsets.fromLTRB(24, 18, 16, 18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        const Icon(Icons.location_on_rounded,
-                            size: 16, color: AppColors.accent),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            job.address,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Row(
+                          children: [
+                            BorderIcon(
+                              width: 28,
+                              height: 28,
+                              padding: EdgeInsets.zero,
+                              borderRadius: 8,
+                              backgroundColor: AppColors.accent.withValues(alpha: 0.08),
+                              borderColor: AppColors.accent.withValues(alpha: 0.15),
+                              child: const Icon(Icons.location_on_rounded,
+                                  size: 14, color: AppColors.accent),
                             ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                job.address,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                      StatusBadge(
+                          status: job.status, label: job.statusLabel, small: true),
+                    ],
                   ),
-                  StatusBadge(
-                      status: job.status, label: job.statusLabel, small: true),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      _meta(Icons.straighten_rounded, job.area),
+                      const SizedBox(width: 16),
+                      _meta(Icons.calendar_today_rounded, job.date),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  OptionButton(
+                    text: 'Сформировать отчёт',
+                    icon: Icons.description_rounded,
+                    onTap: () {},
+                  ),
                 ],
               ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  _meta(Icons.straighten_rounded, job.area),
-                  const SizedBox(width: 16),
-                  _meta(Icons.calendar_today_rounded, job.date),
-                ],
-              ),
-              const SizedBox(height: 14),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () {},
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(
-                        color: AppColors.accent, width: 1),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  child: const Text(
-                    'Сформировать отчёт',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.accent,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+            Container(
+              height: 1,
+              color: AppColors.border,
+            ),
+          ],
         );
       },
     );

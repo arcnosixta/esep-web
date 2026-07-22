@@ -7,6 +7,7 @@ class GlassCard extends StatelessWidget {
   final EdgeInsetsGeometry? margin;
   final VoidCallback? onTap;
   final double borderRadius;
+  final Color? backgroundColor;
 
   const GlassCard({
     super.key,
@@ -14,29 +15,26 @@ class GlassCard extends StatelessWidget {
     this.padding = const EdgeInsets.all(16),
     this.margin,
     this.onTap,
-    this.borderRadius = 18,
+    this.borderRadius = 16,
+    this.backgroundColor,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+      child: Container(
         margin: margin ?? const EdgeInsets.only(bottom: 12),
         padding: padding,
         decoration: BoxDecoration(
-          gradient: AppColors.cardGradient,
+          color: backgroundColor ?? AppColors.surface,
           borderRadius: BorderRadius.circular(borderRadius),
-          border: Border.all(
-            color: AppColors.border,
-            width: 0.5,
-          ),
+          border: Border.all(color: AppColors.border, width: 1),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
             ),
           ],
         ),

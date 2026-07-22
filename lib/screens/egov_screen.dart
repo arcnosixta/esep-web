@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
-import '../widgets/glass_card.dart';
 import '../widgets/primary_button.dart';
 import '../services/egov_service.dart';
 
@@ -53,9 +52,7 @@ class _EgovScreenState extends State<EgovScreen> {
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text('Подключение ЭЦП',
-            style: TextStyle(color: AppColors.textPrimary)),
+        title: const Text('Подключение ЭЦП'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -199,9 +196,7 @@ class _EgovScreenState extends State<EgovScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text('Отключить ЭЦП?',
-            style: TextStyle(color: AppColors.textPrimary)),
+        title: const Text('Отключить ЭЦП?'),
         content: const Text(
           'Все данные EGOV будут удалены из приложения',
           style: TextStyle(color: AppColors.textSecondary),
@@ -248,6 +243,7 @@ class _EgovScreenState extends State<EgovScreen> {
     }
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('ЭЦП и EGOV'),
         leading: IconButton(
@@ -262,87 +258,99 @@ class _EgovScreenState extends State<EgovScreen> {
           physics:
               const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
           slivers: [
-            // ECP Status
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              padding: const EdgeInsets.fromLTRB(24, 16, 16, 0),
               sliver: SliverToBoxAdapter(
-                child: GlassCard(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                child: const Text(
+                  'ЭЦП И EGOV',
+                  style: TextStyle(
+                    fontSize: 36,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+              ),
+            ),
+
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(24, 20, 16, 0),
+              sliver: SliverToBoxAdapter(
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    border: Border(
+                      left: BorderSide(
+                        color: _ecpConnected
+                            ? AppColors.success
+                            : AppColors.muted,
+                        width: 3,
+                      ),
+                    ),
+                  ),
+                  padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+                  child: Row(
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: (_ecpConnected
-                                      ? AppColors.success
-                                      : AppColors.textHint)
-                                  .withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              Icons.vpn_key_rounded,
-                              color: _ecpConnected
-                                  ? AppColors.success
-                                  : AppColors.textHint,
-                              size: 22,
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _ecpConnected ? 'ЭЦП подключён' : 'ЭЦП не подключён',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  _ecpConnected
-                                      ? 'Данные EGOV доступны'
-                                      : 'Подключите ЭЦП для доступа к данным',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: (_ecpConnected
-                                      ? AppColors.success
-                                      : AppColors.textHint)
-                                  .withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              _ecpConnected ? 'Активен' : 'Неактивен',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: _ecpConnected
-                                    ? AppColors.success
-                                    : AppColors.textHint,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _ecpConnected ? 'ЭЦП подключён' : 'ЭЦП не подключён',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
                               ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 4),
+                            Text(
+                              _ecpConnected
+                                  ? 'Данные EGOV доступны'
+                                  : 'Подключите ЭЦП для доступа к данным',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 16),
-                      if (_ecpConnected)
-                        OutlinedButton(
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: (_ecpConnected
+                                  ? AppColors.success
+                                  : AppColors.muted)
+                              .withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          _ecpConnected ? 'Активен' : 'Неактивен',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: _ecpConnected
+                                ? AppColors.success
+                                : AppColors.textHint,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(24, 12, 16, 0),
+              sliver: SliverToBoxAdapter(
+                child: SizedBox(
+                  width: double.infinity,
+                  child: _ecpConnected
+                      ? OutlinedButton(
                           onPressed: _disconnectEcp,
                           style: OutlinedButton.styleFrom(
                             side: const BorderSide(
@@ -350,7 +358,7 @@ class _EgovScreenState extends State<EgovScreen> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
                           child: const Text(
                             'Отключить ЭЦП',
@@ -361,25 +369,23 @@ class _EgovScreenState extends State<EgovScreen> {
                             ),
                           ),
                         )
-                      else
-                        PrimaryButton(
+                      : PrimaryButton(
                           label: 'Подключить ЭЦП',
                           icon: Icons.vpn_key_rounded,
                           onPressed: _connectEcp,
                         ),
-                    ],
-                  ),
                 ),
               ),
             ),
 
-            // Biometric toggle
             if (_biometricAvailable && _ecpConnected)
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                padding: const EdgeInsets.fromLTRB(24, 20, 16, 0),
                 sliver: SliverToBoxAdapter(
-                  child: GlassCard(
-                    padding: const EdgeInsets.all(16),
+                  child: Container(
+                    width: double.infinity,
+                    color: AppColors.paper,
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                     child: Row(
                       children: [
                         Container(
@@ -387,7 +393,7 @@ class _EgovScreenState extends State<EgovScreen> {
                           height: 40,
                           decoration: BoxDecoration(
                             color: AppColors.accent.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Icon(
                             Icons.fingerprint_rounded,
@@ -423,7 +429,8 @@ class _EgovScreenState extends State<EgovScreen> {
                           value: _biometricEnabled,
                           onChanged: _toggleBiometric,
                           activeThumbColor: AppColors.accent,
-                          activeTrackColor: AppColors.accent.withValues(alpha: 0.3),
+                          activeTrackColor:
+                              AppColors.accent.withValues(alpha: 0.3),
                         ),
                       ],
                     ),
@@ -431,88 +438,103 @@ class _EgovScreenState extends State<EgovScreen> {
                 ),
               ),
 
-            // Personal data
-            if (_ecpConnected && _personalData != null)
+            if (_ecpConnected && _personalData != null) ...[
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                padding: const EdgeInsets.fromLTRB(24, 24, 16, 0),
                 sliver: SliverToBoxAdapter(
-                  child: const Text(
-                    'Личные данные (EGOV)',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
+                  child: Container(
+                    width: double.infinity,
+                    color: AppColors.surface,
+                    padding: const EdgeInsets.fromLTRB(24, 18, 16, 18),
+                    child: const Text(
+                      'ЛИЧНЫЕ ДАННЫЕ',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 0.8,
+                      ),
                     ),
                   ),
                 ),
               ),
-            if (_ecpConnected && _personalData != null)
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                padding: const EdgeInsets.fromLTRB(24, 0, 16, 0),
                 sliver: SliverToBoxAdapter(
-                  child: GlassCard(
-                    padding: const EdgeInsets.all(16),
+                  child: Container(
+                    width: double.infinity,
+                    color: AppColors.surface,
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
                     child: Column(
                       children: [
                         _dataRow('ФИО', _personalData!.fullName),
-                        _divider(),
+                        _thinDivider(),
                         _dataRow('ИИН', _personalData!.iin),
-                        _divider(),
+                        _thinDivider(),
                         _dataRow('Дата рождения', _personalData!.dateOfBirth),
-                        _divider(),
+                        _thinDivider(),
                         _dataRow('Адрес', _personalData!.address),
-                        _divider(),
+                        _thinDivider(),
                         _dataRow('Телефон', _personalData!.phone),
                       ],
                     ),
                   ),
                 ),
               ),
+            ],
 
-            // Property
-            if (_ecpConnected && _properties.isNotEmpty)
+            if (_ecpConnected && _properties.isNotEmpty) ...[
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                padding: const EdgeInsets.fromLTRB(24, 24, 16, 0),
                 sliver: SliverToBoxAdapter(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Недвижимость (EGOV)',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
+                  child: Container(
+                    width: double.infinity,
+                    color: AppColors.surface,
+                    padding: const EdgeInsets.fromLTRB(24, 18, 16, 18),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'НЕДВИЖИМОСТЬ',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textSecondary,
+                            letterSpacing: 0.8,
+                          ),
                         ),
-                      ),
-                      Text(
-                        '${_properties.length} объектов',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: AppColors.textSecondary,
+                        Text(
+                          '${_properties.length} объектов',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
-            if (_ecpConnected && _properties.isNotEmpty)
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                padding: const EdgeInsets.fromLTRB(24, 0, 16, 0),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate(
                     _properties.map((prop) {
-                      return GlassCard(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
+                      return Column(
+                        children: [
+                          Container(
+                            width: double.infinity,
+                            color: AppColors.surface,
+                            padding:
+                                const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                            child: Row(
                               children: [
                                 Container(
                                   width: 40,
                                   height: 40,
                                   decoration: BoxDecoration(
-                                    color: AppColors.accent.withValues(alpha: 0.1),
+                                    color: AppColors.accent
+                                        .withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: const Icon(
@@ -524,7 +546,8 @@ class _EgovScreenState extends State<EgovScreen> {
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         prop.type,
@@ -543,55 +566,71 @@ class _EgovScreenState extends State<EgovScreen> {
                                         ),
                                         overflow: TextOverflow.ellipsis,
                                       ),
+                                      const SizedBox(height: 6),
+                                      Row(
+                                        children: [
+                                          _miniStat('${prop.area} м²',
+                                              AppColors.accent),
+                                          const SizedBox(width: 8),
+                                          _miniStat(
+                                              'Кадастр: ${prop.cadastralNumber}',
+                                              AppColors.textSecondary),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '${prop.ownershipType} · ${prop.registrationDate}',
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: AppColors.textHint,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
+                                const Icon(
+                                  Icons.chevron_right_rounded,
+                                  color: AppColors.textHint,
+                                  size: 20,
+                                ),
                               ],
                             ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                _miniStat('${prop.area} м²', AppColors.accent),
-                                const SizedBox(width: 12),
-                                _miniStat(
-                                    'Кадастр: ${prop.cadastralNumber}',
-                                    AppColors.textSecondary),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              '${prop.ownershipType} · ${prop.registrationDate}',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: AppColors.textHint,
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                          Container(
+                            height: 1,
+                            margin: const EdgeInsets.only(left: 68),
+                            color: AppColors.border,
+                          ),
+                        ],
                       );
                     }).toList(),
                   ),
                 ),
               ),
+            ],
 
-            // Documents
-            if (_ecpConnected && _documents.isNotEmpty)
+            if (_ecpConnected && _documents.isNotEmpty) ...[
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                padding: const EdgeInsets.fromLTRB(24, 24, 16, 0),
                 sliver: SliverToBoxAdapter(
-                  child: const Text(
-                    'Документы (EGOV)',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
+                  child: Container(
+                    width: double.infinity,
+                    color: AppColors.surface,
+                    padding: const EdgeInsets.fromLTRB(24, 18, 16, 18),
+                    child: const Text(
+                      'ДОКУМЕНТЫ',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 0.8,
+                      ),
                     ),
                   ),
                 ),
               ),
-            if (_ecpConnected && _documents.isNotEmpty)
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                padding: const EdgeInsets.fromLTRB(24, 0, 16, 0),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate(
                     _documents.map((doc) {
@@ -605,101 +644,133 @@ class _EgovScreenState extends State<EgovScreen> {
                           : doc.type == 'passport'
                               ? AppColors.info
                               : AppColors.accent;
-                      return GlassCard(
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: color.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Icon(icon, color: color, size: 18),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    doc.name,
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                      color: AppColors.textPrimary,
-                                    ),
+                      return Column(
+                        children: [
+                          Container(
+                            width: double.infinity,
+                            color: AppColors.surface,
+                            padding:
+                                const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: color.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    '${doc.date} · ${doc.status}',
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: AppColors.textSecondary,
-                                    ),
+                                  child:
+                                      Icon(icon, color: color, size: 18),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        doc.name,
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '${doc.date} · ${doc.status}',
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
+                                ),
+                                const Icon(
+                                  Icons.chevron_right_rounded,
+                                  color: AppColors.textHint,
+                                  size: 18,
+                                ),
+                              ],
                             ),
-                            Icon(
-                              Icons.chevron_right_rounded,
-                              color: AppColors.textHint,
-                              size: 18,
-                            ),
-                          ],
-                        ),
+                          ),
+                          Container(
+                            height: 1,
+                            margin: const EdgeInsets.only(left: 68),
+                            color: AppColors.border,
+                          ),
+                        ],
                       );
                     }).toList(),
                   ),
                 ),
               ),
+            ],
 
-            // Owner info
-            if (_ecpConnected && _owners.isNotEmpty)
+            if (_ecpConnected && _owners.isNotEmpty) ...[
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                padding: const EdgeInsets.fromLTRB(24, 24, 16, 0),
                 sliver: SliverToBoxAdapter(
-                  child: const Text(
-                    'Сведения о собственнике',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
+                  child: Container(
+                    width: double.infinity,
+                    color: AppColors.surface,
+                    padding: const EdgeInsets.fromLTRB(24, 18, 16, 18),
+                    child: const Text(
+                      'СВЕДЕНИЯ О СОБСТВЕННИКЕ',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 0.8,
+                      ),
                     ),
                   ),
                 ),
               ),
-            if (_ecpConnected && _owners.isNotEmpty)
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                padding: const EdgeInsets.fromLTRB(24, 0, 16, 0),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate(
                     _owners.map((owner) {
-                      return GlassCard(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          children: [
-                            _dataRow('ФИО', owner.fullName),
-                            _divider(),
-                            _dataRow('ИИН', owner.iin),
-                            _divider(),
-                            _dataRow('Доля', owner.ownershipShare),
-                            _divider(),
-                            _dataRow('Тип', owner.registrationType),
-                            _divider(),
-                            _dataRow('Дата регистрации', owner.registrationDate),
-                          ],
-                        ),
+                      return Column(
+                        children: [
+                          Container(
+                            width: double.infinity,
+                            color: AppColors.surface,
+                            padding:
+                                const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                            child: Column(
+                              children: [
+                                _dataRow('ФИО', owner.fullName),
+                                _thinDivider(),
+                                _dataRow('ИИН', owner.iin),
+                                _thinDivider(),
+                                _dataRow('Доля', owner.ownershipShare),
+                                _thinDivider(),
+                                _dataRow('Тип', owner.registrationType),
+                                _thinDivider(),
+                                _dataRow(
+                                    'Дата регистрации', owner.registrationDate),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            height: 1,
+                            color: AppColors.border,
+                          ),
+                        ],
                       );
                     }).toList(),
                   ),
                 ),
               ),
+            ],
 
-            // Empty state
             if (!_ecpConnected)
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 40, 20, 0),
+                padding: const EdgeInsets.fromLTRB(24, 40, 16, 0),
                 sliver: SliverToBoxAdapter(
                   child: Center(
                     child: Column(
@@ -707,7 +778,7 @@ class _EgovScreenState extends State<EgovScreen> {
                         Icon(
                           Icons.vpn_key_off_rounded,
                           size: 64,
-                          color: AppColors.textHint.withValues(alpha: 0.3),
+                          color: AppColors.textHint.withValues(alpha: 0.4),
                         ),
                         const SizedBox(height: 16),
                         const Text(
@@ -776,5 +847,6 @@ class _EgovScreenState extends State<EgovScreen> {
     );
   }
 
-  Widget _divider() => Container(height: 0.5, color: AppColors.divider);
+  Widget _thinDivider() =>
+      Container(height: 1, color: AppColors.border);
 }

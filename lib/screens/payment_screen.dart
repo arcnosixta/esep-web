@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
-import '../widgets/glass_card.dart';
-import '../widgets/primary_button.dart';
+import '../widgets/option_button.dart';
+import '../utils/formatters.dart';
 
 class PaymentScreen extends StatefulWidget {
   const PaymentScreen({super.key});
@@ -16,6 +16,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Оплата'),
         leading: IconButton(
@@ -25,123 +26,113 @@ class _PaymentScreenState extends State<PaymentScreen> {
       ),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            // Amount card
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(28),
-              decoration: BoxDecoration(
-                gradient: AppColors.accentGradient,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.accentGlow,
-                    blurRadius: 32,
-                    offset: const Offset(0, 12),
-                  ),
-                ],
-              ),
-              child: Column(
+              color: AppColors.accent,
+              padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Сумма к оплате',
+                  Text(
+                    'СУММА К ОПЛАТЕ',
                     style: TextStyle(
-                        fontSize: 14, color: Color(0xCCFFFFFF)),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    '15 000 ₸',
-                    style: TextStyle(
-                      fontSize: 44,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                      letterSpacing: -1,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.2,
+                      color: Color(0x99FFFFFF),
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  const Text(
+                  SizedBox(height: 12),
+                  Text(
+                    '15 000 ₸',
+                    style: TextStyle(
+                      fontSize: 48,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      letterSpacing: -1.5,
+                      height: 1.0,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
                     'Оценка · Заявка №2847',
                     style: TextStyle(
-                        fontSize: 13, color: Color(0xAAFFFFFF)),
+                      fontSize: 13,
+                      color: Color(0x80FFFFFF),
+                    ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 32),
-            // Payment methods
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Способ оплаты',
+            Container(
+              width: double.infinity,
+              color: AppColors.surface,
+              padding: const EdgeInsets.fromLTRB(24, 28, 24, 8),
+              child: const Text(
+                'СПОСОБ ОПЛАТЫ',
                 style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.2,
+                  color: AppColors.textSecondary,
                 ),
               ),
             ),
-            const SizedBox(height: 14),
-            _paymentMethod(
-              index: 0,
-              icon: Icons.account_balance_wallet_rounded,
-              label: 'Kaspi Pay',
-              color: const Color(0xFFE8394A),
-              subtitle: 'Оплата через приложение Kaspi',
+            Container(
+              width: double.infinity,
+              color: AppColors.surface,
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                children: [
+                  _paymentRow(
+                    index: 0,
+                    icon: Icons.account_balance_wallet_rounded,
+                    label: 'Kaspi Pay',
+                    subtitle: 'Оплата через приложение Kaspi',
+                    color: const Color(0xFFE8394A),
+                  ),
+                  divider(),
+                  _paymentRow(
+                    index: 1,
+                    icon: Icons.credit_card_rounded,
+                    label: 'Банковская карта',
+                    subtitle: 'Visa, Mastercard, Mir',
+                    color: AppColors.accent,
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 10),
-            _paymentMethod(
-              index: 1,
-              icon: Icons.credit_card_rounded,
-              label: 'Банковская карта',
-              color: AppColors.accent,
-              subtitle: 'Visa, Mastercard, Mir',
-            ),
-            const SizedBox(height: 28),
             if (_selectedMethod == 1)
-              GlassCard(
-                padding: const EdgeInsets.all(16),
+              Container(
+                width: double.infinity,
+                color: AppColors.paper,
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
                 child: Column(
                   children: [
-                    TextField(
-                      style: const TextStyle(
-                          color: AppColors.textPrimary, fontSize: 15),
-                      decoration: const InputDecoration(
-                        hintText: 'Номер карты',
-                        prefixIcon: Icon(Icons.credit_card_rounded,
-                            size: 20, color: AppColors.textHint),
-                      ),
-                    ),
+                    _field('Номер карты', Icons.credit_card_rounded),
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        Expanded(
-                          child: TextField(
-                            style: const TextStyle(
-                                color: AppColors.textPrimary, fontSize: 15),
-                            decoration: const InputDecoration(hintText: 'MM/YY'),
-                          ),
-                        ),
+                        Expanded(child: _field('MM/YY', null)),
                         const SizedBox(width: 12),
-                        Expanded(
-                          child: TextField(
-                            style: const TextStyle(
-                                color: AppColors.textPrimary, fontSize: 15),
-                            decoration: const InputDecoration(hintText: 'CVV'),
-                            obscureText: true,
-                          ),
-                        ),
+                        Expanded(child: _field('CVV', null)),
                       ],
                     ),
+                    const SizedBox(height: 16),
                   ],
                 ),
               ),
-            const SizedBox(height: 28),
-            PrimaryButton(
-              label: 'Оплатить 15 000 ₸',
-              icon: Icons.lock_rounded,
-              onPressed: () {},
+            Container(
+              width: double.infinity,
+              color: AppColors.surface,
+              padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+              child: OptionButton(
+                text: 'Оплатить 15 000 ₸',
+                icon: Icons.lock_rounded,
+                onTap: () {},
+              ),
             ),
           ],
         ),
@@ -149,7 +140,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
-  Widget _paymentMethod({
+  Widget _paymentRow({
     required int index,
     required IconData icon,
     required String label,
@@ -158,30 +149,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }) {
     final selected = _selectedMethod == index;
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: () => setState(() => _selectedMethod = index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOutCubic,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: selected ? color.withValues(alpha: 0.06) : AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: selected ? color : AppColors.border,
-            width: selected ? 1.5 : 0.5,
-          ),
-        ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
         child: Row(
           children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: color, size: 22),
-            ),
+            Icon(icon, color: color, size: 22),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
@@ -198,10 +172,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
-                    ),
+                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                   ),
                 ],
               ),
@@ -222,16 +193,40 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       child: Container(
                         width: 12,
                         height: 12,
-                        decoration: BoxDecoration(
-                          color: color,
-                          shape: BoxShape.circle,
-                        ),
+                        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
                       ),
                     )
                   : null,
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  static Widget _field(String hint, IconData? prefix) {
+    return TextField(
+      style: const TextStyle(color: AppColors.textPrimary, fontSize: 15),
+      decoration: InputDecoration(
+        hintText: hint,
+        filled: true,
+        fillColor: AppColors.surface,
+        prefixIcon: prefix != null
+            ? Icon(prefix, size: 20, color: AppColors.textHint)
+            : null,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppColors.inputBorder, width: 1),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppColors.inputBorder, width: 1),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
     );
   }

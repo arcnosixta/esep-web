@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
-import '../widgets/glass_card.dart';
+import '../utils/formatters.dart';
+import '../widgets/app_filter_chip.dart';
 import '../widgets/status_badge.dart';
 import '../services/supabase_service.dart';
 import '../navigation/app_navigator.dart';
@@ -58,246 +59,218 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
     }
   }
 
-  String _statusLabel(String status) => switch (status) {
-        'new' => 'Новая',
-        'in_progress' => 'В работе',
-        'completed' => 'Завершена',
-        'rejected' => 'Отклонена',
-        'paid' => 'Оплачена',
-        _ => status,
-      };
-
-  BadgeStatus _badgeStatus(String status) => switch (status) {
-        'new' => BadgeStatus.pending,
-        'in_progress' => BadgeStatus.inProgress,
-        'completed' => BadgeStatus.completed,
-        'rejected' => BadgeStatus.rejected,
-        _ => BadgeStatus.pending,
-      };
-
-  String _propertyTypeLabel(String type) => switch (type) {
-        'apartment' => 'Квартира',
-        'house' => 'Дом',
-        'land' => 'Участок',
-        'commercial' => 'Коммерческая',
-        _ => type,
-      };
-
   @override
   Widget build(BuildContext context) {
     final filtered = _filteredApplications;
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 16, 20, 0),
-              child: Text(
-                'Мои заявки',
+            // ── White strip: title ──
+            Container(
+              width: double.infinity,
+              color: AppColors.surface,
+              padding: const EdgeInsets.fromLTRB(24, 20, 20, 16),
+              child: const Text(
+                'МОИ ЗАЯВКИ',
                 style: TextStyle(
-                  fontSize: 28,
+                  fontSize: 36,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
                   letterSpacing: -0.5,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            // Filters
-            SizedBox(
-              height: 40,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: _filters.length,
-                itemBuilder: (context, index) {
-                  final active = _filterIndex == index;
-                  return GestureDetector(
-                    onTap: () => setState(() => _filterIndex = index),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 250),
-                      curve: Curves.easeOutCubic,
-                      margin: const EdgeInsets.only(right: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 18),
-                      decoration: BoxDecoration(
-                        gradient: active ? AppColors.buttonGradient : null,
-                        color: active ? null : AppColors.surface,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: active
-                            ? [
-                                BoxShadow(
-                                  color: AppColors.accentGlow,
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ]
-                            : null,
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        _filters[index],
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color:
-                              active ? Colors.white : AppColors.textSecondary,
-                        ),
-                      ),
-                    ),
-                  );
-                },
+
+            // ── Paper strip: filter chips ──
+            Container(
+              width: double.infinity,
+              color: AppColors.paper,
+              padding: const EdgeInsets.fromLTRB(24, 12, 20, 12),
+              child: SizedBox(
+                height: 44,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: List.generate(_filters.length, (index) {
+                    return AppFilterChip(
+                      label: _filters[index],
+                      isSelected: _filterIndex == index,
+                      onTap: () => setState(() => _filterIndex = index),
+                    );
+                  }),
+                ),
               ),
             ),
-            const SizedBox(height: 16),
-            // List
-            Expanded(
-              child: _loading
-                  ? const Center(
-                      child: CircularProgressIndicator(
-                          color: AppColors.accent))
-                  : filtered.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.description_rounded,
-                                size: 48,
-                                color: AppColors.textHint.withValues(alpha: 0.3),
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                'Нет заявок',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: AppColors.textHint,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : RefreshIndicator(
-                          onRefresh: _loadApplications,
-                          color: AppColors.accent,
-                          child: ListView.builder(
-                            physics: const AlwaysScrollableScrollPhysics(
-                              parent: BouncingScrollPhysics(),
-                            ),
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 20),
-                            itemCount: filtered.length,
-                            itemBuilder: (context, index) {
-                              final app = filtered[index];
-                              final prop = app['properties'];
-                              final propType =
-                                  prop != null ? (prop['type'] ?? '') : '';
-                              final address =
-                                  prop != null ? (prop['address'] ?? '') : '';
-                              final area = prop != null
-                                  ? '${prop['area'] ?? 0} м²'
-                                  : '';
-                              final status = app['status'] ?? 'new';
 
-                              return GlassCard(
-                                onTap: () => AppNavigator.push(
-                                  context,
-                                  const ApplicationCardScreen(),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 44,
-                                      height: 44,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.accent
-                                            .withValues(alpha: 0.1),
-                                        borderRadius:
-                                            BorderRadius.circular(12),
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          '#${(app['id'] ?? '').toString().substring(0, 4).toUpperCase()}',
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w700,
-                                            color: AppColors.accent,
+            // ── White strip: list ──
+            Expanded(
+              child: Container(
+                color: AppColors.surface,
+                child: _loading
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.accent,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : filtered.isEmpty
+                        ? _buildEmptyState()
+                        : RefreshIndicator(
+                            onRefresh: _loadApplications,
+                            color: AppColors.accent,
+                            child: ListView.separated(
+                              physics: const AlwaysScrollableScrollPhysics(
+                                parent: BouncingScrollPhysics(),
+                              ),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 24),
+                              itemCount: filtered.length,
+                              separatorBuilder: (context, _) => Container(
+                                height: 1,
+                                color: AppColors.border,
+                              ),
+                              itemBuilder: (context, index) {
+                                final app = filtered[index];
+                                final prop = app['properties'];
+                                final propType =
+                                    prop != null ? (prop['type'] ?? '') : '';
+                                final address =
+                                    prop != null ? (prop['address'] ?? '') : '';
+                                final area = prop != null
+                                    ? '${prop['area'] ?? 0} м²'
+                                    : '';
+                                final status = app['status'] ?? 'new';
+
+                                return GestureDetector(
+                                  onTap: () => AppNavigator.push(
+                                    context,
+                                    const ApplicationCardScreen(),
+                                  ),
+                                  behavior: HitTestBehavior.opaque,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 16),
+                                    child: Row(
+                                      children: [
+                                        // ID pill
+                                        Container(
+                                          padding:
+                                              const EdgeInsets.symmetric(
+                                                  horizontal: 10,
+                                                  vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.accent
+                                                .withValues(alpha: 0.1),
+                                            borderRadius:
+                                                BorderRadius.circular(6),
+                                          ),
+                                          child: Text(
+                                            '#${(app['id'] ?? '').toString().substring(0, 4).toUpperCase()}',
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
+                                              color: AppColors.accent,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 14),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment
-                                                    .spaceBetween,
+                                        const SizedBox(width: 14),
+
+                                        // Info
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                _propertyTypeLabel(
-                                                    propType),
+                                                propertyTypeLabel(propType),
                                                 style: const TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight:
-                                                      FontWeight.w600,
-                                                  color: AppColors
-                                                      .textPrimary,
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w600,
+                                                  color:
+                                                      AppColors.textPrimary,
                                                 ),
                                               ),
-                                              StatusBadge(
-                                                status:
-                                                    _badgeStatus(status),
-                                                label:
-                                                    _statusLabel(status),
-                                                small: true,
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 5),
-                                          Row(
-                                            children: [
-                                              Text(
-                                                area,
-                                                style: const TextStyle(
-                                                    fontSize: 12,
-                                                    color: AppColors
-                                                        .textSecondary),
-                                              ),
-                                              const Text('  ·  ',
-                                                  style: TextStyle(
-                                                      color: AppColors
-                                                          .textHint)),
-                                              Expanded(
-                                                child: Text(
-                                                  address,
-                                                  style: const TextStyle(
+                                              const SizedBox(height: 4),
+                                              Row(
+                                                children: [
+                                                  Text(
+                                                    area,
+                                                    style: const TextStyle(
                                                       fontSize: 12,
                                                       color: AppColors
-                                                          .textSecondary),
-                                                  overflow: TextOverflow
-                                                      .ellipsis,
-                                                ),
+                                                          .textSecondary,
+                                                    ),
+                                                  ),
+                                                  const Text('  ·  ',
+                                                      style: TextStyle(
+                                                          color: AppColors
+                                                              .textHint)),
+                                                  Expanded(
+                                                    child: Text(
+                                                      address,
+                                                      style:
+                                                          const TextStyle(
+                                                        fontSize: 12,
+                                                        color: AppColors
+                                                            .textSecondary,
+                                                      ),
+                                                      overflow: TextOverflow
+                                                          .ellipsis,
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ],
                                           ),
-                                        ],
-                                      ),
+                                        ),
+
+                                        const SizedBox(width: 10),
+
+                                        // Status badge
+                                        StatusBadge(
+                                          status:
+                                              badgeStatusFromKey(status),
+                                          label: statusLabel(status),
+                                          small: true,
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                              );
-                            },
+                                  ),
+                                );
+                              },
+                            ),
                           ),
-                        ),
+              ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.description_rounded,
+            size: 48,
+            color: AppColors.muted,
+          ),
+          const SizedBox(height: 14),
+          const Text(
+            'Нет заявок',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
       ),
     );
   }

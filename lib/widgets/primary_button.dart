@@ -14,7 +14,7 @@ class PrimaryButton extends StatefulWidget {
     required this.label,
     this.onPressed,
     this.width,
-    this.height = 54,
+    this.height = 52,
     this.outlined = false,
     this.icon,
   });
@@ -36,7 +36,7 @@ class _PrimaryButtonState extends State<PrimaryButton>
       duration: const Duration(milliseconds: 120),
       reverseDuration: const Duration(milliseconds: 80),
     );
-    _scaleAnim = Tween<double>(begin: 1.0, end: 0.96).animate(
+    _scaleAnim = Tween<double>(begin: 1.0, end: 0.97).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
   }
@@ -80,7 +80,7 @@ class _PrimaryButtonState extends State<PrimaryButton>
       decoration: widget.outlined
           ? BoxDecoration(
               color: Colors.transparent,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: enabled
                     ? AppColors.accent
@@ -89,15 +89,14 @@ class _PrimaryButtonState extends State<PrimaryButton>
               ),
             )
           : BoxDecoration(
-              gradient: enabled ? AppColors.buttonGradient : null,
-              color: enabled ? null : AppColors.surfaceLight,
-              borderRadius: BorderRadius.circular(16),
+              color: enabled ? AppColors.accent : AppColors.surfaceLight,
+              borderRadius: BorderRadius.circular(12),
               boxShadow: enabled
                   ? [
                       BoxShadow(
-                        color: AppColors.accentGlow,
-                        blurRadius: 24,
-                        offset: const Offset(0, 8),
+                        color: AppColors.accent.withValues(alpha: 0.2),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
                       ),
                     ]
                   : null,
@@ -105,7 +104,7 @@ class _PrimaryButtonState extends State<PrimaryButton>
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           splashColor: Colors.white.withValues(alpha: 0.1),
           highlightColor: Colors.white.withValues(alpha: 0.05),
           onTap: widget.onPressed,
@@ -114,7 +113,9 @@ class _PrimaryButtonState extends State<PrimaryButton>
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (widget.icon != null) ...[
-                  Icon(widget.icon, color: Colors.white, size: 20),
+                  Icon(widget.icon,
+                      color: enabled ? Colors.white : AppColors.textHint,
+                      size: 20),
                   const SizedBox(width: 8),
                 ],
                 Text(
@@ -122,8 +123,9 @@ class _PrimaryButtonState extends State<PrimaryButton>
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: enabled ? Colors.white : AppColors.textHint,
-                    letterSpacing: 0.2,
+                    color: enabled
+                        ? Colors.white
+                        : AppColors.textHint,
                   ),
                 ),
               ],

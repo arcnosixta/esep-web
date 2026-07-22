@@ -52,82 +52,128 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
-            // Header
+            // ── White header strip ──
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.fromLTRB(24, 16, 20, 14),
               decoration: const BoxDecoration(
                 color: AppColors.surface,
                 border: Border(
-                  bottom: BorderSide(color: AppColors.border, width: 0.5),
+                  bottom: BorderSide(color: AppColors.border, width: 1),
                 ),
               ),
               child: Row(
                 children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      gradient: AppColors.accentGradient,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'AI',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                        ),
-                      ),
+                  const Text(
+                    'AI АССИСТЕНТ',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.2,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'ESEP AI',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      Text(
-                        'Онлайн',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppColors.success,
-                        ),
-                      ),
-                    ],
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: const BoxDecoration(
+                      color: AppColors.success,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const Text(
+                    'Онлайн',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.success,
+                    ),
                   ),
                   const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.more_vert_rounded, size: 20),
+                  Icon(
+                    Icons.more_vert_rounded,
+                    size: 18,
                     color: AppColors.textHint,
-                    onPressed: () {},
                   ),
                 ],
               ),
             ),
-            // Messages
+
+            // ── Messages ──
             Expanded(
               child: ListView.builder(
                 controller: _scrollController,
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
                 itemCount: _messages.length,
                 itemBuilder: (context, index) {
                   return _buildMessage(_messages[index], index);
                 },
               ),
             ),
-            // Input
-            _buildInput(),
+
+            // ── White input strip ──
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 10, 16, 14),
+              decoration: const BoxDecoration(
+                color: AppColors.surface,
+                border: Border(
+                  top: BorderSide(color: AppColors.border, width: 1),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: AppColors.border,
+                          width: 1,
+                        ),
+                      ),
+                      child: TextField(
+                        controller: _controller,
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 14,
+                        ),
+                        decoration: const InputDecoration(
+                          hintText: 'Сообщение...',
+                          hintStyle: TextStyle(color: AppColors.textHint),
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        maxLines: null,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: const BoxDecoration(
+                      color: AppColors.accent,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.send_rounded,
+                      size: 17,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -135,144 +181,52 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
   }
 
   Widget _buildMessage(_ChatMessage msg, int index) {
-    return TweenAnimationWidget<double>(
+    final isUser = msg.isUser;
+
+    return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.0, end: 1.0),
-      duration: Duration(milliseconds: 300 + (index * 50)),
+      duration: Duration(milliseconds: 250 + (index * 40)),
       curve: Curves.easeOut,
       builder: (context, value, child) {
         return Opacity(
           opacity: value,
           child: Transform.translate(
-            offset: Offset(0, 10 * (1 - value)),
+            offset: Offset(0, 8 * (1 - value)),
             child: child,
           ),
         );
       },
-      child: Align(
-        alignment: msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(context).size.width * 0.75,
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: msg.isUser ? AppColors.accent : AppColors.surface,
-            borderRadius: BorderRadius.only(
-              topLeft: const Radius.circular(18),
-              topRight: const Radius.circular(18),
-              bottomLeft: Radius.circular(msg.isUser ? 18 : 4),
-              bottomRight: Radius.circular(msg.isUser ? 4 : 18),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: (msg.isUser ? AppColors.accent : Colors.black)
-                    .withValues(alpha: 0.15),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: isUser ? 64 : 0,
+          right: isUser ? 0 : 64,
+          bottom: 10,
+        ),
+        child: Align(
+          alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            decoration: BoxDecoration(
+              color: isUser ? AppColors.accent : AppColors.paper,
+              borderRadius: BorderRadius.only(
+                topLeft: const Radius.circular(6),
+                topRight: const Radius.circular(6),
+                bottomLeft: Radius.circular(isUser ? 6 : 2),
+                bottomRight: Radius.circular(isUser ? 2 : 6),
               ),
-            ],
-          ),
-          child: Text(
-            msg.text,
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.5,
-              color: msg.isUser
-                  ? Colors.white
-                  : AppColors.textPrimary.withValues(alpha: 0.9),
+            ),
+            child: Text(
+              msg.text,
+              style: TextStyle(
+                fontSize: 14,
+                height: 1.55,
+                color: isUser ? Colors.white : AppColors.textPrimary,
+              ),
             ),
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildInput() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(top: BorderSide(color: AppColors.border, width: 0.5)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: AppColors.inputFill,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.inputBorder, width: 0.5),
-              ),
-              child: TextField(
-                controller: _controller,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 14,
-                ),
-                decoration: const InputDecoration(
-                  hintText: 'Сообщение...',
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(vertical: 13),
-                ),
-                maxLines: null,
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              gradient: AppColors.buttonGradient,
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.accentGlow,
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.send_rounded, size: 18),
-              color: Colors.white,
-              onPressed: () {},
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class TweenAnimationWidget<T> extends StatelessWidget {
-  final Tween<T> tween;
-  final Duration duration;
-  final Curve curve;
-  final Widget Function(BuildContext, T, Widget?) builder;
-  final Widget? child;
-
-  const TweenAnimationWidget({
-    super.key,
-    required this.tween,
-    required this.duration,
-    this.curve = Curves.linear,
-    required this.builder,
-    this.child,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TweenAnimationBuilder<T>(
-      tween: tween,
-      duration: duration,
-      curve: curve,
-      builder: builder,
-      child: child,
     );
   }
 }
