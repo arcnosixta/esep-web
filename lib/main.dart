@@ -8,7 +8,10 @@ import 'screens/app_shell.dart';
 import 'providers/app_settings.dart';
 import 'l10n/app_strings.dart';
 
-const openRouterApiKey = 'YOUR_OPENROUTER_API_KEY';
+const openRouterApiKey = String.fromEnvironment(
+  'OPENROUTER_API_KEY',
+  defaultValue: 'YOUR_OPENROUTER_API_KEY',
+);
 
 const supabaseUrl = 'https://rphsqxhwfrkavvxzvnuv.supabase.co';
 const supabaseAnonKey =

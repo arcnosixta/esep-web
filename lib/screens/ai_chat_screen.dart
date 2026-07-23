@@ -30,10 +30,10 @@ class _AiChatScreenState extends State<AiChatScreen> {
   final List<String> _pendingImageBase64 = [];
 
   static const _quickQuestions = [
-    'Оценить квартиру в Астане',
-    'Факторы стоимости дома',
-    'Как tính рыночную цену?',
+    'Предварительная оценка квартиры',
+    'Какие факторы влияют на стоимость?',
     'Сравнить цены по районам',
+    'Что нужно для отчёта об оценке?',
   ];
 
   @override
@@ -231,11 +231,17 @@ class _AiChatScreenState extends State<AiChatScreen> {
             });
           }
         },
-        onError: (_) {
+        onError: (e) {
           if (mounted) {
+            final msg = e.toString();
+            final isNetwork = msg.contains('SocketException') ||
+                msg.contains('Connection') ||
+                msg.contains('timeout');
             setState(() {
               _messages[assistantIndex] = ChatMessage(
-                text: 'Произошла ошибка. Попробуйте ещё раз.',
+                text: isNetwork
+                    ? 'Нет подключения к интернету. Проверьте сеть и попробуйте ещё раз.'
+                    : 'Ошибка: ${msg.length > 200 ? '${msg.substring(0, 200)}...' : msg}',
                 role: MessageRole.assistant,
                 timestamp: DateTime.now(),
               );
@@ -248,7 +254,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
       if (mounted) {
         setState(() {
           _messages[assistantIndex] = ChatMessage(
-            text: 'Не удалось подключиться к AI-сервису.',
+            text: 'Не удалось отправить запрос: ${e.toString()}',
             role: MessageRole.assistant,
             timestamp: DateTime.now(),
           );
@@ -314,7 +320,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
                   ),
                 ),
                 Text(
-                  'Оценка недвижимости',
+                  'Айдар Нурланович',
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w400,
@@ -391,7 +397,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Задайте вопрос об оценке недвижимости,\nотправьте фото объекта для анализа',
+              'Задайте вопрос по оценке недвижимости\nили отправьте фото объекта для анализа',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
