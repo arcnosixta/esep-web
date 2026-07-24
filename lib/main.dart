@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'theme/app_theme.dart';
 import 'screens/splash_screen.dart';
@@ -8,10 +9,7 @@ import 'screens/app_shell.dart';
 import 'providers/app_settings.dart';
 import 'l10n/app_strings.dart';
 
-const openRouterApiKey = String.fromEnvironment(
-  'OPENROUTER_API_KEY',
-  defaultValue: 'YOUR_OPENROUTER_API_KEY',
-);
+late final String openRouterApiKey;
 
 const supabaseUrl = 'https://rphsqxhwfrkavvxzvnuv.supabase.co';
 const supabaseAnonKey =
@@ -21,6 +19,9 @@ final appSettings = AppSettings();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await dotenv.load(fileName: '.env');
+  openRouterApiKey = dotenv.env['OPENROUTER_API_KEY'] ?? '';
 
   await Supabase.initialize(
     url: supabaseUrl,
