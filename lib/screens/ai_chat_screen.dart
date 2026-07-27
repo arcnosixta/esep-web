@@ -30,10 +30,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
   final List<String> _pendingImageBase64 = [];
 
   static const _quickQuestions = [
-    'Предварительная оценка квартиры',
-    'Какие факторы влияют на стоимость?',
-    'Сравнить цены по районам',
-    'Что нужно для отчёта об оценке?',
+    'Начать оценку',
   ];
 
   @override
@@ -109,7 +106,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'Добавить фото',
+                  'Добавить фото (страховка / объект)',
                   style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
@@ -388,7 +385,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'Чем могу помочь?',
+              'Оценка недвижимости',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
@@ -397,7 +394,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Задайте вопрос по оценке недвижимости\nили отправьте фото объекта для анализа',
+              'Пришлите два фото и получите оценку:\n📄 Страховой полис — там адрес, площадь, данные\n🏠 Фото объекта — состояние и отделка',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -405,7 +402,60 @@ class _AiChatScreenState extends State<AiChatScreen> {
                 height: 1.5,
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: c.accent.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: c.accent.withValues(alpha: 0.2)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.description_rounded, color: c.accent, size: 18),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Страховка',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: c.accent,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: c.gold.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: c.gold.withValues(alpha: 0.25)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.home_rounded, color: c.gold, size: 18),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Фото объекта',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: c.gold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -729,7 +779,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
                   color: c.textPrimary,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'Задайте вопрос...',
+                  hintText: 'Адрес или вопрос...',
                   hintStyle: TextStyle(color: c.textHint),
                   border: InputBorder.none,
                   contentPadding:
