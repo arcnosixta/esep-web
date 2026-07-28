@@ -398,6 +398,12 @@ class SupabaseService {
         .from('applications')
         .update({'status': status})
         .eq('id', applicationId);
+    await logActivity(
+      action: 'application_status_changed',
+      entityType: 'application',
+      entityId: applicationId,
+      details: {'new_status': status},
+    );
   }
 
   static Future<List<Map<String, dynamic>>> getAppraiserStats() async {
@@ -432,27 +438,19 @@ class SupabaseService {
   // ============================================
 
   static Future<List<Map<String, dynamic>>> getAllProfiles() async {
-    try {
-      final data = await supabase
-          .from('profiles')
-          .select()
-          .order('created_at', ascending: false);
-      return List<Map<String, dynamic>>.from(data);
-    } catch (_) {
-      return [];
-    }
+    final data = await supabase
+        .from('profiles')
+        .select()
+        .order('created_at', ascending: false);
+    return List<Map<String, dynamic>>.from(data);
   }
 
   static Future<List<Map<String, dynamic>>> getAllApplications() async {
-    try {
-      final data = await supabase
-          .from('applications')
-          .select('*, profiles!applications_user_id_fkey(full_name, email, iin), properties(type, address, area)')
-          .order('created_at', ascending: false);
-      return List<Map<String, dynamic>>.from(data);
-    } catch (_) {
-      return [];
-    }
+    final data = await supabase
+        .from('applications')
+        .select('*, profiles!applications_user_id_fkey(full_name, email, iin), properties(type, address, area)')
+        .order('created_at', ascending: false);
+    return List<Map<String, dynamic>>.from(data);
   }
 
   static Future<void> updateUserRole(String userUserId, String role) async {
@@ -460,6 +458,12 @@ class SupabaseService {
         .from('profiles')
         .update({'role': role})
         .eq('user_id', userUserId);
+    await logActivity(
+      action: 'user_role_changed',
+      entityType: 'profile',
+      entityId: userUserId,
+      details: {'new_role': role},
+    );
   }
 
   static Future<void> toggleUserBlock(String userUserId, bool blocked) async {
@@ -467,6 +471,11 @@ class SupabaseService {
         .from('profiles')
         .update({'is_blocked': blocked})
         .eq('user_id', userUserId);
+    await logActivity(
+      action: blocked ? 'user_blocked' : 'user_unblocked',
+      entityType: 'profile',
+      entityId: userUserId,
+    );
   }
 
   static Future<void> updateUserProfile(
@@ -485,79 +494,71 @@ class SupabaseService {
     if (role != null) updates['role'] = role;
     if (updates.isNotEmpty) {
       await supabase.from('profiles').update(updates).eq('user_id', userUserId);
+      await logActivity(
+        action: 'user_profile_updated',
+        entityType: 'profile',
+        entityId: userUserId,
+        details: updates,
+      );
     }
   }
 
   static Future<Map<String, int>> getAdminStats() async {
-    try {
-      final profiles = await supabase.from('profiles').select('id');
-      final applications = await supabase.from('applications').select('id, status');
-      final appraisers = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('role', 'appraiser');
+    final profiles = await supabase.from('profiles').select('id');
+    final applications = await supabase.from('applications').select('id, status');
+    final appraisers = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('role', 'appraiser');
 
-      final allApps = List<Map<String, dynamic>>.from(applications);
-      final completed = allApps.where((a) => a['status'] == 'completed').length;
-      final inProgress = allApps.where((a) => a['status'] == 'in_progress').length;
+    final allApps = List<Map<String, dynamic>>.from(applications);
+    final completed = allApps.where((a) => a['status'] == 'completed').length;
+    final inProgress = allApps.where((a) => a['status'] == 'in_progress').length;
 
-      return {
-        'totalUsers': profiles.length,
-        'totalApplications': allApps.length,
-        'totalAppraisers': appraisers.length,
-        'completedApplications': completed,
-        'inProgressApplications': inProgress,
-      };
-    } catch (_) {
-      return {
-        'totalUsers': 0,
-        'totalApplications': 0,
-        'totalAppraisers': 0,
-        'completedApplications': 0,
-        'inProgressApplications': 0,
-      };
-    }
+    return {
+      'totalUsers': profiles.length,
+      'totalApplications': allApps.length,
+      'totalAppraisers': appraisers.length,
+      'completedApplications': completed,
+      'inProgressApplications': inProgress,
+    };
   }
 
   static Future<List<Map<String, dynamic>>> getAdminActivityLogs({
     int limit = 50,
   }) async {
-    try {
-      final data = await supabase
-          .from('activity_logs')
-          .select('*, profiles!activity_logs_user_id_fkey(full_name)')
-          .order('created_at', ascending: false)
-          .limit(limit);
-      return List<Map<String, dynamic>>.from(data);
-    } catch (_) {
-      return [];
-    }
+    final data = await supabase
+        .from('activity_logs')
+        .select('*, profiles!activity_logs_user_id_fkey(full_name)')
+        .order('created_at', ascending: false)
+        .limit(limit);
+    return List<Map<String, dynamic>>.from(data);
   }
 
   static Future<Map<String, dynamic>?> getApplicationDetail(String id) async {
-    try {
-      final data = await supabase
-          .from('applications')
-          .select('*, profiles!applications_user_id_fkey(full_name, email, iin, phone), profiles!applications_appraiser_id_fkey(full_name, email) as appraiser_profile, properties(type, address, area, rooms, floor, total_floors)')
-          .eq('id', id)
-          .maybeSingle();
-      return data;
-    } catch (_) {
-      return null;
-    }
+    final data = await supabase
+        .from('applications')
+        .select('*, profiles!applications_user_id_fkey(full_name, email, iin, phone), profiles!applications_appraiser_id_fkey(full_name, email) as appraiser_profile, properties(type, address, area, rooms, floor, total_floors)')
+        .eq('id', id)
+        .maybeSingle();
+    return data;
   }
 
   static Future<List<Map<String, dynamic>>> getApplicationDocuments(String userId) async {
-    try {
-      final data = await supabase
-          .from('documents')
-          .select()
-          .eq('user_id', userId)
-          .order('created_at', ascending: false);
-      return List<Map<String, dynamic>>.from(data);
-    } catch (_) {
-      return [];
-    }
+    final data = await supabase
+        .from('documents')
+        .select()
+        .eq('user_id', userId)
+        .order('created_at', ascending: false);
+    return List<Map<String, dynamic>>.from(data);
+  }
+
+  static Future<List<Map<String, dynamic>>> getAllDocuments() async {
+    final data = await supabase
+        .from('documents')
+        .select('*, profiles!documents_user_id_fkey(full_name, email)')
+        .order('created_at', ascending: false);
+    return List<Map<String, dynamic>>.from(data);
   }
 
   // ============================================

@@ -5,7 +5,6 @@ import '../models/user_profile.dart';
 import '../utils/formatters.dart';
 import '../widgets/status_badge.dart';
 import '../widgets/app_filter_chip.dart';
-import 'document_upload_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -1756,13 +1755,193 @@ class _AdminApplicationDetailScreenState extends State<_AdminApplicationDetailSc
 // ADMIN DOCUMENTS
 // ============================================
 
-class _AdminDocuments extends StatelessWidget {
+class _AdminDocuments extends StatefulWidget {
   const _AdminDocuments();
 
   @override
-  Widget build(BuildContext context) {
-    return const DocumentUploadScreen();
+  State<_AdminDocuments> createState() => _AdminDocumentsState();
+}
+
+class _AdminDocumentsState extends State<_AdminDocuments> {
+  bool _loading = true;
+  List<Map<String, dynamic>> _documents = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
   }
+
+  Future<void> _loadData() async {
+    try {
+      final data = await SupabaseService.getAllDocuments();
+      if (mounted) {
+        setState(() {
+          _documents = data;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+
+    return Scaffold(
+      backgroundColor: c.background,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Документы',
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.5,
+                      color: c.textPrimary,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: c.accent.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '${_documents.length}',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: c.accent),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: _loading
+                  ? Center(child: CircularProgressIndicator(color: c.accent, strokeWidth: 2))
+                  : _documents.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.folder_open_rounded, size: 56, color: c.muted),
+                              const SizedBox(height: 16),
+                              Text('Нет документов', style: TextStyle(fontSize: 16, color: c.textSecondary)),
+                              const SizedBox(height: 6),
+                              Text('Документы появятся после загрузки пользователями',
+                                  style: TextStyle(fontSize: 13, color: c.textHint)),
+                            ],
+                          ),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: _loadData,
+                          color: c.accent,
+                          child: ListView.separated(
+                            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                            padding: const EdgeInsets.fromLTRB(24, 14, 24, 24),
+                            itemCount: _documents.length,
+                            separatorBuilder: (context, _) => const SizedBox(height: 8),
+                            itemBuilder: (context, index) {
+                              final doc = _documents[index];
+                              final fileType = (doc['file_type'] ?? '').toString().toLowerCase();
+                              final userName = (doc['profiles']?['full_name'] ?? '').toString();
+                              final fileSize = doc['file_size'];
+                              final createdAt = doc['created_at']?.toString();
+                              final sizeLabel = fileSize != null
+                                  ? _formatFileSize((fileSize as num).toDouble())
+                                  : '';
+                              final dateLabel = createdAt != null
+                                  ? _formatDate(createdAt)
+                                  : '';
+
+                              return Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: c.surface,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: c.border, width: 1),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 42,
+                                      height: 42,
+                                      decoration: BoxDecoration(
+                                        color: _fileColor(c, fileType).withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Icon(_fileIcon(fileType), color: _fileColor(c, fileType), size: 20),
+                                    ),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            doc['name'] ?? '',
+                                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: c.textPrimary),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 3),
+                                          Text(
+                                            userName.isNotEmpty ? '$userName · $sizeLabel' : sizeLabel,
+                                            style: TextStyle(fontSize: 12, color: c.textSecondary),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    if (dateLabel.isNotEmpty)
+                                      Text(dateLabel, style: TextStyle(fontSize: 11, color: c.textHint)),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatFileSize(double bytes) {
+    if (bytes < 1024) return '${bytes.round()} B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+  }
+
+  String _formatDate(String iso) {
+    try {
+      final dt = DateTime.parse(iso).toLocal();
+      return '${dt.day.toString().padLeft(2, '0')}.${dt.month.toString().padLeft(2, '0')}.${dt.year}';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  Color _fileColor(AppColors c, String type) => switch (type) {
+        'pdf' => const Color(0xFFEF4444),
+        'jpg' || 'jpeg' => const Color(0xFF38BDF8),
+        'png' => const Color(0xFF2DD4A8),
+        _ => c.textSecondary,
+      };
+
+  IconData _fileIcon(String type) => switch (type) {
+        'pdf' => Icons.picture_as_pdf_rounded,
+        'jpg' || 'jpeg' => Icons.photo_rounded,
+        'png' => Icons.image_rounded,
+        _ => Icons.insert_drive_file_rounded,
+      };
 }
 
 // ============================================
@@ -1916,6 +2095,16 @@ class _AdminLogsState extends State<_AdminLogs> {
         return 'Оценка создана';
       case 'appraisal_signed':
         return 'Оценка подписана ЭЦП';
+      case 'user_role_changed':
+        return 'Роль пользователя изменена';
+      case 'user_blocked':
+        return 'Пользователь заблокирован';
+      case 'user_unblocked':
+        return 'Пользователь разблокирован';
+      case 'user_profile_updated':
+        return 'Профиль пользователя обновлён';
+      case 'application_status_changed':
+        return 'Статус заявки изменён';
       default:
         return action;
     }

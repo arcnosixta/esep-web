@@ -154,6 +154,11 @@ CREATE POLICY "Appraisers can view client profiles" ON profiles FOR SELECT TO au
 DROP POLICY IF EXISTS "Users can view own properties" ON properties;
 CREATE POLICY "Users can view own properties" ON properties FOR SELECT TO authenticated USING ((SELECT auth.uid()) = user_id);
 
+DROP POLICY IF EXISTS "Admins can view all properties" ON properties;
+CREATE POLICY "Admins can view all properties" ON properties FOR SELECT TO authenticated USING (
+  EXISTS (SELECT 1 FROM profiles WHERE user_id = (SELECT auth.uid()) AND role = 'admin')
+);
+
 DROP POLICY IF EXISTS "Users can insert own properties" ON properties;
 CREATE POLICY "Users can insert own properties" ON properties FOR INSERT TO authenticated WITH CHECK ((SELECT auth.uid()) = user_id);
 
@@ -166,6 +171,11 @@ CREATE POLICY "Users can delete own properties" ON properties FOR DELETE TO auth
 -- documents
 DROP POLICY IF EXISTS "Users can view own documents" ON documents;
 CREATE POLICY "Users can view own documents" ON documents FOR SELECT TO authenticated USING ((SELECT auth.uid()) = user_id);
+
+DROP POLICY IF EXISTS "Admins can view all documents" ON documents;
+CREATE POLICY "Admins can view all documents" ON documents FOR SELECT TO authenticated USING (
+  EXISTS (SELECT 1 FROM profiles WHERE user_id = (SELECT auth.uid()) AND role = 'admin')
+);
 
 DROP POLICY IF EXISTS "Users can insert own documents" ON documents;
 CREATE POLICY "Users can insert own documents" ON documents FOR INSERT TO authenticated WITH CHECK ((SELECT auth.uid()) = user_id);
