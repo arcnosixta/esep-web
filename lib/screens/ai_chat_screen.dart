@@ -49,7 +49,10 @@ class _AiChatScreenState extends State<AiChatScreen> {
   @override
   void initState() {
     super.initState();
-    _loadConversations();
+    // Delay to ensure Supabase auth is ready after navigation
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) _loadConversations();
+    });
   }
 
   @override
@@ -63,9 +66,13 @@ class _AiChatScreenState extends State<AiChatScreen> {
 
   Future<void> _loadConversations() async {
     try {
+      debugPrint('[AI] Loading conversations, userId: ${SupabaseService.userId}');
       final list = await SupabaseService.getConversations();
+      debugPrint('[AI] Loaded ${list.length} conversations');
       if (mounted) setState(() => _conversations = list);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[AI] Load conversations error: $e');
+    }
   }
 
   Future<void> _loadConversation(String id) async {
@@ -117,16 +124,19 @@ class _AiChatScreenState extends State<AiChatScreen> {
 
     try {
       if (_conversationId != null) {
+        debugPrint('[AI] Updating conversation: $_conversationId');
         await SupabaseService.updateConversation(
           id: _conversationId!,
           title: title,
           messages: apiMessages,
         );
       } else {
+        debugPrint('[AI] Creating new conversation');
         _conversationId = await SupabaseService.createConversation(
           title: title,
           messages: apiMessages,
         );
+        debugPrint('[AI] Created conversation: $_conversationId');
       }
       await _loadConversations();
     } catch (e) {

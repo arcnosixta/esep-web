@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../main.dart';
 import '../models/user_profile.dart';
@@ -615,12 +616,21 @@ class SupabaseService {
   // ============================================
 
   static Future<List<Map<String, dynamic>>> getConversations() async {
-    if (userId == null) return [];
-    return await supabase
-        .from('ai_conversations')
-        .select('id, title, updated_at')
-        .eq('user_id', userId!)
-        .order('updated_at', ascending: false);
+    final uid = userId;
+    if (uid == null) {
+      debugPrint('[Supabase] getConversations: userId is null');
+      return [];
+    }
+    try {
+      return await supabase
+          .from('ai_conversations')
+          .select('id, title, updated_at')
+          .eq('user_id', uid)
+          .order('updated_at', ascending: false);
+    } catch (e) {
+      debugPrint('[Supabase] getConversations error: $e');
+      return [];
+    }
   }
 
   static Future<List<Map<String, dynamic>>> getConversation(String id) async {
