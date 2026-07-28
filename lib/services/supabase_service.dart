@@ -449,12 +449,22 @@ class SupabaseService {
 
   static Future<List<Map<String, dynamic>>> getAllApplications() async {
     debugPrint('[Admin] getAllApplications: userId=$userId');
-    final data = await supabase
-        .from('applications')
-        .select('*, profiles!applications_user_id_fkey(full_name, email, iin), properties(type, address, area)')
-        .order('created_at', ascending: false);
-    debugPrint('[Admin] getAllApplications: got ${data.length} applications');
-    return List<Map<String, dynamic>>.from(data);
+    try {
+      final data = await supabase
+          .from('applications')
+          .select('*, profiles!applications_user_id_fkey(full_name, email, iin), properties(type, address, area)')
+          .order('created_at', ascending: false);
+      debugPrint('[Admin] getAllApplications: got ${data.length} applications (with joins)');
+      return List<Map<String, dynamic>>.from(data);
+    } catch (e) {
+      debugPrint('[Admin] getAllApplications join failed: $e — falling back to simple query');
+      final data = await supabase
+          .from('applications')
+          .select()
+          .order('created_at', ascending: false);
+      debugPrint('[Admin] getAllApplications: got ${data.length} applications (simple)');
+      return List<Map<String, dynamic>>.from(data);
+    }
   }
 
   static Future<void> updateUserRole(String userUserId, String role) async {
@@ -535,22 +545,43 @@ class SupabaseService {
     int limit = 50,
   }) async {
     debugPrint('[Admin] getAdminActivityLogs: userId=$userId');
-    final data = await supabase
-        .from('activity_logs')
-        .select('*, profiles!activity_logs_user_id_fkey(full_name)')
-        .order('created_at', ascending: false)
-        .limit(limit);
-    debugPrint('[Admin] getAdminActivityLogs: got ${data.length} logs');
-    return List<Map<String, dynamic>>.from(data);
+    try {
+      final data = await supabase
+          .from('activity_logs')
+          .select('*, profiles!activity_logs_user_id_fkey(full_name)')
+          .order('created_at', ascending: false)
+          .limit(limit);
+      debugPrint('[Admin] getAdminActivityLogs: got ${data.length} logs (with joins)');
+      return List<Map<String, dynamic>>.from(data);
+    } catch (e) {
+      debugPrint('[Admin] getAdminActivityLogs join failed: $e — falling back to simple query');
+      final data = await supabase
+          .from('activity_logs')
+          .select()
+          .order('created_at', ascending: false)
+          .limit(limit);
+      debugPrint('[Admin] getAdminActivityLogs: got ${data.length} logs (simple)');
+      return List<Map<String, dynamic>>.from(data);
+    }
   }
 
   static Future<Map<String, dynamic>?> getApplicationDetail(String id) async {
-    final data = await supabase
-        .from('applications')
-        .select('*, profiles!applications_user_id_fkey(full_name, email, iin, phone), profiles!applications_appraiser_id_fkey(full_name, email) as appraiser_profile, properties(type, address, area, rooms, floor, total_floors)')
-        .eq('id', id)
-        .maybeSingle();
-    return data;
+    try {
+      final data = await supabase
+          .from('applications')
+          .select('*, profiles!applications_user_id_fkey(full_name, email, iin, phone), profiles!applications_appraiser_id_fkey(full_name, email) as appraiser_profile, properties(type, address, area, rooms, floor, total_floors)')
+          .eq('id', id)
+          .maybeSingle();
+      return data;
+    } catch (e) {
+      debugPrint('[Admin] getApplicationDetail join failed: $e — falling back');
+      final data = await supabase
+          .from('applications')
+          .select('*, properties(type, address, area, rooms, floor, total_floors)')
+          .eq('id', id)
+          .maybeSingle();
+      return data;
+    }
   }
 
   static Future<List<Map<String, dynamic>>> getApplicationDocuments(String userId) async {
@@ -564,12 +595,22 @@ class SupabaseService {
 
   static Future<List<Map<String, dynamic>>> getAllDocuments() async {
     debugPrint('[Admin] getAllDocuments: userId=$userId');
-    final data = await supabase
-        .from('documents')
-        .select('*, profiles!documents_user_id_fkey(full_name, email)')
-        .order('created_at', ascending: false);
-    debugPrint('[Admin] getAllDocuments: got ${data.length} documents');
-    return List<Map<String, dynamic>>.from(data);
+    try {
+      final data = await supabase
+          .from('documents')
+          .select('*, profiles!documents_user_id_fkey(full_name, email)')
+          .order('created_at', ascending: false);
+      debugPrint('[Admin] getAllDocuments: got ${data.length} documents (with joins)');
+      return List<Map<String, dynamic>>.from(data);
+    } catch (e) {
+      debugPrint('[Admin] getAllDocuments join failed: $e — falling back to simple query');
+      final data = await supabase
+          .from('documents')
+          .select()
+          .order('created_at', ascending: false);
+      debugPrint('[Admin] getAllDocuments: got ${data.length} documents (simple)');
+      return List<Map<String, dynamic>>.from(data);
+    }
   }
 
   // ============================================
