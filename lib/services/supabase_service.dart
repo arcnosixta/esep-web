@@ -358,22 +358,38 @@ class SupabaseService {
 
   static Future<List<Map<String, dynamic>>> getAppraiserApplications() async {
     if (userId == null) return [];
-    final data = await supabase
+    final appsData = await supabase
         .from('applications')
-        .select('*, profiles!applications_appraiser_id_fkey(full_name, email)')
+        .select()
         .eq('appraiser_id', userId!)
         .order('created_at', ascending: false);
-    return List<Map<String, dynamic>>.from(data);
+
+    final profilesData = await supabase.from('profiles').select('user_id, full_name, email');
+    final profilesMap = {for (var p in profilesData) p['user_id']: p};
+
+    final result = List<Map<String, dynamic>>.from(appsData).map((app) {
+      app['profiles'] = profilesMap[app['user_id']];
+      return app;
+    }).toList();
+    return result;
   }
 
   static Future<List<Map<String, dynamic>>> getAvailableApplications() async {
-    final data = await supabase
+    final appsData = await supabase
         .from('applications')
-        .select('*, profiles!applications_user_id_fkey(full_name, email, iin)')
+        .select()
         .eq('status', 'new')
         .isFilter('appraiser_id', null)
         .order('created_at', ascending: false);
-    return List<Map<String, dynamic>>.from(data);
+
+    final profilesData = await supabase.from('profiles').select('user_id, full_name, email, iin');
+    final profilesMap = {for (var p in profilesData) p['user_id']: p};
+
+    final result = List<Map<String, dynamic>>.from(appsData).map((app) {
+      app['profiles'] = profilesMap[app['user_id']];
+      return app;
+    }).toList();
+    return result;
   }
 
   static Future<void> assignApplication(String applicationId) async {
@@ -449,12 +465,28 @@ class SupabaseService {
 
   static Future<List<Map<String, dynamic>>> getAllApplications() async {
     debugPrint('[Admin] getAllApplications: userId=$userId');
-    final data = await supabase
+    final appsData = await supabase
         .from('applications')
-        .select('*, profiles!applications_user_id_fkey(full_name, email, iin), properties(type, address, area)')
+        .select()
         .order('created_at', ascending: false);
-    debugPrint('[Admin] getAllApplications: got ${data.length} applications');
-    return List<Map<String, dynamic>>.from(data);
+
+    // Fetch profiles and properties separately (FKs point to auth.users, not profiles)
+    final profilesData = await supabase.from('profiles').select('user_id, full_name, email, iin');
+    final profilesMap = {for (var p in profilesData) p['user_id']: p};
+
+    final propertiesData = await supabase.from('properties').select('id, type, address, area');
+    final propertiesMap = {for (var p in propertiesData) p['id']: p};
+
+    final result = List<Map<String, dynamic>>.from(appsData).map((app) {
+      app['profiles'] = profilesMap[app['user_id']];
+      if (app['property_id'] != null) {
+        app['properties'] = propertiesMap[app['property_id']];
+      }
+      return app;
+    }).toList();
+
+    debugPrint('[Admin] getAllApplications: got ${result.length} applications');
+    return result;
   }
 
   static Future<void> updateUserRole(String userUserId, String role) async {
@@ -535,22 +567,53 @@ class SupabaseService {
     int limit = 50,
   }) async {
     debugPrint('[Admin] getAdminActivityLogs: userId=$userId');
-    final data = await supabase
+    final logsData = await supabase
         .from('activity_logs')
-        .select('*, profiles!activity_logs_user_id_fkey(full_name)')
+        .select()
         .order('created_at', ascending: false)
         .limit(limit);
-    debugPrint('[Admin] getAdminActivityLogs: got ${data.length} logs');
-    return List<Map<String, dynamic>>.from(data);
+
+    final profilesData = await supabase.from('profiles').select('user_id, full_name');
+    final profilesMap = {for (var p in profilesData) p['user_id']: p};
+
+    final result = List<Map<String, dynamic>>.from(logsData).map((log) {
+      log['profiles'] = profilesMap[log['user_id']];
+      return log;
+    }).toList();
+
+    debugPrint('[Admin] getAdminActivityLogs: got ${result.length} logs');
+    return result;
   }
 
   static Future<Map<String, dynamic>?> getApplicationDetail(String id) async {
-    final data = await supabase
+    final appData = await supabase
         .from('applications')
-        .select('*, profiles!applications_user_id_fkey(full_name, email, iin, phone), profiles!applications_appraiser_id_fkey(full_name, email) as appraiser_profile, properties(type, address, area, rooms, floor, total_floors)')
+        .select('*, properties(type, address, area, rooms, floor, total_floors)')
         .eq('id', id)
         .maybeSingle();
-    return data;
+    if (appData == null) return null;
+
+    // Fetch owner profile
+    if (appData['user_id'] != null) {
+      final ownerProfile = await supabase
+          .from('profiles')
+          .select('full_name, email, iin, phone')
+          .eq('user_id', appData['user_id'])
+          .maybeSingle();
+      appData['profiles'] = ownerProfile;
+    }
+
+    // Fetch appraiser profile
+    if (appData['appraiser_id'] != null) {
+      final appraiserProfile = await supabase
+          .from('profiles')
+          .select('full_name, email')
+          .eq('user_id', appData['appraiser_id'])
+          .maybeSingle();
+      appData['appraiser_profile'] = appraiserProfile;
+    }
+
+    return appData;
   }
 
   static Future<List<Map<String, dynamic>>> getApplicationDocuments(String userId) async {
@@ -564,12 +627,21 @@ class SupabaseService {
 
   static Future<List<Map<String, dynamic>>> getAllDocuments() async {
     debugPrint('[Admin] getAllDocuments: userId=$userId');
-    final data = await supabase
+    final docsData = await supabase
         .from('documents')
-        .select('*, profiles!documents_user_id_fkey(full_name, email)')
+        .select()
         .order('created_at', ascending: false);
-    debugPrint('[Admin] getAllDocuments: got ${data.length} documents');
-    return List<Map<String, dynamic>>.from(data);
+
+    final profilesData = await supabase.from('profiles').select('user_id, full_name, email');
+    final profilesMap = {for (var p in profilesData) p['user_id']: p};
+
+    final result = List<Map<String, dynamic>>.from(docsData).map((doc) {
+      doc['profiles'] = profilesMap[doc['user_id']];
+      return doc;
+    }).toList();
+
+    debugPrint('[Admin] getAllDocuments: got ${result.length} documents');
+    return result;
   }
 
   // ============================================
