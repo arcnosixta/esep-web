@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../models/chat_message.dart';
 import '../services/openrouter_service.dart';
+import '../services/supabase_service.dart';
 import '../theme/app_colors.dart';
 
 class AiChatScreen extends StatefulWidget {
@@ -29,6 +30,10 @@ class _AiChatScreenState extends State<AiChatScreen> {
   final List<String> _pendingImagePaths = [];
   final List<String> _pendingImageBase64 = [];
 
+  String? _conversationId;
+  List<Map<String, dynamic>> _conversations = [];
+  bool _loadingHistory = false;
+
   static const _quickQuestions = [
     'Начать оценку',
     'Нет документов',
@@ -42,12 +47,219 @@ class _AiChatScreenState extends State<AiChatScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _loadConversations();
+  }
+
+  @override
   void dispose() {
     _streamSubscription?.cancel();
     _controller.dispose();
     _scrollController.dispose();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadConversations() async {
+    try {
+      final list = await SupabaseService.getConversations();
+      if (mounted) setState(() => _conversations = list);
+    } catch (_) {}
+  }
+
+  Future<void> _loadConversation(String id) async {
+    setState(() => _loadingHistory = true);
+    try {
+      final result = await SupabaseService.getConversation(id);
+      if (result.isEmpty || !mounted) return;
+      final data = result.first;
+      final rawMessages = data['messages'] as List<dynamic>;
+      setState(() {
+        _conversationId = id;
+        _messages.clear();
+        for (final m in rawMessages) {
+          _messages.add(ChatMessage(
+            text: m['text'] ?? '',
+            role: m['role'] == 'user' ? MessageRole.user : MessageRole.assistant,
+            timestamp: DateTime.tryParse(m['timestamp'] ?? '') ?? DateTime.now(),
+            imagePaths: List<String>.from(m['imagePaths'] ?? []),
+          ));
+        }
+        _loadingHistory = false;
+      });
+      _scrollToBottom();
+    } catch (e) {
+      if (mounted) setState(() => _loadingHistory = false);
+    }
+  }
+
+  Future<void> _saveConversation() async {
+    if (_messages.isEmpty) return;
+    final apiMessages = _messages
+        .where((m) => !m.isStreaming)
+        .map((m) => {
+          'role': m.role == MessageRole.user ? 'user' : 'assistant',
+          'text': m.text,
+          'timestamp': m.timestamp.toIso8601String(),
+          'imagePaths': m.imagePaths,
+        })
+        .toList();
+
+    // Auto-title from first user message
+    final firstUserMsg = _messages
+        .where((m) => m.role == MessageRole.user && m.text.isNotEmpty)
+        .map((m) => m.text)
+        .firstOrNull;
+    final title = (firstUserMsg?.length ?? 0) > 40
+        ? '${firstUserMsg!.substring(0, 40)}...'
+        : (firstUserMsg ?? 'Новый чат');
+
+    try {
+      if (_conversationId != null) {
+        await SupabaseService.updateConversation(
+          id: _conversationId!,
+          title: title,
+          messages: apiMessages,
+        );
+      } else {
+        _conversationId = await SupabaseService.createConversation(
+          title: title,
+          messages: apiMessages,
+        );
+      }
+      await _loadConversations();
+    } catch (e) {
+      debugPrint('[AI] Save conversation error: $e');
+    }
+  }
+
+  void _newChat() {
+    setState(() {
+      _conversationId = null;
+      _messages.clear();
+      _pendingImagePaths.clear();
+      _pendingImageBase64.clear();
+    });
+  }
+
+  void _showHistorySheet() {
+    final c = AppColors.of(context);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: c.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: c.muted,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'История чатов',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: c.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      '${_conversations.length}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: c.textHint,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                if (_conversations.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    child: Text(
+                      'Пока нет сохранённых чатов',
+                      style: TextStyle(fontSize: 14, color: c.textHint),
+                    ),
+                  )
+                else
+                  Flexible(
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: _conversations.length,
+                      separatorBuilder: (_, __) => Divider(height: 1, color: c.border),
+                      itemBuilder: (_, i) {
+                        final conv = _conversations[i];
+                        final isActive = conv['id'] == _conversationId;
+                        return ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(
+                            Icons.chat_bubble_outline_rounded,
+                            color: isActive ? c.accent : c.textHint,
+                            size: 20,
+                          ),
+                          title: Text(
+                            conv['title'] ?? 'Чат',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                              color: isActive ? c.accent : c.textPrimary,
+                            ),
+                          ),
+                          subtitle: Text(
+                            _formatConvDate(conv['updated_at']),
+                            style: TextStyle(fontSize: 11, color: c.textHint),
+                          ),
+                          trailing: IconButton(
+                            icon: Icon(Icons.delete_outline_rounded, size: 18, color: c.error),
+                            onPressed: () async {
+                              await SupabaseService.deleteConversation(conv['id']);
+                              if (isActive) _newChat();
+                              await _loadConversations();
+                              if (ctx.mounted) Navigator.pop(ctx);
+                            },
+                          ),
+                          onTap: () {
+                            Navigator.pop(ctx);
+                            _loadConversation(conv['id']);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  String _formatConvDate(dynamic iso) {
+    if (iso == null) return '';
+    final dt = DateTime.tryParse(iso.toString());
+    if (dt == null) return '';
+    final now = DateTime.now();
+    if (dt.day == now.day && dt.month == now.month && dt.year == now.year) {
+      return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    }
+    return '${dt.day}.${dt.month}.${dt.year}';
   }
 
   void _scrollToBottom() {
@@ -234,6 +446,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
               );
               _isStreaming = false;
             });
+            _saveConversation();
           }
         },
         onError: (e) {
@@ -325,17 +538,29 @@ class _AiChatScreenState extends State<AiChatScreen> {
                   ),
                 ),
                 Text(
-                  'Айдар Нурланович',
+                  _conversationId != null ? 'Сохранён' : 'Новый чат',
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w400,
-                    color: c.textHint,
+                    color: _conversationId != null ? c.success : c.textHint,
                   ),
                 ),
               ],
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            onPressed: _newChat,
+            icon: Icon(Icons.add_comment_outlined, color: c.textSecondary, size: 22),
+            tooltip: 'Новый чат',
+          ),
+          IconButton(
+            onPressed: _showHistorySheet,
+            icon: Icon(Icons.history_rounded, color: c.textSecondary, size: 22),
+            tooltip: 'История',
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(height: 1, color: c.border),
@@ -344,7 +569,11 @@ class _AiChatScreenState extends State<AiChatScreen> {
       body: Column(
         children: [
           Expanded(
-            child: _messages.isEmpty ? _buildEmptyState() : _buildMessageList(),
+            child: _loadingHistory
+                ? Center(child: CircularProgressIndicator(color: c.accent))
+                : _messages.isEmpty
+                    ? _buildEmptyState()
+                    : _buildMessageList(),
           ),
           if (_pendingImagePaths.isNotEmpty) _buildImagePreview(),
           _buildInputArea(),

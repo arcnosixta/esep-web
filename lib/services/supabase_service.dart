@@ -609,4 +609,63 @@ class SupabaseService {
       'completed': completed.length,
     };
   }
+
+  // ============================================
+  // AI CONVERSATIONS
+  // ============================================
+
+  static Future<List<Map<String, dynamic>>> getConversations() async {
+    if (userId == null) return [];
+    return await supabase
+        .from('ai_conversations')
+        .select('id, title, updated_at')
+        .eq('user_id', userId!)
+        .order('updated_at', ascending: false);
+  }
+
+  static Future<List<Map<String, dynamic>>> getConversation(String id) async {
+    final result = await supabase
+        .from('ai_conversations')
+        .select('id, title, messages')
+        .eq('id', id)
+        .maybeSingle();
+    return result != null ? [result] : [];
+  }
+
+  static Future<String> createConversation({
+    required String title,
+    required List<Map<String, dynamic>> messages,
+  }) async {
+    final result = await supabase
+        .from('ai_conversations')
+        .insert({
+          'user_id': userId!,
+          'title': title,
+          'messages': messages,
+        })
+        .select('id')
+        .single();
+    return result['id'] as String;
+  }
+
+  static Future<void> updateConversation({
+    required String id,
+    required String title,
+    required List<Map<String, dynamic>> messages,
+  }) async {
+    await supabase
+        .from('ai_conversations')
+        .update({
+          'title': title,
+          'messages': messages,
+        })
+        .eq('id', id);
+  }
+
+  static Future<void> deleteConversation(String id) async {
+    await supabase
+        .from('ai_conversations')
+        .delete()
+        .eq('id', id);
+  }
 }
