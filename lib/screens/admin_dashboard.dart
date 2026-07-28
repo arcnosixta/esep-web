@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../services/supabase_service.dart';
@@ -25,6 +26,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Future<void> _loadProfile() async {
     final profile = await SupabaseService.getUserProfile();
+    debugPrint('[AdminDashboard] profile loaded: role=${profile?.role}, userId=${SupabaseService.userId}');
     if (mounted) setState(() => _profile = profile);
   }
 
@@ -143,14 +145,18 @@ class _AdminHomeState extends State<_AdminHome> {
         SupabaseService.getAdminStats(),
         SupabaseService.getAllApplications(),
       ]);
+      final stats = results[0] as Map<String, int>;
+      final apps = results[1] as List<Map<String, dynamic>>;
+      debugPrint('[AdminHome] stats=$stats, apps=${apps.length}');
       if (mounted) {
         setState(() {
-          _stats = results[0] as Map<String, int>;
-          _recentApps = (results[1] as List<Map<String, dynamic>>).take(5).toList();
+          _stats = stats;
+          _recentApps = apps.take(5).toList();
           _loading = false;
         });
       }
     } catch (e) {
+      debugPrint('[AdminHome] error: $e');
       if (mounted) setState(() => _loading = false);
     }
   }
@@ -413,7 +419,7 @@ class _AdminHomeState extends State<_AdminHome> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: c.surface,
           borderRadius: BorderRadius.circular(14),
@@ -424,22 +430,27 @@ class _AdminHomeState extends State<_AdminHome> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 32,
-              height: 32,
+              width: 30,
+              height: 30,
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(icon, color: color, size: 18),
+              child: Icon(icon, color: color, size: 16),
             ),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: c.textPrimary),
+            const SizedBox(height: 6),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                value,
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: c.textPrimary),
+              ),
             ),
             Text(
               label,
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: c.textSecondary),
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: c.textSecondary),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -477,6 +488,7 @@ class _AdminUsersState extends State<_AdminUsers> {
     setState(() => _loading = true);
     try {
       final data = await SupabaseService.getAllProfiles();
+      debugPrint('[AdminUsers] loaded ${data.length} profiles');
       if (mounted) {
         setState(() {
           _allUsers = data;
@@ -484,6 +496,7 @@ class _AdminUsersState extends State<_AdminUsers> {
         });
       }
     } catch (e) {
+      debugPrint('[AdminUsers] error: $e');
       if (mounted) setState(() => _loading = false);
     }
   }
@@ -969,6 +982,7 @@ class _AdminAppraisersState extends State<_AdminAppraisers> {
       ]);
       final profiles = results[0];
       final apps = results[1];
+      debugPrint('[AdminAppraisers] profiles=${profiles.length}, apps=${apps.length}');
       if (mounted) {
         setState(() {
           _appraisers = profiles.where((u) => u['role'] == 'appraiser').toList();
@@ -977,6 +991,7 @@ class _AdminAppraisersState extends State<_AdminAppraisers> {
         });
       }
     } catch (e) {
+      debugPrint('[AdminAppraisers] error: $e');
       if (mounted) setState(() => _loading = false);
     }
   }
@@ -1317,6 +1332,7 @@ class _AdminRequestsState extends State<_AdminRequests> {
   Future<void> _loadData() async {
     try {
       final data = await SupabaseService.getAllApplications();
+      debugPrint('[AdminRequests] loaded ${data.length} applications');
       if (mounted) {
         setState(() {
           _applications = data;
@@ -1324,6 +1340,7 @@ class _AdminRequestsState extends State<_AdminRequests> {
         });
       }
     } catch (e) {
+      debugPrint('[AdminRequests] error: $e');
       if (mounted) setState(() => _loading = false);
     }
   }
@@ -1775,6 +1792,7 @@ class _AdminDocumentsState extends State<_AdminDocuments> {
   Future<void> _loadData() async {
     try {
       final data = await SupabaseService.getAllDocuments();
+      debugPrint('[AdminDocs] loaded ${data.length} documents');
       if (mounted) {
         setState(() {
           _documents = data;
@@ -1782,6 +1800,7 @@ class _AdminDocumentsState extends State<_AdminDocuments> {
         });
       }
     } catch (e) {
+      debugPrint('[AdminDocs] error: $e');
       if (mounted) setState(() => _loading = false);
     }
   }
@@ -1968,6 +1987,7 @@ class _AdminLogsState extends State<_AdminLogs> {
   Future<void> _loadData() async {
     try {
       final data = await SupabaseService.getAdminActivityLogs();
+      debugPrint('[AdminLogs] loaded ${data.length} logs');
       if (mounted) {
         setState(() {
           _logs = data;
@@ -1975,6 +1995,7 @@ class _AdminLogsState extends State<_AdminLogs> {
         });
       }
     } catch (e) {
+      debugPrint('[AdminLogs] error: $e');
       if (mounted) setState(() => _loading = false);
     }
   }

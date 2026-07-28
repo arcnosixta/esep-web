@@ -438,18 +438,22 @@ class SupabaseService {
   // ============================================
 
   static Future<List<Map<String, dynamic>>> getAllProfiles() async {
+    debugPrint('[Admin] getAllProfiles: userId=$userId');
     final data = await supabase
         .from('profiles')
         .select()
         .order('created_at', ascending: false);
+    debugPrint('[Admin] getAllProfiles: got ${data.length} profiles');
     return List<Map<String, dynamic>>.from(data);
   }
 
   static Future<List<Map<String, dynamic>>> getAllApplications() async {
+    debugPrint('[Admin] getAllApplications: userId=$userId');
     final data = await supabase
         .from('applications')
         .select('*, profiles!applications_user_id_fkey(full_name, email, iin), properties(type, address, area)')
         .order('created_at', ascending: false);
+    debugPrint('[Admin] getAllApplications: got ${data.length} applications');
     return List<Map<String, dynamic>>.from(data);
   }
 
@@ -504,6 +508,7 @@ class SupabaseService {
   }
 
   static Future<Map<String, int>> getAdminStats() async {
+    debugPrint('[Admin] getAdminStats: userId=$userId');
     final profiles = await supabase.from('profiles').select('id');
     final applications = await supabase.from('applications').select('id, status');
     final appraisers = await supabase
@@ -515,23 +520,27 @@ class SupabaseService {
     final completed = allApps.where((a) => a['status'] == 'completed').length;
     final inProgress = allApps.where((a) => a['status'] == 'in_progress').length;
 
-    return {
+    final stats = {
       'totalUsers': profiles.length,
       'totalApplications': allApps.length,
       'totalAppraisers': appraisers.length,
       'completedApplications': completed,
       'inProgressApplications': inProgress,
     };
+    debugPrint('[Admin] getAdminStats: $stats');
+    return stats;
   }
 
   static Future<List<Map<String, dynamic>>> getAdminActivityLogs({
     int limit = 50,
   }) async {
+    debugPrint('[Admin] getAdminActivityLogs: userId=$userId');
     final data = await supabase
         .from('activity_logs')
         .select('*, profiles!activity_logs_user_id_fkey(full_name)')
         .order('created_at', ascending: false)
         .limit(limit);
+    debugPrint('[Admin] getAdminActivityLogs: got ${data.length} logs');
     return List<Map<String, dynamic>>.from(data);
   }
 
@@ -554,10 +563,12 @@ class SupabaseService {
   }
 
   static Future<List<Map<String, dynamic>>> getAllDocuments() async {
+    debugPrint('[Admin] getAllDocuments: userId=$userId');
     final data = await supabase
         .from('documents')
         .select('*, profiles!documents_user_id_fkey(full_name, email)')
         .order('created_at', ascending: false);
+    debugPrint('[Admin] getAllDocuments: got ${data.length} documents');
     return List<Map<String, dynamic>>.from(data);
   }
 
