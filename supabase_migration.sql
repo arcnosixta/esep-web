@@ -1,8 +1,6 @@
 -- ============================================
 -- ESEP — Supabase Database Schema (полный, безопасный)
 -- ============================================
--- Можно запускать сколько угодно раз — не будет ошибок
--- ============================================
 
 -- 1. Профили пользователей
 CREATE TABLE IF NOT EXISTS profiles (
@@ -14,6 +12,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   email TEXT NOT NULL DEFAULT '',
   role TEXT NOT NULL DEFAULT 'client' CHECK (role IN ('client', 'appraiser', 'admin')),
   avatar_url TEXT,
+  is_blocked BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -44,8 +43,6 @@ CREATE TABLE IF NOT EXISTS documents (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-ALTER TABLE documents ADD COLUMN IF NOT EXISTS content_text TEXT;
-
 -- 4. Заявки на оценку
 CREATE TABLE IF NOT EXISTS applications (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -56,6 +53,7 @@ CREATE TABLE IF NOT EXISTS applications (
   estimated_price NUMERIC,
   final_price NUMERIC,
   notes TEXT,
+  priority TEXT NOT NULL DEFAULT 'normal' CHECK (priority IN ('low', 'normal', 'high', 'urgent')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -86,11 +84,23 @@ CREATE TABLE IF NOT EXISTS market_data (
   parsed_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- 7. Логи активности
+CREATE TABLE IF NOT EXISTS activity_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  action TEXT NOT NULL,
+  entity_type TEXT,
+  entity_id UUID,
+  details JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 -- ============================================
 -- ИНДЕКСЫ
 -- ============================================
 
 CREATE INDEX IF NOT EXISTS idx_profiles_user_id ON profiles(user_id);
+CREATE INDEX IF NOT EXISTS idx_profiles_role ON profiles(role);
 CREATE INDEX IF NOT EXISTS idx_properties_user_id ON properties(user_id);
 CREATE INDEX IF NOT EXISTS idx_documents_user_id ON documents(user_id);
 CREATE INDEX IF NOT EXISTS idx_documents_property_id ON documents(property_id);
@@ -100,9 +110,11 @@ CREATE INDEX IF NOT EXISTS idx_applications_appraiser_id ON applications(apprais
 CREATE INDEX IF NOT EXISTS idx_appraisals_application_id ON appraisals(application_id);
 CREATE INDEX IF NOT EXISTS idx_market_data_type ON market_data(type);
 CREATE INDEX IF NOT EXISTS idx_market_data_source ON market_data(source);
+CREATE INDEX IF NOT EXISTS idx_activity_logs_user_id ON activity_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at ON activity_logs(created_at);
 
 -- ============================================
--- ROW LEVEL SECURITY (RLS) — таблицы
+-- ROW LEVEL SECURITY (RLS)
 -- ============================================
 
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
@@ -111,6 +123,7 @@ ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE applications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE appraisals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE market_data ENABLE ROW LEVEL SECURITY;
+ALTER TABLE activity_logs ENABLE ROW LEVEL SECURITY;
 
 -- profiles
 DROP POLICY IF EXISTS "Users can view own profile" ON profiles;
@@ -121,6 +134,21 @@ CREATE POLICY "Users can insert own profile" ON profiles FOR INSERT TO authentic
 
 DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
 CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE TO authenticated USING ((SELECT auth.uid()) = user_id) WITH CHECK ((SELECT auth.uid()) = user_id);
+
+DROP POLICY IF EXISTS "Admins can view all profiles" ON profiles;
+CREATE POLICY "Admins can view all profiles" ON profiles FOR SELECT TO authenticated USING (
+  EXISTS (SELECT 1 FROM profiles WHERE user_id = (SELECT auth.uid()) AND role = 'admin')
+);
+
+DROP POLICY IF EXISTS "Admins can update all profiles" ON profiles;
+CREATE POLICY "Admins can update all profiles" ON profiles FOR UPDATE TO authenticated USING (
+  EXISTS (SELECT 1 FROM profiles WHERE user_id = (SELECT auth.uid()) AND role = 'admin')
+);
+
+DROP POLICY IF EXISTS "Appraisers can view client profiles" ON profiles;
+CREATE POLICY "Appraisers can view client profiles" ON profiles FOR SELECT TO authenticated USING (
+  EXISTS (SELECT 1 FROM profiles WHERE user_id = (SELECT auth.uid()) AND role = 'appraiser')
+);
 
 -- properties
 DROP POLICY IF EXISTS "Users can view own properties" ON properties;
@@ -158,6 +186,16 @@ CREATE POLICY "Users can insert own applications" ON applications FOR INSERT TO 
 DROP POLICY IF EXISTS "Appraisers can update assigned applications" ON applications;
 CREATE POLICY "Appraisers can update assigned applications" ON applications FOR UPDATE TO authenticated USING ((SELECT auth.uid()) = appraiser_id);
 
+DROP POLICY IF EXISTS "Admins can view all applications" ON applications;
+CREATE POLICY "Admins can view all applications" ON applications FOR SELECT TO authenticated USING (
+  EXISTS (SELECT 1 FROM profiles WHERE user_id = (SELECT auth.uid()) AND role = 'admin')
+);
+
+DROP POLICY IF EXISTS "Admins can update all applications" ON applications;
+CREATE POLICY "Admins can update all applications" ON applications FOR UPDATE TO authenticated USING (
+  EXISTS (SELECT 1 FROM profiles WHERE user_id = (SELECT auth.uid()) AND role = 'admin')
+);
+
 -- appraisals
 DROP POLICY IF EXISTS "Users can view own appraisals" ON appraisals;
 CREATE POLICY "Users can view own appraisals" ON appraisals FOR SELECT TO authenticated USING (EXISTS (SELECT 1 FROM applications WHERE applications.id = appraisals.application_id AND applications.user_id = (SELECT auth.uid())));
@@ -168,6 +206,11 @@ CREATE POLICY "Appraisers can view assigned appraisals" ON appraisals FOR SELECT
 DROP POLICY IF EXISTS "Appraisers can insert appraisals" ON appraisals;
 CREATE POLICY "Appraisers can insert appraisals" ON appraisals FOR INSERT TO authenticated WITH CHECK (EXISTS (SELECT 1 FROM applications WHERE applications.id = appraisals.application_id AND applications.appraiser_id = (SELECT auth.uid())));
 
+DROP POLICY IF EXISTS "Admins can view all appraisals" ON appraisals;
+CREATE POLICY "Admins can view all appraisals" ON appraisals FOR SELECT TO authenticated USING (
+  EXISTS (SELECT 1 FROM profiles WHERE user_id = (SELECT auth.uid()) AND role = 'admin')
+);
+
 -- market_data
 DROP POLICY IF EXISTS "Anyone can view market data" ON market_data;
 CREATE POLICY "Anyone can view market data" ON market_data FOR SELECT TO anon USING (true);
@@ -177,6 +220,18 @@ CREATE POLICY "Authenticated users can view market data" ON market_data FOR SELE
 
 DROP POLICY IF EXISTS "Authenticated users can insert market data" ON market_data;
 CREATE POLICY "Authenticated users can insert market data" ON market_data FOR INSERT TO authenticated WITH CHECK (true);
+
+-- activity_logs
+DROP POLICY IF EXISTS "Users can view own logs" ON activity_logs;
+CREATE POLICY "Users can view own logs" ON activity_logs FOR SELECT TO authenticated USING ((SELECT auth.uid()) = user_id);
+
+DROP POLICY IF EXISTS "Admins can view all logs" ON activity_logs;
+CREATE POLICY "Admins can view all logs" ON activity_logs FOR SELECT TO authenticated USING (
+  EXISTS (SELECT 1 FROM profiles WHERE user_id = (SELECT auth.uid()) AND role = 'admin')
+);
+
+DROP POLICY IF EXISTS "Authenticated users can insert logs" ON activity_logs;
+CREATE POLICY "Authenticated users can insert logs" ON activity_logs FOR INSERT TO authenticated WITH CHECK (true);
 
 -- ============================================
 -- ROW LEVEL SECURITY — Supabase Storage

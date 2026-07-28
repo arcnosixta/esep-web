@@ -3,7 +3,6 @@ import '../theme/app_colors.dart';
 import '../widgets/primary_button.dart';
 import '../navigation/app_navigator.dart';
 import '../services/supabase_service.dart';
-import 'app_shell.dart';
 import 'login_screen.dart';
 
 class RegistrationScreen extends StatefulWidget {
@@ -70,7 +69,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
         );
-        AppNavigator.pushReplacement(context, const AppShell());
+        Navigator.of(context).popUntil((route) => route.isFirst);
       }
     } catch (e) {
       if (mounted) {

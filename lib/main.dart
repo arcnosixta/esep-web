@@ -6,8 +6,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'theme/app_theme.dart';
 import 'screens/splash_screen.dart';
 import 'screens/app_shell.dart';
+import 'screens/appraiser_dashboard.dart';
+import 'screens/admin_dashboard.dart';
 import 'providers/app_settings.dart';
 import 'l10n/app_strings.dart';
+import 'models/user_profile.dart';
+import 'services/supabase_service.dart';
 
 late final String openRouterApiKey;
 
@@ -85,11 +89,53 @@ class AuthGate extends StatefulWidget {
 
 class _AuthGateState extends State<AuthGate> {
   late final Stream<AuthState> _authStream;
+  UserRole? _userRole;
+  bool _loadingRole = false;
 
   @override
   void initState() {
     super.initState();
     _authStream = Supabase.instance.client.auth.onAuthStateChange;
+    _checkCurrentSession();
+  }
+
+  Future<void> _checkCurrentSession() async {
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session != null) {
+      await _loadRole();
+    }
+  }
+
+  Future<void> _loadRole() async {
+    setState(() => _loadingRole = true);
+    try {
+      final role = await SupabaseService.getUserRole();
+      if (mounted) {
+        setState(() {
+          _userRole = role;
+          _loadingRole = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _userRole = UserRole.client;
+          _loadingRole = false;
+        });
+      }
+    }
+  }
+
+  Widget _buildHomeForRole(UserRole? role) {
+    switch (role) {
+      case UserRole.admin:
+        return const AdminDashboard();
+      case UserRole.appraiser:
+        return const AppraiserDashboard();
+      case UserRole.client:
+      case null:
+        return const AppShell();
+    }
   }
 
   @override
@@ -98,10 +144,25 @@ class _AuthGateState extends State<AuthGate> {
       stream: _authStream,
       builder: (context, snapshot) {
         final session = snapshot.data?.session;
-        if (session != null) {
-          return const AppShell();
+        if (session == null) {
+          _userRole = null;
+          return const SplashScreen();
         }
-        return const SplashScreen();
+
+        if (_loadingRole) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (_userRole == null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) => _loadRole());
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        return _buildHomeForRole(_userRole);
       },
     );
   }

@@ -3,7 +3,6 @@ import '../theme/app_colors.dart';
 import '../widgets/primary_button.dart';
 import '../navigation/app_navigator.dart';
 import '../services/supabase_service.dart';
-import 'app_shell.dart';
 import 'registration_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -40,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       await SupabaseService.signIn(email: email, password: password);
       if (mounted) {
-        AppNavigator.pushReplacement(context, const AppShell());
+        Navigator.of(context).popUntil((route) => route.isFirst);
       }
     } catch (e) {
       if (mounted) {
