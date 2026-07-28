@@ -410,9 +410,9 @@ class _Ru implements StringsBase {
   @override String get docsFormats => 'Форматы: PDF, JPG, PNG';
 
   @override String get aiTitle => 'AI Оценка';
-  @override String get aiPlaceholder => 'Задайте вопрос...';
+  @override String get aiPlaceholder => 'Адрес, тип объекта или вопрос...';
   @override String get aiGreeting => 'Чем могу помочь?';
-  @override String get aiGreetingSubtitle => 'Задайте вопрос об оценке недвижимости,\nотправьте фото объекта для анализа';
+  @override String get aiGreetingSubtitle => '📸 Отправьте фото или ✍️ опишите объект текстом\nДва способа получить оценку';
   @override String get aiError => 'Не удалось подключиться к AI-сервису.';
   @override String get aiSuggestions => 'Рекомендации';
 
@@ -624,7 +624,7 @@ class _Kk implements StringsBase {
   @override String get aiTitle => 'AI Бағалау';
   @override String get aiPlaceholder => 'Сұрақ қойыңыз...';
   @override String get aiGreeting => 'Чем көмектесе аламын?';
-  @override String get aiGreetingSubtitle => 'Мүлікті бағалау туралы сұрақ қойыңыз,\nобъектінің суретін жіберіңіз';
+  @override String get aiGreetingSubtitle => '📸 Сурет жіберіңіз немесе ✍️ мәтінмен жазыңыз\nБағалау алатын екі жол бар';
   @override String get aiError => 'AI қызметіне қосылу мүмкін болмады.';
   @override String get aiSuggestions => 'Ұсыныстар';
 
@@ -836,7 +836,7 @@ class _En implements StringsBase {
   @override String get aiTitle => 'AI Evaluation';
   @override String get aiPlaceholder => 'Ask a question...';
   @override String get aiGreeting => 'How can I help?';
-  @override String get aiGreetingSubtitle => 'Ask about property evaluation,\nsend photos for analysis';
+  @override String get aiGreetingSubtitle => '📸 Send photos or ✍️ describe the property in text\nTwo ways to get an evaluation';
   @override String get aiError => 'Could not connect to AI service.';
   @override String get aiSuggestions => 'Suggestions';
 

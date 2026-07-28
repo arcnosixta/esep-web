@@ -31,6 +31,14 @@ class _AiChatScreenState extends State<AiChatScreen> {
 
   static const _quickQuestions = [
     'Начать оценку',
+    'Нет документов',
+    'Как это работает?',
+  ];
+
+  static const _textTemplates = [
+    'Квартира, Абая 150, 3-комн, 85 м², 5/9, косметический ремонт',
+    'Дом, ул. Достык 25, 120 м², 2 этаж, чистовая отделка',
+    'Участок, с. Калкаман, 10 соток, ИЖС',
   ];
 
   @override
@@ -394,7 +402,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Пришлите два фото и получите оценку:\n📄 Страховой полис — там адрес, площадь, данные\n🏠 Фото объекта — состояние и отделка',
+              'Два способа получить оценку:\n📸 Отправьте фото или ✍️ опишите текстом',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -403,6 +411,10 @@ class _AiChatScreenState extends State<AiChatScreen> {
               ),
             ),
             const SizedBox(height: 20),
+
+            // ── Mode 1: Photos ──
+            _buildSectionHeader('📸 С фото', c),
+            const SizedBox(height: 8),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -455,6 +467,40 @@ class _AiChatScreenState extends State<AiChatScreen> {
                 ),
               ],
             ),
+
+            const SizedBox(height: 20),
+
+            // ── Mode 2: Text templates ──
+            _buildSectionHeader('✍️ Без документов — текстом', c),
+            const SizedBox(height: 8),
+            Column(
+              children: _textTemplates.map((t) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: GestureDetector(
+                    onTap: () => _sendMessage(t),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: c.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: c.border),
+                      ),
+                      child: Text(
+                        t,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: c.textSecondary,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+
             const SizedBox(height: 24),
             Wrap(
               spacing: 8,
@@ -468,16 +514,16 @@ class _AiChatScreenState extends State<AiChatScreen> {
                       vertical: 10,
                     ),
                     decoration: BoxDecoration(
-                      color: c.surface,
+                      color: c.accent.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: c.border),
+                      border: Border.all(color: c.accent.withValues(alpha: 0.2)),
                     ),
                     child: Text(
                       q,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: c.textPrimary,
+                        color: c.accent,
                       ),
                     ),
                   ),
@@ -485,6 +531,21 @@ class _AiChatScreenState extends State<AiChatScreen> {
               }).toList(),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, AppColors c) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: c.textHint,
+          letterSpacing: 0.3,
         ),
       ),
     );
@@ -779,7 +840,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
                   color: c.textPrimary,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'Адрес или вопрос...',
+                  hintText: 'Адрес, тип объекта или вопрос...',
                   hintStyle: TextStyle(color: c.textHint),
                   border: InputBorder.none,
                   contentPadding:
