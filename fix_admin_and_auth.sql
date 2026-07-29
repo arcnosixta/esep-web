@@ -296,11 +296,23 @@ CREATE POLICY "Users can view own applications" ON applications
 CREATE POLICY "Users can insert own applications" ON applications
   FOR INSERT TO authenticated WITH CHECK ((SELECT auth.uid()) = user_id);
 
+-- Оценщик видит: а) свои назначенные б) доступные (new + appraiser_id IS NULL)
 CREATE POLICY "Appraisers can view assigned applications" ON applications
-  FOR SELECT TO authenticated USING ((SELECT auth.uid()) = appraiser_id);
+  FOR SELECT TO authenticated USING (
+    public.is_appraiser() AND (
+      (SELECT auth.uid()) = appraiser_id
+      OR (status = 'new' AND appraiser_id IS NULL)
+    )
+  );
 
+-- Оценщик может: а) обновить свою назначенную б) назначить себе доступную
 CREATE POLICY "Appraisers can update assigned applications" ON applications
-  FOR UPDATE TO authenticated USING ((SELECT auth.uid()) = appraiser_id);
+  FOR UPDATE TO authenticated USING (
+    public.is_appraiser() AND (
+      (SELECT auth.uid()) = appraiser_id
+      OR (status = 'new' AND appraiser_id IS NULL)
+    )
+  );
 
 CREATE POLICY "Admins can view all applications" ON applications
   FOR SELECT TO authenticated USING (public.is_admin());

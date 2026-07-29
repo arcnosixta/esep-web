@@ -558,9 +558,13 @@ class _AppraiserRequestsState extends State<_AppraiserRequests> {
     final propType = prop?['type'] ?? '';
     final area = prop?['area'] ?? 0;
     final createdAt = app['created_at']?.toString() ?? '';
-    final date = createdAt.isNotEmpty
-        ? '${DateTime.parse(createdAt).day.toString().padLeft(2, '0')}.${DateTime.parse(createdAt).month.toString().padLeft(2, '0')}.${DateTime.parse(createdAt).year}'
-        : '';
+    String date = '';
+    if (createdAt.isNotEmpty) {
+      try {
+        final dt = DateTime.parse(createdAt);
+        date = '${dt.day.toString().padLeft(2, '0')}.${dt.month.toString().padLeft(2, '0')}.${dt.year}';
+      } catch (_) {}
+    }
 
     return Container(
       padding: const EdgeInsets.all(18),
