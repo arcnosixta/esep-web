@@ -6,6 +6,7 @@ import '../utils/formatters.dart';
 import '../widgets/status_badge.dart';
 import '../widgets/app_filter_chip.dart';
 import 'document_upload_screen.dart';
+import 'report_screen.dart';
 
 class AppraiserDashboard extends StatefulWidget {
   const AppraiserDashboard({super.key});
@@ -682,6 +683,7 @@ class _AppraiserRequestsState extends State<_AppraiserRequests> {
     final prop = app['properties'];
     final address = prop?['address'] ?? '';
     final area = prop?['area'] ?? 0;
+    final applicationId = (app['id'] ?? '').toString();
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -690,40 +692,68 @@ class _AppraiserRequestsState extends State<_AppraiserRequests> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: c.border, width: 1),
       ),
-      child: Row(
+      child: Column(
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: c.accent.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Center(
-              child: Text(
-                '#${(app['id'] ?? '').toString().substring(0, 4).toUpperCase()}',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: c.accent),
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: c.accent.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(
+                  child: Text(
+                    '#${applicationId.substring(0, applicationId.length > 4 ? 4 : applicationId.length).toUpperCase()}',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: c.accent),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(userName.isNotEmpty ? userName : 'Клиент',
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: c.textPrimary)),
+                    const SizedBox(height: 4),
+                    Text(
+                      area > 0 ? '$area м² · $address' : address,
+                      style: TextStyle(fontSize: 12, color: c.textSecondary),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              StatusBadge(status: badgeStatusFromKey(status), label: statusLabel(context, status), small: true),
+            ],
+          ),
+          if (status == 'in_progress') ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ReportScreen(applicationId: applicationId),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.description_rounded, size: 18),
+                label: const Text('Сгенерировать отчёт', style: TextStyle(fontWeight: FontWeight.w600)),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: c.accent,
+                  side: BorderSide(color: c.accent),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(userName.isNotEmpty ? userName : 'Клиент',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: c.textPrimary)),
-                const SizedBox(height: 4),
-                Text(
-                  area > 0 ? '$area м² · $address' : address,
-                  style: TextStyle(fontSize: 12, color: c.textSecondary),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          StatusBadge(status: badgeStatusFromKey(status), label: statusLabel(context, status), small: true),
+          ],
         ],
       ),
     );

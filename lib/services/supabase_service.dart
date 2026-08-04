@@ -170,6 +170,7 @@ class SupabaseService {
     int? rooms,
     int? floor,
     int? totalFloors,
+    String? condition,
   }) async {
     final data = await supabase.from('properties').insert({
       'user_id': userId,
@@ -179,6 +180,7 @@ class SupabaseService {
       'rooms': rooms,
       'floor': floor,
       'total_floors': totalFloors,
+      'condition': condition,
     }).select().single();
     return data;
   }
@@ -299,9 +301,27 @@ class SupabaseService {
   static Future<Map<String, dynamic>> getApplication(String id) async {
     final data = await supabase
         .from('applications')
-        .select('*, properties(type, address, area, rooms, floor)')
+        .select()
         .eq('id', id)
         .single();
+
+    final propId = data['property_id'] as String?;
+    if (propId != null) {
+      final propData = await supabase
+          .from('properties')
+          .select()
+          .eq('id', propId)
+          .maybeSingle();
+      data['properties'] = propData;
+    }
+
+    final profilesData = await supabase
+        .from('profiles')
+        .select('user_id, full_name, iin')
+        .eq('user_id', data['user_id'])
+        .maybeSingle();
+    data['profiles'] = profilesData;
+
     return data;
   }
 
@@ -364,11 +384,34 @@ class SupabaseService {
         .eq('appraiser_id', userId!)
         .order('created_at', ascending: false);
 
+    debugPrint('[Appraiser] apps count: ${appsData.length}');
+    for (final app in appsData) {
+      debugPrint('[Appraiser] app ${app['id']}: property_id=${app['property_id']}, status=${app['status']}');
+    }
+
     final profilesData = await supabase.from('profiles').select('user_id, full_name, email');
     final profilesMap = {for (var p in profilesData) p['user_id']: p};
 
+    final propIds = appsData
+        .map((a) => a['property_id'] as String?)
+        .where((id) => id != null)
+        .toSet()
+        .toList();
+    debugPrint('[Appraiser] property IDs to fetch: $propIds');
+
+    final propsData = propIds.isNotEmpty
+        ? await supabase.from('properties').select().inFilter('id', propIds)
+        : <Map<String, dynamic>>[];
+    debugPrint('[Appraiser] properties fetched: ${propsData.length}');
+    for (final p in propsData) {
+      debugPrint('[Appraiser] prop ${p['id']}: address=${p['address']}, area=${p['area']}, floor=${p['floor']}');
+    }
+
+    final propsMap = {for (var p in propsData) p['id']: p};
+
     final result = List<Map<String, dynamic>>.from(appsData).map((app) {
       app['profiles'] = profilesMap[app['user_id']];
+      app['properties'] = propsMap[app['property_id']];
       return app;
     }).toList();
     return result;
@@ -382,11 +425,29 @@ class SupabaseService {
         .isFilter('appraiser_id', null)
         .order('created_at', ascending: false);
 
+    debugPrint('[Available] apps count: ${appsData.length}');
+    for (final app in appsData) {
+      debugPrint('[Available] app ${app['id']}: property_id=${app['property_id']}, user_id=${app['user_id']}');
+    }
+
     final profilesData = await supabase.from('profiles').select('user_id, full_name, email, iin');
     final profilesMap = {for (var p in profilesData) p['user_id']: p};
 
+    final propIds = appsData
+        .map((a) => a['property_id'] as String?)
+        .where((id) => id != null)
+        .toSet()
+        .toList();
+
+    final propsData = propIds.isNotEmpty
+        ? await supabase.from('properties').select().inFilter('id', propIds)
+        : <Map<String, dynamic>>[];
+    debugPrint('[Available] properties fetched: ${propsData.length}');
+    final propsMap = {for (var p in propsData) p['id']: p};
+
     final result = List<Map<String, dynamic>>.from(appsData).map((app) {
       app['profiles'] = profilesMap[app['user_id']];
+      app['properties'] = propsMap[app['property_id']];
       return app;
     }).toList();
     return result;

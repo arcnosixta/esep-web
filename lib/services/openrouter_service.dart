@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 
 import '../main.dart';
 import '../models/chat_message.dart';
+import '../models/report_template.dart';
 import '../services/supabase_service.dart';
 
 class OpenRouterService {
@@ -275,6 +276,151 @@ class OpenRouterService {
     yield '\n[Ошибка] Сервис временно недостаточно. '
         'Проверьте подключение к интернету и попробуйте позже.\n'
         'Детали: ${lastError ?? "неизвестная ошибка"}';
+  }
+
+  // ============================================
+  // REPORT GENERATION (two-step: JSON → PDF)
+  // ============================================
+
+  static const _reportSystemPrompt = '''
+Ты — AI-оценщик недвижимости в системе ESEP (Казахстан).
+Сгенерируй данные для отчёта об оценке в формате JSON.
+
+Входные данные: тип объекта, адрес, площадь, комнаты, этаж, общая этажность, состояние, год постройки, ФИО клиента, ИИН.
+
+Доступные рыночные данные (если есть):
+''';
+
+  static Future<ReportData?> generateReportData({
+    required String propertyType,
+    required String address,
+    required double area,
+    required int rooms,
+    required int floor,
+    required int totalFloors,
+    required String condition,
+    required int yearBuilt,
+    required String clientName,
+    required String clientIin,
+    String? appraiserName,
+  }) async {
+    final results = await Future.wait([
+      _fetchMarketContext(propertyType: propertyType, limit: 5),
+      _fetchUserProfile(),
+    ]);
+
+    final marketData = results[0] as List<Map<String, dynamic>>;
+    final marketContext = _buildMarketContext(marketData);
+
+    final userPrompt = '''
+Объект для оценки:
+- Тип: $propertyType
+- Адрес: $address
+- Площадь: $area м²
+- Комнат: $rooms
+- Этаж: $floor/$totalFloors
+- Состояние: $condition
+- Год постройки: $yearBuilt
+- Клиент: $clientName (ИИН: $clientIin)
+- Дата оценки: ${DateTime.now().day}.${DateTime.now().month}.${DateTime.now().year}
+- Оценщик: ${appraiserName ?? 'Айдар Нурланович'}
+
+$marketContext
+
+Верни ТОЛЬКО валидный JSON без markdown и комментариев:
+{
+  "client_name": "string",
+  "client_iin": "string",
+  "property_type": "string",
+  "address": "string",
+  "area": number,
+  "rooms": number,
+  "floor": number,
+  "total_floors": number,
+  "condition": "string",
+  "year_built": number,
+  "estimated_price": number,
+  "price_range_low": number,
+  "price_range_high": number,
+  "price_per_meter": number,
+  "confidence": number от 0.7 до 0.99,
+  "comparables": [
+    {"address": "string", "area": number, "price": number, "type": "string", "source": "string"}
+  ],
+  "recommendations": [
+    {"icon": "trending_up|home|location|info", "title": "string", "description": "string"}
+  ],
+  "appraisal_date": "DD.MM.YYYY",
+  "appraiser_name": "string",
+  "appraiser_certificate": ""
+}
+
+Оцени реалистично на основе рыночных данных. Диапазон ±10-15% от основной оценки.
+''';
+
+    final apiMessages = [
+      {'role': 'system', 'content': _reportSystemPrompt},
+      {'role': 'user', 'content': userPrompt},
+    ];
+
+    String? lastError;
+
+    for (final model in _textModels) {
+      try {
+        final body = jsonEncode({
+          'model': model,
+          'messages': apiMessages,
+          'stream': false,
+          'max_tokens': 2048,
+          'temperature': 0.3,
+          'top_p': 0.9,
+        });
+
+        final client = HttpClient();
+        try {
+          final request = await client.postUrl(Uri.parse(_baseUrl));
+          request.headers.set('Content-Type', 'application/json');
+          request.headers.set('Authorization', 'Bearer $openRouterApiKey');
+          request.headers.set('HTTP-Referer', 'https://esep.kz');
+          request.headers.set('X-OpenRouter-Title', 'ESEP Report Generator');
+          final bodyBytes = utf8.encode(body);
+          request.headers.contentLength = bodyBytes.length;
+          request.add(bodyBytes);
+
+          final response = await request.close();
+          if (response.statusCode != 200) {
+            final error = await response.transform(utf8.decoder).join();
+            throw Exception('HTTP ${response.statusCode}: $error');
+          }
+
+          final responseBody = await response.transform(utf8.decoder).join();
+          final json = jsonDecode(responseBody) as Map<String, dynamic>;
+          final choices = json['choices'] as List?;
+          if (choices == null || choices.isEmpty) throw Exception('No choices');
+
+          final content = choices[0]['message']?['content'] as String? ?? '';
+          if (content.isEmpty) throw Exception('Empty content');
+
+          final cleaned = content
+              .replaceAll('```json', '')
+              .replaceAll('```', '')
+              .trim();
+
+          final reportJson = jsonDecode(cleaned) as Map<String, dynamic>;
+          debugPrint('[Report] AI model $model succeeded');
+          return ReportData.fromJson(reportJson);
+        } finally {
+          client.close();
+        }
+      } catch (e) {
+        lastError = e.toString();
+        debugPrint('[Report] Model $model failed: $lastError');
+        continue;
+      }
+    }
+
+    debugPrint('[Report] All models failed. Last error: $lastError');
+    return null;
   }
 
   static Stream<String> _streamWithModel({

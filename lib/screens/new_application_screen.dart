@@ -17,6 +17,7 @@ class _NewApplicationScreenState extends State<NewApplicationScreen> {
   final _roomsController = TextEditingController();
   final _floorController = TextEditingController();
   final _totalFloorsController = TextEditingController();
+  String _selectedCondition = 'Косметический ремонт';
   bool _loading = false;
 
   @override
@@ -62,6 +63,7 @@ class _NewApplicationScreenState extends State<NewApplicationScreen> {
         rooms: int.tryParse(roomsText),
         floor: int.tryParse(floorText),
         totalFloors: int.tryParse(totalFloorsText),
+        condition: _selectedCondition,
       );
 
       await SupabaseService.createApplication(
@@ -299,6 +301,50 @@ class _NewApplicationScreenState extends State<NewApplicationScreen> {
                             ),
                           ),
                         ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Состояние / Ремонт',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: c.textSecondary,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: c.surfaceLight,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: c.border, width: 1),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: _selectedCondition,
+                            isExpanded: true,
+                            dropdownColor: c.surface,
+                            style: TextStyle(color: c.textPrimary, fontSize: 14),
+                            items: [
+                              'Без ремонта',
+                              'Косметический ремонт',
+                              'Капитальный ремонт',
+                              'Дизайнерский ремонт',
+                              'Евро ремонт',
+                            ].map((String value) {
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value),
+                              );
+                            }).toList(),
+                            onChanged: (String? newValue) {
+                              if (newValue != null) {
+                                setState(() => _selectedCondition = newValue);
+                              }
+                            },
+                          ),
+                        ),
                       ),
                     ],
                   ),
