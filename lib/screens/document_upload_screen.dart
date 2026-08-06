@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -54,9 +54,16 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
       });
 
       for (final file in result.files) {
-        if (file.path == null) continue;
+        final Uint8List bytes;
+        if (file.bytes != null) {
+          bytes = file.bytes!;
+        } else if (file.path != null) {
+          bytes = await file.xFile.readAsBytes();
+        } else {
+          continue;
+        }
         try {
-          await SupabaseService.uploadDocument(File(file.path!));
+          await SupabaseService.uploadDocument(fileName: file.name, bytes: bytes);
         } catch (e) {
           _uploadError = 'Ошибка загрузки ${file.name}: $e';
         }
@@ -111,11 +118,21 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
     }
   }
 
-  void _openDocument(Map<String, dynamic> doc) {
+  Future<void> _openDocument(Map<String, dynamic> doc) async {
     final filePath = doc['file_url']?.toString();
     if (filePath == null || filePath.isEmpty) return;
 
-    final url = SupabaseService.getDocumentUrl(filePath);
+    final String url;
+    try {
+      url = await SupabaseService.getDocumentUrl(filePath);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка открытия документа: $e')),
+        );
+      }
+      return;
+    }
     final fileType = (doc['file_type'] ?? '').toString().toLowerCase();
 
     if (fileType == 'jpg' || fileType == 'jpeg' || fileType == 'png') {
@@ -385,12 +402,21 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                         if (isImage && filePath != null)
                                           ClipRRect(
                                             borderRadius: BorderRadius.circular(10),
-                                            child: Image.network(
-                                              SupabaseService.getDocumentUrl(filePath),
-                                              width: 48,
-                                              height: 48,
-                                              fit: BoxFit.cover,
-                                              errorBuilder: (_, obj, stack) => _buildFileIcon(c, fileType),
+                                            child: FutureBuilder<String>(
+                                              future: SupabaseService.getDocumentUrl(filePath),
+                                              builder: (context, snapshot) {
+                                                final url = snapshot.data;
+                                                if (url == null || url.isEmpty) {
+                                                  return _buildFileIcon(c, fileType);
+                                                }
+                                                return Image.network(
+                                                  url,
+                                                  width: 48,
+                                                  height: 48,
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder: (_, obj, stack) => _buildFileIcon(c, fileType),
+                                                );
+                                              },
                                             ),
                                           )
                                         else

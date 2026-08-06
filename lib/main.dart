@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -30,6 +31,9 @@ Future<void> main() async {
   await Supabase.initialize(
     url: supabaseUrl,
     publishableKey: supabaseAnonKey,
+    authOptions: FlutterAuthClientOptions(
+      authFlowType: kIsWeb ? AuthFlowType.pkce : AuthFlowType.implicit,
+    ),
   );
 
   await appSettings.load();

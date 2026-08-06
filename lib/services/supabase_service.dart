@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -226,10 +226,13 @@ class SupabaseService {
     return List<Map<String, dynamic>>.from(data);
   }
 
-  static Future<Map<String, dynamic>> uploadDocument(File file) async {
+  static Future<Map<String, dynamic>> uploadDocument({
+    required String fileName,
+    required Uint8List bytes,
+  }) async {
     if (userId == null) throw Exception('Не авторизован');
 
-    final originalName = file.uri.pathSegments.last;
+    final originalName = fileName;
     final ext = originalName.contains('.')
         ? originalName.substring(originalName.lastIndexOf('.'))
         : '';
@@ -237,13 +240,13 @@ class SupabaseService {
     final safeName = '$timestamp$ext';
     final path = _storagePath(safeName);
 
-    await supabase.storage.from(_storageBucket).upload(
+    await supabase.storage.from(_storageBucket).uploadBinary(
       path,
-      file,
+      bytes,
       fileOptions: const FileOptions(upsert: true),
     );
 
-    final fileSize = await file.length();
+    final fileSize = bytes.length;
     final fileType = ext.replaceFirst('.', '').toLowerCase();
 
     final data = await supabase
@@ -269,8 +272,8 @@ class SupabaseService {
     await supabase.from('documents').delete().eq('id', id);
   }
 
-  static String getDocumentUrl(String filePath) {
-    return supabase.storage.from(_storageBucket).getPublicUrl(filePath);
+  static Future<String> getDocumentUrl(String filePath) async {
+    return supabase.storage.from(_storageBucket).createSignedUrl(filePath, 3600);
   }
 
   // ============================================

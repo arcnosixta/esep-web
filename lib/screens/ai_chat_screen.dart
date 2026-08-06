@@ -1,11 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../models/chat_message.dart';
+import '../utils/chat_image.dart';
 import '../services/openrouter_service.dart';
 import '../services/supabase_service.dart';
 import '../theme/app_colors.dart';
@@ -293,11 +294,13 @@ class _AiChatScreenState extends State<AiChatScreen> {
     );
     if (picked == null) return;
 
-    final bytes = await File(picked.path).readAsBytes();
+    final bytes = await picked.readAsBytes();
     final b64 = base64Encode(bytes);
 
     setState(() {
-      _pendingImagePaths.add(picked.path);
+      if (!kIsWeb && picked.path.isNotEmpty) {
+        _pendingImagePaths.add(picked.path);
+      }
       _pendingImageBase64.add(b64);
     });
   }
@@ -310,7 +313,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
   }
 
   void _showImageSourceSheet() {
-    final canUseCamera = !Platform.isLinux;
+    final canUseCamera = !kIsWeb && defaultTargetPlatform != TargetPlatform.linux;
     final c = AppColors.of(context);
 
     showModalBottomSheet(
@@ -869,7 +872,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        if (msg.imagePaths.isNotEmpty) _buildImageGrid(msg.imagePaths),
+        if (msg.imagePaths.isNotEmpty || msg.imageBase64.isNotEmpty) _buildImageGrid(msg),
         if (msg.text.isNotEmpty)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -914,23 +917,29 @@ class _AiChatScreenState extends State<AiChatScreen> {
     );
   }
 
-  Widget _buildImageGrid(List<String> paths) {
+  Widget _buildImageGrid(ChatMessage msg) {
+    final count = msg.imagePaths.length > msg.imageBase64.length
+        ? msg.imagePaths.length
+        : msg.imageBase64.length;
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Wrap(
         spacing: 6,
         runSpacing: 6,
-        children: paths.map((path) {
+        children: List.generate(count, (i) {
+          final path = i < msg.imagePaths.length ? msg.imagePaths[i] : '';
+          final base64 = i < msg.imageBase64.length ? msg.imageBase64[i] : '';
           return ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: Image.file(
-              File(path),
+            child: chatImage(
+              path: path,
+              base64: base64,
               width: 120,
               height: 120,
               fit: BoxFit.cover,
             ),
           );
-        }).toList(),
+        }),
       ),
     );
   }
@@ -985,15 +994,18 @@ class _AiChatScreenState extends State<AiChatScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: _pendingImagePaths.length,
+        itemCount: _pendingImagePaths.length > _pendingImageBase64.length
+            ? _pendingImagePaths.length
+            : _pendingImageBase64.length,
         separatorBuilder: (context, index) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
           return Stack(
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(10),
-                child: Image.file(
-                  File(_pendingImagePaths[index]),
+                child: chatImage(
+                  path: _pendingImagePaths[index],
+                  base64: _pendingImageBase64[index],
                   width: 64,
                   height: 64,
                   fit: BoxFit.cover,

@@ -1,10 +1,9 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:path_provider/path_provider.dart';
 
 import '../models/report_template.dart';
 import '../services/openrouter_service.dart';
@@ -49,7 +48,7 @@ class ReportService {
   // BUILD PDF FROM ReportData
   // ============================================
 
-  static Future<File> generatePdf(ReportData data) async {
+  static Future<Uint8List> generatePdf(ReportData data) async {
     final pdf = pw.Document();
 
     final fontData = await rootBundle.load('assets/fonts/DejaVuSans.ttf');
@@ -79,11 +78,9 @@ class ReportService {
       ),
     );
 
-    final dir = await getApplicationDocumentsDirectory();
-    final file = File('${dir.path}/report_${DateTime.now().millisecondsSinceEpoch}.pdf');
-    await file.writeAsBytes(await pdf.save());
-    debugPrint('[Report] PDF saved to: ${file.path}');
-    return file;
+    final bytes = await pdf.save();
+    debugPrint('[Report] PDF generated: ${bytes.length} bytes');
+    return bytes;
   }
 
   static pw.Widget _buildHeader(ReportData data, pw.Font font, pw.Font fontBold) {
@@ -397,9 +394,8 @@ class ReportService {
   // UPLOAD PDF TO SUPABASE STORAGE
   // ============================================
 
-  static Future<String?> uploadReportPdf(File pdfFile, String applicationId) async {
+  static Future<String?> uploadReportPdf(Uint8List bytes, String applicationId) async {
     try {
-      final bytes = await pdfFile.readAsBytes();
       final fileName = 'reports/report_${applicationId}_${DateTime.now().millisecondsSinceEpoch}.pdf';
 
       await supabase.storage.from('reports').uploadBinary(fileName, bytes);
@@ -449,13 +445,13 @@ class ReportService {
       return const ReportResult(success: false, error: 'AI не смог сгенерировать данные отчёта');
     }
 
-    final pdfFile = await generatePdf(reportData);
-    final pdfUrl = await uploadReportPdf(pdfFile, applicationId);
+    final pdfBytes = await generatePdf(reportData);
+    final pdfUrl = await uploadReportPdf(pdfBytes, applicationId);
 
     return ReportResult(
       success: true,
       reportData: reportData,
-      pdfFile: pdfFile,
+      pdfBytes: pdfBytes,
       pdfUrl: pdfUrl,
     );
   }
@@ -465,14 +461,14 @@ class ReportResult {
   final bool success;
   final String? error;
   final ReportData? reportData;
-  final File? pdfFile;
+  final Uint8List? pdfBytes;
   final String? pdfUrl;
 
   const ReportResult({
     required this.success,
     this.error,
     this.reportData,
-    this.pdfFile,
+    this.pdfBytes,
     this.pdfUrl,
   });
 }

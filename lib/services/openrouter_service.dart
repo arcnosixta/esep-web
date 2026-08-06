@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 
 import '../main.dart';
 import '../models/chat_message.dart';
@@ -376,42 +376,35 @@ $marketContext
           'top_p': 0.9,
         });
 
-        final client = HttpClient();
-        try {
-          final request = await client.postUrl(Uri.parse(_baseUrl));
-          request.headers.set('Content-Type', 'application/json');
-          request.headers.set('Authorization', 'Bearer $openRouterApiKey');
-          request.headers.set('HTTP-Referer', 'https://esep.kz');
-          request.headers.set('X-OpenRouter-Title', 'ESEP Report Generator');
-          final bodyBytes = utf8.encode(body);
-          request.headers.contentLength = bodyBytes.length;
-          request.add(bodyBytes);
-
-          final response = await request.close();
-          if (response.statusCode != 200) {
-            final error = await response.transform(utf8.decoder).join();
-            throw Exception('HTTP ${response.statusCode}: $error');
-          }
-
-          final responseBody = await response.transform(utf8.decoder).join();
-          final json = jsonDecode(responseBody) as Map<String, dynamic>;
-          final choices = json['choices'] as List?;
-          if (choices == null || choices.isEmpty) throw Exception('No choices');
-
-          final content = choices[0]['message']?['content'] as String? ?? '';
-          if (content.isEmpty) throw Exception('Empty content');
-
-          final cleaned = content
-              .replaceAll('```json', '')
-              .replaceAll('```', '')
-              .trim();
-
-          final reportJson = jsonDecode(cleaned) as Map<String, dynamic>;
-          debugPrint('[Report] AI model $model succeeded');
-          return ReportData.fromJson(reportJson);
-        } finally {
-          client.close();
+        final response = await http.post(
+          Uri.parse(_baseUrl),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $openRouterApiKey',
+            'HTTP-Referer': 'https://esep.kz',
+            'X-OpenRouter-Title': 'ESEP Report Generator',
+          },
+          body: body,
+        );
+        if (response.statusCode != 200) {
+          throw Exception('HTTP ${response.statusCode}: ${response.body}');
         }
+
+        final json = jsonDecode(response.body) as Map<String, dynamic>;
+        final choices = json['choices'] as List?;
+        if (choices == null || choices.isEmpty) throw Exception('No choices');
+
+        final content = choices[0]['message']?['content'] as String? ?? '';
+        if (content.isEmpty) throw Exception('Empty content');
+
+        final cleaned = content
+            .replaceAll('```json', '')
+            .replaceAll('```', '')
+            .trim();
+
+        final reportJson = jsonDecode(cleaned) as Map<String, dynamic>;
+        debugPrint('[Report] AI model $model succeeded');
+        return ReportData.fromJson(reportJson);
       } catch (e) {
         lastError = e.toString();
         debugPrint('[Report] Model $model failed: $lastError');
@@ -439,25 +432,23 @@ $marketContext
     debugPrint('[AI] Request body length: ${body.length} chars');
     debugPrint('[AI] Request body preview: ${body.substring(0, body.length > 300 ? 300 : body.length)}');
 
-    final client = HttpClient();
-    try {
-      final request = await client.postUrl(Uri.parse(_baseUrl));
-      request.headers.set('Content-Type', 'application/json');
-      request.headers.set('Authorization', 'Bearer $openRouterApiKey');
-      request.headers.set('HTTP-Referer', 'https://esep.kz');
-      request.headers.set('X-OpenRouter-Title', 'ESEP Real Estate Appraiser');
-      final bodyBytes = utf8.encode(body);
-      request.headers.contentLength = bodyBytes.length;
-      request.add(bodyBytes);
+    final request = http.Request('POST', Uri.parse(_baseUrl))
+      ..headers.addAll({
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $openRouterApiKey',
+        'HTTP-Referer': 'https://esep.kz',
+        'X-OpenRouter-Title': 'ESEP Real Estate Appraiser',
+      })
+      ..body = body;
 
-      final response = await request.close();
-      if (response.statusCode != 200) {
-        final error = await response.transform(utf8.decoder).join();
-        throw Exception('HTTP ${response.statusCode}: $error');
-      }
+    final streamed = await request.send();
+    if (streamed.statusCode != 200) {
+      final error = await streamed.stream.transform(utf8.decoder).join();
+      throw Exception('HTTP ${streamed.statusCode}: $error');
+    }
 
-      String buffer = '';
-      await for (final chunk in response.transform(utf8.decoder)) {
+    String buffer = '';
+    await for (final chunk in streamed.stream.transform(utf8.decoder)) {
         buffer += chunk;
         final lines = buffer.split('\n');
         buffer = lines.removeLast();
@@ -484,8 +475,5 @@ $marketContext
           } catch (_) {}
         }
       }
-    } finally {
-      client.close();
-    }
   }
 }

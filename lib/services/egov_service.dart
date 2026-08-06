@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -157,7 +156,7 @@ class EgovService {
       if (file.bytes != null) {
         bytes = file.bytes;
       } else if (file.path != null) {
-        bytes = await File(file.path!).readAsBytes();
+        bytes = await file.xFile.readAsBytes();
       }
 
       if (bytes == null) return null;

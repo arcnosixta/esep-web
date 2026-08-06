@@ -84,11 +84,11 @@ class _ReportScreenState extends State<ReportScreen> {
     setState(() => _generating = true);
 
     try {
-      final pdfFile = await ReportService.generatePdf(_reportData!);
+      final pdfBytes = await ReportService.generatePdf(_reportData!);
 
       if (mounted) {
         await Printing.layoutPdf(
-          onLayout: (format) async => pdfFile.readAsBytesSync(),
+          onLayout: (format) async => pdfBytes,
           name: 'ESEP_Report_${DateTime.now().millisecondsSinceEpoch}',
         );
       }
@@ -109,8 +109,8 @@ class _ReportScreenState extends State<ReportScreen> {
     setState(() => _generating = true);
 
     try {
-      final pdfFile = await ReportService.generatePdf(_reportData!);
-      await Printing.sharePdf(bytes: pdfFile.readAsBytesSync(), filename: 'report.pdf');
+      final pdfBytes = await ReportService.generatePdf(_reportData!);
+      await Printing.sharePdf(bytes: pdfBytes, filename: 'report.pdf');
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
