@@ -104,10 +104,31 @@ class OpenRouterService {
 - Возвращай к оценке: «Пришлите фото или опишите объект текстом — дам оценку»
 
 ## ЧТО ИЩЕШЬ В ИНТЕРНЕТЕ:
-- Крыша.кz — актуальные цены на похожие объекты
+- Крыша.кз — актуальные цены на похожие объекты
 - OLX.kz — предложения продажи
-- Своя БД — рыночные данные
+- Своя БД — рыночные данные (раздел ДАННЫЕ РЫНКА)
 - Сравнивай по: район, площадь, этаж, состояние
+
+ВАЖНО ПРО РЫНОЧНЫЕ ДАННЫЕ:
+- Используй ТОЛЬКО данные из раздела «ДАННЫЕ РЫНКА ИЗ БД ESEP» (если он есть в контексте).
+- Никогда НЕ выдумывай цены, адреса и ссылки. Если рыночных данных нет — так и скажи: «похожих предложений в базе пока нет, оценка ориентировочная».
+- Если у аналога есть ссылка — приведи её в тексте как доказательство.
+- ПУТЬ 2 (без документов): после оценки ОБЯЗАТЕЛЬНО добавь фразу: «Без страховки/документов официальный документ создать нельзя — это только предварительная оценка. Пришлите фото страховки или документы, чтобы оформить официальный отчёт.»
+
+## СТРУКТУРИРОВАННЫЙ ВЫВОД ОЦЕНКИ (ОБЯЗАТЕЛЬНО):
+В КОНЦЕ ответа, если ты дал оценку (у тебя есть тип + адрес + площадь), добавь JSON-блок
+строго такого вида (между маркерами [ESTIMATE] и [/ESTIMATE]):
+
+[ESTIMATE]
+{"property_type":"квартира","address":"г. Алматы, Абая 150","area":85,"rooms":3,"floor":5,"total_floors":9,"condition":"косметический ремонт","year_built":2005,"price_low":32600000,"price_high":44200000,"price_mid":38400000,"has_documents":true}
+[/ESTIMATE]
+
+Правила:
+- property_type: квартира | дом | земля | коммерческая (по-русски, маленькими буквами)
+- price_low/price_high/price_mid — в тенге, целыми числами, реалистично по рыночным данным
+- has_documents: true — если пользователь прислал фото страховки/документов; false — если только текст
+- Если данных недостаточно для оценки — НЕ выводи блок [ESTIMATE] вообще
+- Блок идёт в самом конце ответа, отдельной строкой
 
 ## ПРОДАЖА ОЦЕНКИ:
 В конце каждого ответа с оценкой мягко предложи:
@@ -183,6 +204,7 @@ class OpenRouterService {
       final rooms = item['rooms'] ?? '—';
       final floor = item['floor'] ?? '—';
       final totalFloors = item['total_floors'] ?? '—';
+      final sourceUrl = item['source_url'];
 
       buffer.writeln('${i + 1}. $type | $address');
       buffer.writeln('   $area м² | $rooms комн. | $floor/$totalFloors эт.');
@@ -192,6 +214,9 @@ class OpenRouterService {
           final pricePerM2 = price / (area is num ? area : 1);
           buffer.writeln('   За м²: ~${pricePerM2.round()} ₸');
         }
+      }
+      if (sourceUrl != null && sourceUrl.toString().isNotEmpty) {
+        buffer.writeln('   Ссылка: $sourceUrl');
       }
       buffer.writeln('');
     }
@@ -472,4 +497,86 @@ $marketContext
         }
       }
   }
+
+  // ============================================
+  // PARSE [ESTIMATE] JSON FROM ASSISTANT ANSWER
+  // ============================================
+
+  /// Извлекает структурированную оценку из ответа ИИ.
+  /// Ищет блок [ESTIMATE]...[/ESTIMATE]; если маркеров нет — пробует
+  /// распарсить последний JSON-объект в тексте (на случай если модель
+  /// забыла маркеры). Возвращает null, если оценки нет.
+  static EstimateData? extractEstimate(String text) {
+    if (text.isEmpty) return null;
+
+    String? jsonCandidate;
+
+    final markerMatch = RegExp(
+      r'\[ESTIMATE\]([\s\S]*?)\[/ESTIMATE\]',
+      caseSensitive: false,
+    ).firstMatch(text);
+    if (markerMatch != null) {
+      jsonCandidate = markerMatch.group(1)?.trim();
+    } else {
+      // Последний {...} блок в тексте
+      final matches = RegExp(r'\{[^{}]*\}').allMatches(text).toList();
+      if (matches.isNotEmpty) {
+        jsonCandidate = matches.last.group(0);
+      }
+    }
+
+    if (jsonCandidate == null) return null;
+
+    try {
+      final map = jsonDecode(jsonCandidate) as Map<String, dynamic>;
+      if (map['price_mid'] == null && map['price_low'] == null) return null;
+      return EstimateData(
+        propertyType: (map['property_type'] as String?) ?? '',
+        address: (map['address'] as String?) ?? '',
+        area: (map['area'] as num?)?.toDouble(),
+        rooms: (map['rooms'] as num?)?.toInt(),
+        floor: (map['floor'] as num?)?.toInt(),
+        totalFloors: (map['total_floors'] as num?)?.toInt(),
+        condition: (map['condition'] as String?) ?? '',
+        yearBuilt: (map['year_built'] as num?)?.toInt(),
+        priceLow: (map['price_low'] as num?)?.toDouble(),
+        priceHigh: (map['price_high'] as num?)?.toDouble(),
+        priceMid: (map['price_mid'] as num?)?.toDouble(),
+        hasDocuments: map['has_documents'] == true,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+}
+
+/// Структурированная оценка, извлечённая из ответа ИИ.
+class EstimateData {
+  final String propertyType;
+  final String address;
+  final double? area;
+  final int? rooms;
+  final int? floor;
+  final int? totalFloors;
+  final String condition;
+  final int? yearBuilt;
+  final double? priceLow;
+  final double? priceHigh;
+  final double? priceMid;
+  final bool hasDocuments;
+
+  const EstimateData({
+    this.propertyType = '',
+    this.address = '',
+    this.area,
+    this.rooms,
+    this.floor,
+    this.totalFloors,
+    this.condition = '',
+    this.yearBuilt,
+    this.priceLow,
+    this.priceHigh,
+    this.priceMid,
+    this.hasDocuments = false,
+  });
 }

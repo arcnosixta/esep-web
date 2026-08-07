@@ -294,14 +294,26 @@ class SupabaseService {
   static Future<Map<String, dynamic>> createApplication({
     required String propertyId,
     String source = 'manual',
+    double? estimatedPrice,
   }) async {
     final data = await supabase.from('applications').insert({
       'user_id': userId,
       'property_id': propertyId,
       'status': 'new',
       'source': source,
+      'estimated_price': ?estimatedPrice,
     }).select().single();
     return data;
+  }
+
+  /// Пометить заявку как подписанную оценщиком (ЭЦП-заглушка).
+  static Future<void> signApplication(String applicationId) async {
+    await supabase.from('applications').update({
+      'status': 'completed',
+      'signed_at': DateTime.now().toIso8601String(),
+      'signed_by': userId,
+      'signature': 'ECP-TEST-${applicationId.substring(0, 8).toUpperCase()}',
+    }).eq('id', applicationId);
   }
 
   static Future<Map<String, dynamic>> getApplication(String id) async {

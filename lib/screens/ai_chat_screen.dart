@@ -10,6 +10,10 @@ import '../utils/chat_image.dart';
 import '../services/openrouter_service.dart';
 import '../services/supabase_service.dart';
 import '../theme/app_colors.dart';
+import '../utils/formatters.dart';
+import '../navigation/app_navigator.dart';
+import '../widgets/option_button.dart';
+import 'payment_screen.dart';
 
 class AiChatScreen extends StatefulWidget {
   const AiChatScreen({super.key});
@@ -27,6 +31,10 @@ class _AiChatScreenState extends State<AiChatScreen> {
   final List<ChatMessage> _messages = [];
   bool _isStreaming = false;
   StreamSubscription<String>? _streamSubscription;
+
+  /// Последняя структурированная оценка от ИИ (из блока [ESTIMATE]).
+  EstimateData? _lastEstimate;
+  bool _creatingApplication = false;
 
   final List<String> _pendingImagePaths = [];
   final List<String> _pendingImageBase64 = [];
@@ -445,7 +453,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
           if (mounted) {
             setState(() {
               _messages[assistantIndex] = _messages[assistantIndex].copyWith(
-                text: buffer.toString(),
+                text: _stripEstimateBlock(buffer.toString()),
               );
             });
             _scrollToBottom();
@@ -453,12 +461,18 @@ class _AiChatScreenState extends State<AiChatScreen> {
         },
         onDone: () {
           if (mounted) {
+            final full = buffer.toString();
+            // Парсим оценку ДО очистки текста от JSON-маркеров.
+            final estimate = OpenRouterService.extractEstimate(full);
             setState(() {
               _messages[assistantIndex] = _messages[assistantIndex].copyWith(
+                text: _stripEstimateBlock(full),
                 isStreaming: false,
               );
               _isStreaming = false;
+              _lastEstimate = estimate;
             });
+            _scrollToBottom();
             _saveConversation();
           }
         },
@@ -493,6 +507,61 @@ class _AiChatScreenState extends State<AiChatScreen> {
         });
       }
     }
+  }
+
+  /// Убирает блок [ESTIMATE]...[/ESTIMATE] из текста ответа ИИ.
+  /// Закрытый блок вырезается целиком; незакрытый хвост обрезается.
+  String _stripEstimateBlock(String text) {
+    var cleaned = text.replaceAll(
+      RegExp(r'\[ESTIMATE\][\s\S]*?\[/ESTIMATE\]', caseSensitive: false),
+      '',
+    );
+    final start = cleaned.toLowerCase().indexOf('[estimate]');
+    if (start >= 0) cleaned = cleaned.substring(0, start);
+    return cleaned.trim();
+  }
+
+  /// Создаёт объект + заявку (source='ai') и открывает оплату.
+  Future<void> _startPayment(EstimateData e) async {
+    if (_creatingApplication) return;
+    setState(() => _creatingApplication = true);
+    try {
+      final property = await SupabaseService.addProperty(
+        type: _dbTypeFromEstimate(e.propertyType),
+        address: e.address,
+        area: e.area ?? 0,
+        rooms: e.rooms,
+        floor: e.floor,
+        totalFloors: e.totalFloors,
+        condition: e.condition,
+      );
+      final app = await SupabaseService.createApplication(
+        propertyId: property['id'],
+        source: 'ai',
+        estimatedPrice: e.priceMid,
+      );
+      if (!mounted) return;
+      setState(() => _creatingApplication = false);
+      AppNavigator.push(
+        context,
+        PaymentScreen(applicationId: app['id']),
+      );
+    } catch (err) {
+      if (!mounted) return;
+      setState(() => _creatingApplication = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Не удалось создать заявку: $err')),
+      );
+    }
+  }
+
+  String _dbTypeFromEstimate(String t) {
+    return switch (t.toLowerCase()) {
+      'дом' => 'house',
+      'земля' || 'участок' => 'land',
+      'коммерческая' || 'коммерция' => 'commercial',
+      _ => 'apartment',
+    };
   }
 
   @override
@@ -794,11 +863,18 @@ class _AiChatScreenState extends State<AiChatScreen> {
   }
 
   Widget _buildMessageList() {
+    final showEstimate = _lastEstimate != null && !_isStreaming;
     return ListView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      itemCount: _messages.length,
+      itemCount: _messages.length + (showEstimate ? 1 : 0),
       itemBuilder: (context, index) {
+        if (showEstimate && index >= _messages.length) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: _buildEstimateCard(_lastEstimate!),
+          );
+        }
         final msg = _messages[index];
         final isUser = msg.role == MessageRole.user;
 
@@ -822,6 +898,114 @@ class _AiChatScreenState extends State<AiChatScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildEstimateCard(EstimateData e) {
+    final c = AppColors.of(context);
+    final low = e.priceLow ?? e.priceMid ?? 0;
+    final high = e.priceHigh ?? e.priceMid ?? 0;
+    final areaText = e.area != null ? '${e.area!.round()} м²' : '';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: c.accent.withValues(alpha: 0.35), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.calculate_rounded, size: 20, color: c.accent),
+              const SizedBox(width: 8),
+              Text(
+                'ПРЕДВАРИТЕЛЬНАЯ ОЦЕНКА',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.0,
+                  color: c.accent,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (e.address.isNotEmpty)
+            Text(
+              e.address,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: c.textPrimary,
+              ),
+            ),
+          if (e.address.isNotEmpty || areaText.isNotEmpty)
+            const SizedBox(height: 4),
+          if (areaText.isNotEmpty)
+            Text(
+              '$areaText · ${e.condition.isEmpty ? 'состояние не указано' : e.condition}',
+              style: TextStyle(fontSize: 13, color: c.textSecondary),
+            ),
+          const SizedBox(height: 14),
+          Text(
+            low == high ? formatTenge(low) : '${formatTenge(low)} — ${formatTenge(high)}',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: c.textPrimary,
+              height: 1.1,
+            ),
+          ),
+          const SizedBox(height: 14),
+          if (e.hasDocuments) ...[
+            OptionButton(
+              text: _creatingApplication
+                  ? 'Создание заявки…'
+                  : '💳 Оплатить официальный отчёт',
+              icon: Icons.payments_rounded,
+              onTap: _creatingApplication ? null : () => _startPayment(e),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'После оплаты заявка уйдёт оценщику — он подготовит и подпишет официальный отчёт.',
+              style: TextStyle(fontSize: 12, color: c.textSecondary, height: 1.35),
+            ),
+          ] else ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: c.gold.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: c.gold.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, size: 18, color: c.gold),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Для официального отчёта нужны документы. Пришлите фото страховки и объекта — и сможете оформить заявку.',
+                      style: TextStyle(fontSize: 12.5, color: c.textPrimary, height: 1.35),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
