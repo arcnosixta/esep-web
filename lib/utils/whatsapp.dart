@@ -8,7 +8,7 @@ class WhatsApp {
 
   /// Номер менеджера/компании в международном формате БЕЗ '+' (для wa.me).
   /// TODO: заменить на реальный номер.
-  static const String managerPhone = '77000000000';
+  static const String managerPhone = '77029315415';
 
   /// Собрать ссылку wa.me с предзаполненным текстом.
   static Uri link({

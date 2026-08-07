@@ -17,7 +17,7 @@ class PaymentService {
 
   /// Номер Kaspi-счёта/телефона для переводов (международный формат, без +).
   /// TODO: заменить на реальный номер ИП/компании.
-  static const String kaspiBusinessPhone = '77000000000';
+  static const String kaspiBusinessPhone = '77029315415';
 
   static const String _table = 'payments';
 
