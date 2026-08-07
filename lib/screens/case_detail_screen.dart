@@ -10,11 +10,34 @@ import 'payment_screen.dart';
 import 'report_screen.dart';
 
 class CaseDetailScreen extends StatelessWidget {
-  const CaseDetailScreen({super.key});
+  final Map<String, dynamic> application;
+
+  const CaseDetailScreen({super.key, required this.application});
 
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final prop = application['properties'] as Map<String, dynamic>? ?? {};
+    final id = (application['id'] ?? '').toString();
+    final status = application['status'] ?? 'new';
+    final type = prop['type'] ?? '';
+    final address = prop['address'] ?? '';
+    final area = (prop['area'] as num?)?.toDouble() ?? 0;
+    final rooms = prop['rooms'] as int?;
+    final floor = prop['floor'] as int?;
+    final totalFloors = prop['total_floors'] as int?;
+    final estimated = application['estimated_price'] as num?;
+    final createdAt = application['created_at'] as String?;
+
+    final progress = switch (status) {
+      'new' => 0.15,
+      'pending_payment' => 0.4,
+      'in_progress' => 0.55,
+      'completed' => 1.0,
+      'paid' => 1.0,
+      'rejected' => 0.0,
+      _ => 0.15,
+    };
 
     return Scaffold(
       backgroundColor: c.background,
@@ -38,7 +61,7 @@ class CaseDetailScreen extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Заявка №FA1D',
+                        caseNumber(id),
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
@@ -47,8 +70,8 @@ class CaseDetailScreen extends StatelessWidget {
                       ),
                     ),
                     StatusBadge(
-                      status: BadgeStatus.inProgress,
-                      label: 'В работе',
+                      status: badgeStatusFromKey(status),
+                      label: statusLabel(context, status),
                     ),
                   ],
                 ),
@@ -84,15 +107,15 @@ class CaseDetailScreen extends StatelessWidget {
                         ),
                         child: Center(
                           child: Icon(
-                            Icons.apartment_rounded,
+                            propertyTypeIcon(type),
                             size: 48,
-                            color: c.muted,
+                            color: propertyTypeColor(context, type),
                           ),
                         ),
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Квартира',
+                        propertyTypeLabel(context, type),
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
@@ -101,14 +124,14 @@ class CaseDetailScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'г. Алматы, ул. Абая 52',
+                        address,
                         style: TextStyle(
                           fontSize: 14,
                           color: c.textSecondary,
                         ),
                       ),
                       const SizedBox(height: 16),
-                      CaseProgressBar(progress: 0.55),
+                      CaseProgressBar(progress: progress),
                     ],
                   ),
                 ),
@@ -137,19 +160,23 @@ class CaseDetailScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     InformationTile(
-                      content: '85',
+                      content: area > 0 ? '${area.round()}' : '—',
                       name: 'Площадь м²',
                       icon: Icons.square_foot_rounded,
                       valueColor: c.textPrimary,
                     ),
                     InformationTile(
-                      content: '3',
+                      content: rooms != null ? '$rooms' : '—',
                       name: 'Комнаты',
                       icon: Icons.meeting_room_rounded,
                       valueColor: c.info,
                     ),
                     InformationTile(
-                      content: '12',
+                      content: floor != null
+                          ? totalFloors != null
+                              ? '$floor/$totalFloors'
+                              : '$floor'
+                          : '—',
                       name: 'Этаж',
                       icon: Icons.layers_rounded,
                       valueColor: c.warning,
@@ -171,16 +198,18 @@ class CaseDetailScreen extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      infoRow(context, 'Тип', 'Квартира'),
+                      infoRow(context, 'Тип', propertyTypeLabel(context, type)),
                       divider(context),
-                      infoRow(context, 'Адрес', 'г. Алматы, ул. Абая 52'),
-                      divider(context),
-                      infoRow(
-                        context,
-                        'Стоимость',
-                        '42 500 000 ₸',
-                        highlight: true,
-                      ),
+                      infoRow(context, 'Адрес', address),
+                      if (estimated != null) ...[
+                        divider(context),
+                        infoRow(
+                          context,
+                          'Стоимость',
+                          formatTenge(estimated.toDouble()),
+                          highlight: true,
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -216,27 +245,22 @@ class CaseDetailScreen extends StatelessWidget {
                     children: [
                       _statusStep(
                         context: context,
-                        title: 'Заявка создана',
-                        time: '12 января, 10:30',
+                        title: 'ИИ-анализ пройден',
+                        time: _formatDate(createdAt),
                         done: true,
                         isFirst: true,
                       ),
                       _statusStep(
                         context: context,
-                        title: 'Документы получены',
-                        time: '12 января, 11:15',
-                        done: true,
-                      ),
-                      _statusStep(
-                        context: context,
                         title: 'В работе у оценщика',
-                        time: '13 января, 09:00',
-                        done: true,
+                        done: status == 'in_progress' ||
+                            status == 'completed' ||
+                            status == 'paid',
                       ),
                       _statusStep(
                         context: context,
-                        title: 'Ожидает оплаты',
-                        done: false,
+                        title: 'Отчёт готов',
+                        done: status == 'completed' || status == 'paid',
                         isLast: true,
                       ),
                     ],
@@ -250,20 +274,28 @@ class CaseDetailScreen extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
                 child: Column(
                   children: [
-                    OptionButton(
-                      text: 'Оплатить',
-                      icon: Icons.payments_rounded,
-                      onTap: () => AppNavigator.push(
-                          context, const PaymentScreen()),
-                    ),
-                    const SizedBox(height: 12),
+                    if (status == 'pending_payment' ||
+                        status == 'new' ||
+                        status == 'in_progress') ...[
+                      OptionButton(
+                        text: 'Оплатить',
+                        icon: Icons.payments_rounded,
+                        onTap: () => AppNavigator.push(
+                          context,
+                          PaymentScreen(applicationId: id),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                     OptionButton(
                       text: 'Посмотреть отчёт',
                       icon: Icons.description_rounded,
                       backgroundColor: AppColors.of(context).surface,
                       textColor: AppColors.of(context).textPrimary,
-                      onTap: () =>
-                          AppNavigator.push(context, const ReportScreen()),
+                      onTap: () => AppNavigator.push(
+                        context,
+                        ReportScreen(applicationId: id),
+                      ),
                     ),
                   ],
                 ),
@@ -273,6 +305,19 @@ class CaseDetailScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatDate(String? iso) {
+    if (iso == null || iso.isEmpty) return '—';
+    final dt = DateTime.tryParse(iso);
+    if (dt == null) return '—';
+    const months = [
+      'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+      'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря',
+    ];
+    final hh = dt.hour.toString().padLeft(2, '0');
+    final mm = dt.minute.toString().padLeft(2, '0');
+    return '${dt.day} ${months[dt.month - 1]}, $hh:$mm';
   }
 
   Widget _statusStep({

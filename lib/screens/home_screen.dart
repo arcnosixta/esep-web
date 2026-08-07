@@ -134,7 +134,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
                     child: GestureDetector(
                       onTap: () => AppNavigator.push(
-                          context, const CaseDetailScreen()),
+                          context,
+                          CaseDetailScreen(
+                              application: _recentApps.first)),
                       child: Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
@@ -368,7 +370,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
                                     return GestureDetector(
                                       onTap: () => AppNavigator.push(
-                                          context, const CaseDetailScreen()),
+                                          context,
+                                          CaseDetailScreen(
+                                              application: app)),
                                       behavior: HitTestBehavior.opaque,
                                       child: Padding(
                                         padding: const EdgeInsets.symmetric(

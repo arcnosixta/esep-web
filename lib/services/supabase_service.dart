@@ -286,17 +286,20 @@ class SupabaseService {
         .from('applications')
         .select('*, properties(type, address, area, rooms, floor)')
         .eq('user_id', userId!)
+        .eq('source', 'ai')
         .order('created_at', ascending: false);
     return List<Map<String, dynamic>>.from(data);
   }
 
   static Future<Map<String, dynamic>> createApplication({
     required String propertyId,
+    String source = 'manual',
   }) async {
     final data = await supabase.from('applications').insert({
       'user_id': userId,
       'property_id': propertyId,
       'status': 'new',
+      'source': source,
     }).select().single();
     return data;
   }
@@ -385,6 +388,7 @@ class SupabaseService {
         .from('applications')
         .select()
         .eq('appraiser_id', userId!)
+        .eq('source', 'ai')
         .order('created_at', ascending: false);
 
     debugPrint('[Appraiser] apps count: ${appsData.length}');
@@ -425,6 +429,7 @@ class SupabaseService {
         .from('applications')
         .select()
         .eq('status', 'new')
+        .eq('source', 'ai')
         .isFilter('appraiser_id', null)
         .order('created_at', ascending: false);
 
@@ -738,18 +743,21 @@ class SupabaseService {
     final all = await supabase
         .from('applications')
         .select('id')
-        .eq('user_id', userId!);
+        .eq('user_id', userId!)
+        .eq('source', 'ai');
 
     final inProgress = await supabase
         .from('applications')
         .select('id')
         .eq('user_id', userId!)
+        .eq('source', 'ai')
         .eq('status', 'in_progress');
 
     final completed = await supabase
         .from('applications')
         .select('id')
         .eq('user_id', userId!)
+        .eq('source', 'ai')
         .eq('status', 'completed');
 
     return {

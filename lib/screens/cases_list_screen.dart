@@ -139,7 +139,7 @@ class _CasesListScreenState extends State<CasesListScreen> {
                               return GestureDetector(
                                 onTap: () => AppNavigator.push(
                                   context,
-                                  const CaseDetailScreen(),
+                                  CaseDetailScreen(application: app),
                                 ),
                                 behavior: HitTestBehavior.opaque,
                                 child: Container(
