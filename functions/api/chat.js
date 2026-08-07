@@ -2,18 +2,20 @@
 //
 // РОУТИНГ (экономия токенов на продакшене):
 //   - Сообщения БЕЗ картинок (просто текст) -> дешёвая текстовая модель:
-//       GEMINI_TEXT_MODEL (по умолчанию gemini-2.5-flash-lite, есть поиск)
+//       GEMINI_TEXT_MODEL (по умолчанию gemini-flash-lite-latest, без поиска)
 //   - Сообщения С картинками (фото страховки/объекта) -> vision-модель:
-//       GEMINI_VISION_MODEL (по умолчанию gemini-2.5-flash, vision + google_search)
+//       GEMINI_VISION_MODEL (по умолчанию gemini-2.5-flash, vision + google_search);
+//       если flash перегружен/лимит -> flash-lite (vision без поиска),
+//       затем -> OpenRouter gemma free.
 //   - Если GEMINI_API_KEY не задан — прозрачный фолбэк на OpenRouter
 //     (клиентские model id вида 'gemini-*' заменяются на бесплатные
 //     google/gemma-4-*-it:free, всё остальное пробрасывается как раньше).
 //
 // СЕКРЕТЫ (только на сервере, Pages -> Settings -> Environment variables):
-//   OPENROUTER_API_KEY  — был раньше, остаётся как фолбэк.
-//   GEMINI_API_KEY      — новый основной ключ (бесплатный, aistudio.google.com/apikey).
-//   GEMINI_TEXT_MODEL    — опционально: текстовая модель (default gemini-2.5-flash-lite).
-//   GEMINI_VISION_MODEL  — опционально: vision-модель (default gemini-2.5-flash).
+//   OPENROUTER_API_KEY  — фолбэк (был раньше, остаётся).
+//   GEMINI_API_KEY      — основной ключ (бесплатный, aistudio.google.com/apikey).
+//   GEMINI_TEXT_MODEL    — опционально: текстовая модель.
+//   GEMINI_VISION_MODEL  — опционально: vision-модель с поиском.
 //
 // Маршрут:  POST /api/chat
 // Тело:     OpenAI-формат {model, messages, stream, ...} — клиент НЕ меняется.
@@ -115,7 +117,7 @@ function toGeminiBody(body, hasImg) {
   };
   // google_search (живой поиск с ссылками-доказательствами) на бесплатном тарифе
   // работает ТОЛЬКО для gemini-2.5-flash; для flash-lite возвращает 429 quota.
-  // Поэтому tools добавляем только для запросов с фото (vision-модель).
+  // Поэтому tools добавляем только для vision-запросов на основной модели.
   if (hasImg) gem.tools = [{ google_search: {} }];
   if (systemParts.length) gem.systemInstruction = { parts: systemParts };
   return gem;
@@ -150,6 +152,27 @@ async function callGemini(model, gemBody, apiKey, stream) {
     throw new Error(`Gemini HTTP ${resp.status}: ${detail.slice(0, 300)}`);
   }
   return resp;
+}
+
+// Обработка успешного ответа Gemini -> OpenAI-формат (SSE или JSON).
+function respondGemini(resp, stream, model, request) {
+  if (stream) return geminiStreamToOpenAI(resp, request);
+  return (async () => {
+    const raw = await resp.text();
+    let gem;
+    try { gem = JSON.parse(raw); } catch (_) { throw new Error('Bad Gemini JSON'); }
+    let content = textFromGeminiPayload(gem);
+    if (gem.candidates && gem.candidates[0] && gem.candidates[0].groundingMetadata) {
+      content += sourcesFromGrounding(gem.candidates[0].groundingMetadata);
+    }
+    return json({
+      id: 'chatcmpl-gemini',
+      object: 'chat.completion',
+      created: Math.floor(Date.now() / 1000),
+      model,
+      choices: [{ index: 0, message: { role: 'assistant', content }, finish_reason: 'stop' }],
+    }, 200, corsHeaders(request));
+  })();
 }
 
 // ============================================================
@@ -187,7 +210,7 @@ function wrapOpenRouterResponse(upstream, body, request) {
 }
 
 // ============================================================
-// GEMINI -> OpenAI-совместимый ответ (SSE и JSON)
+// GEMINI -> OpenAI-совместимый ответ (SSE)
 // ============================================================
 
 function geminiStreamToOpenAI(resp, request) {
@@ -274,36 +297,27 @@ export async function onRequestPost(context) {
 
   const hasImg = hasImages(body.messages);
   const geminiKey = env.GEMINI_API_KEY;
+  const stream = body.stream === true;
 
   // --- Основной путь: Gemini (vision+поиск для фото, лайт для текста) ---
   if (geminiKey) {
     try {
       const model = pickGeminiModel(body, hasImg, env);
-      const gemBody = toGeminiBody(body, hasImg);
-      const stream = body.stream === true;
-      const resp = await callGemini(model, gemBody, geminiKey, stream);
-
-      if (stream) {
-        return geminiStreamToOpenAI(resp, request);
-      }
-
-      const raw = await resp.text();
-      let gem;
-      try { gem = JSON.parse(raw); } catch (_) { throw new Error('Bad Gemini JSON'); }
-      let content = textFromGeminiPayload(gem);
-      if (gem.candidates && gem.candidates[0] && gem.candidates[0].groundingMetadata) {
-        content += sourcesFromGrounding(gem.candidates[0].groundingMetadata);
-      }
-      return json({
-        id: 'chatcmpl-gemini',
-        object: 'chat.completion',
-        created: Math.floor(Date.now() / 1000),
-        model,
-        choices: [{ index: 0, message: { role: 'assistant', content }, finish_reason: 'stop' }],
-      }, 200, corsHeaders(request));
+      const resp = await callGemini(model, toGeminiBody(body, hasImg), geminiKey, stream);
+      return await respondGemini(resp, stream, model, request);
     } catch (e) {
-      // Gemini недоступен/лимит -> фолбэк на OpenRouter
-      console.error('[chat.js] Gemini failed, fallback to OpenRouter:', String(e).slice(0, 300));
+      console.error('[chat.js] Gemini primary failed:', String(e).slice(0, 300));
+      // Второй уровень: для фото пробуем flash-lite (vision без поиска) —
+      // flash часто перегружен (503 high demand / 429 quota на free-тарифе).
+      if (hasImg) {
+        try {
+          const fallbackModel = env.GEMINI_VISION_FALLBACK_MODEL || 'gemini-flash-lite-latest';
+          const resp2 = await callGemini(fallbackModel, toGeminiBody(body, false), geminiKey, stream);
+          return await respondGemini(resp2, stream, fallbackModel, request);
+        } catch (e2) {
+          console.error('[chat.js] Gemini vision fallback failed:', String(e2).slice(0, 300));
+        }
+      }
     }
   }
 
@@ -315,7 +329,6 @@ export async function onRequestPost(context) {
 
   let overrideModel = null;
   if ((body.model || '').startsWith('gemini-')) {
-    // Клиент просит Gemini, но ключа нет — подменяем на бесплатный OpenRouter-аналог
     overrideModel = hasImg ? OR_VISION_FALLBACK : OR_TEXT_FALLBACK;
   }
 
