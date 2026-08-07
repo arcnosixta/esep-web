@@ -92,7 +92,7 @@ function toGeminiParts(content) {
   return parts;
 }
 
-function toGeminiBody(body) {
+function toGeminiBody(body, hasImg) {
   const systemParts = [];
   const contents = [];
   for (const m of body.messages || []) {
@@ -107,14 +107,16 @@ function toGeminiBody(body) {
   }
   const gem = {
     contents,
-    // Живой поиск в интернете: ссылки-доказательства (krisha/olx/kn и др.)
-    tools: [{ google_search: {} }],
     generationConfig: {
       maxOutputTokens: body.max_tokens || 4096,
       temperature: body.temperature ?? 0.7,
       topP: body.top_p ?? 0.9,
     },
   };
+  // google_search (живой поиск с ссылками-доказательствами) на бесплатном тарифе
+  // работает ТОЛЬКО для gemini-2.5-flash; для flash-lite возвращает 429 quota.
+  // Поэтому tools добавляем только для запросов с фото (vision-модель).
+  if (hasImg) gem.tools = [{ google_search: {} }];
   if (systemParts.length) gem.systemInstruction = { parts: systemParts };
   return gem;
 }
@@ -277,7 +279,7 @@ export async function onRequestPost(context) {
   if (geminiKey) {
     try {
       const model = pickGeminiModel(body, hasImg, env);
-      const gemBody = toGeminiBody(body);
+      const gemBody = toGeminiBody(body, hasImg);
       const stream = body.stream === true;
       const resp = await callGemini(model, gemBody, geminiKey, stream);
 
