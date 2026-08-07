@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
-import '../main.dart';
 import '../models/chat_message.dart';
 import '../models/report_template.dart';
 import '../services/supabase_service.dart';
@@ -12,7 +11,10 @@ import '../services/supabase_service.dart';
 class OpenRouterService {
   OpenRouterService._();
 
-  static const _baseUrl = 'https://openrouter.ai/api/v1/chat/completions';
+  // Запросы идут через Cloudflare Pages Function (/api/chat):
+  // ключ OpenRouter хранится только на сервере (secret в Pages),
+  // в клиентском коде (и в JS-бандле) его больше нет.
+  static const _baseUrl = 'https://esep.pages.dev/api/chat';
 
   static const _textModels = [
     'google/gemma-4-26b-a4b-it:free',
@@ -380,9 +382,6 @@ $marketContext
           Uri.parse(_baseUrl),
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer $openRouterApiKey',
-            'HTTP-Referer': 'https://esep.kz',
-            'X-OpenRouter-Title': 'ESEP Report Generator',
           },
           body: body,
         );
@@ -435,9 +434,6 @@ $marketContext
     final request = http.Request('POST', Uri.parse(_baseUrl))
       ..headers.addAll({
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $openRouterApiKey',
-        'HTTP-Referer': 'https://esep.kz',
-        'X-OpenRouter-Title': 'ESEP Real Estate Appraiser',
       })
       ..body = body;
 

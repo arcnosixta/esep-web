@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../services/payment_service.dart';
 import '../services/supabase_service.dart';
 import '../models/user_profile.dart';
 import '../utils/formatters.dart';
@@ -43,6 +44,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       _AdminUsers(onRefresh: _loadProfile),
       const _AdminAppraisers(),
       _AdminRequests(onRefresh: _loadProfile),
+      const _AdminPayments(),
       const _AdminDocuments(),
       const _AdminLogs(),
       _AdminProfile(profile: _profile, onRefresh: _loadProfile),
@@ -65,9 +67,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 _navItem(1, Icons.people_rounded, 'Юзеры'),
                 _navItem(2, Icons.engineering_rounded, 'Оценщики'),
                 _navItem(3, Icons.assignment_rounded, 'Заявки'),
-                _navItem(4, Icons.description_rounded, 'Доки'),
-                _navItem(5, Icons.history_rounded, 'Логи'),
-                _navItem(6, Icons.person_rounded, 'Профиль'),
+                _navItem(4, Icons.payments_rounded, 'Платежи'),
+                _navItem(5, Icons.description_rounded, 'Доки'),
+                _navItem(6, Icons.history_rounded, 'Логи'),
+                _navItem(7, Icons.person_rounded, 'Профиль'),
               ],
             ),
           ),
@@ -1554,6 +1557,25 @@ class _AdminApplicationDetailScreenState extends State<_AdminApplicationDetailSc
 
   Future<void> _updateStatus(String newStatus) async {
     try {
+      if (newStatus == 'paid') {
+        // Админ подтверждает оплату: создаём запись в payments, если её нет,
+        // и сразу подтверждаем (заявка → paid).
+        final existing =
+            await PaymentService.getPaymentsForApplication(widget.applicationId);
+        if (existing.isEmpty) {
+          await PaymentService.createPayment(
+            applicationId: widget.applicationId,
+            amount: PaymentService.appraisalPrice,
+            method: 'manual',
+          );
+        }
+        final refreshed =
+            await PaymentService.getPaymentsForApplication(widget.applicationId);
+        if (refreshed.isNotEmpty &&
+            refreshed.every((p) => p['status'] != 'paid')) {
+          await PaymentService.confirmPayment(refreshed.first['id'] as String);
+        }
+      }
       await SupabaseService.updateApplicationStatus(widget.applicationId, newStatus);
       await _loadData();
       if (mounted) {
@@ -1765,6 +1787,198 @@ class _AdminApplicationDetailScreenState extends State<_AdminApplicationDetailSc
         )),
       ],
     );
+  }
+}
+
+// ============================================
+// ADMIN PAYMENTS
+// ============================================
+
+class _AdminPayments extends StatefulWidget {
+  const _AdminPayments();
+
+  @override
+  State<_AdminPayments> createState() => _AdminPaymentsState();
+}
+
+class _AdminPaymentsState extends State<_AdminPayments> {
+  bool _loading = true;
+  List<Map<String, dynamic>> _payments = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final data = await PaymentService.getAllPayments();
+      if (mounted) {
+        setState(() {
+          _payments = data;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('[AdminPayments] error: $e');
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _confirm(String paymentId) async {
+    try {
+      await PaymentService.confirmPayment(paymentId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Платёж подтверждён, заявка оплачена')),
+        );
+        _load();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка: $e')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    return Scaffold(
+      backgroundColor: c.background,
+      appBar: AppBar(
+        backgroundColor: c.surface,
+        surfaceTintColor: Colors.transparent,
+        title: const Text(
+          'Платежи',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        centerTitle: true,
+      ),
+      body: _loading
+          ? Center(
+              child: CircularProgressIndicator(color: c.accent, strokeWidth: 2))
+          : _payments.isEmpty
+              ? Center(
+                  child: Text(
+                    'Платежей пока нет',
+                    style: TextStyle(color: c.textSecondary),
+                  ),
+                )
+              : RefreshIndicator(
+                  onRefresh: _load,
+                  child: ListView.separated(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _payments.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 10),
+                    itemBuilder: (context, i) =>
+                        _paymentCard(c, _payments[i]),
+                  ),
+                ),
+    );
+  }
+
+  Widget _paymentCard(AppColors c, Map<String, dynamic> p) {
+    final status = (p['status'] as String?) ?? 'pending';
+    final paid = status == 'paid';
+    final method = (p['method'] as String?) ?? 'manual';
+    final amount = (p['amount'] as num?)?.toInt() ?? 0;
+    final appId = (p['application_id'] as String?) ?? '';
+    final createdAt = p['created_at'] as String?;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: c.border, width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Заявка ${PaymentService.applicationNumber(appId)}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: c.textPrimary,
+                  ),
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color:
+                      (paid ? c.success : c.warning).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  PaymentService.statusLabel(status),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: paid ? c.success : c.warning,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${PaymentService.methodLabel(method)} · $amount ₸',
+            style: TextStyle(fontSize: 13, color: c.textSecondary),
+          ),
+          if (createdAt != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              'Создан: ${_formatDate(createdAt)}',
+              style: TextStyle(fontSize: 12, color: c.textHint),
+            ),
+          ],
+          if (!paid) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => _confirm(p['id'] as String),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: c.success,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Text(
+                  'Подтвердить оплату',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(String iso) {
+    try {
+      final dt = DateTime.parse(iso).toLocal();
+      return '${dt.day.toString().padLeft(2, '0')}.'
+          '${dt.month.toString().padLeft(2, '0')}.'
+          '${dt.year} '
+          '${dt.hour.toString().padLeft(2, '0')}:'
+          '${dt.minute.toString().padLeft(2, '0')}';
+    } catch (_) {
+      return iso;
+    }
   }
 }
 

@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'theme/app_theme.dart';
 import 'screens/splash_screen.dart';
@@ -14,8 +13,6 @@ import 'l10n/app_strings.dart';
 import 'models/user_profile.dart';
 import 'services/supabase_service.dart';
 
-late final String openRouterApiKey;
-
 const supabaseUrl = 'https://rphsqxhwfrkavvxzvnuv.supabase.co';
 const supabaseAnonKey =
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwaHNxeGh3ZnJrYXZ2eHp2bnV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ0NTQ4ODcsImV4cCI6MjEwMDAzMDg4N30.dFa8Py2xK0Jw7OSCJSRlPwAgwRGlTYzq8JfSBUkh_TU';
@@ -24,9 +21,6 @@ final appSettings = AppSettings();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  await dotenv.load(fileName: '.env');
-  openRouterApiKey = dotenv.env['OPENROUTER_API_KEY'] ?? '';
 
   await Supabase.initialize(
     url: supabaseUrl,

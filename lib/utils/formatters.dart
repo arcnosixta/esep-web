@@ -7,6 +7,7 @@ String statusLabel(BuildContext context, String status) {
   final s = AppStrings.of(context);
   return switch (status) {
     'new' => s.statusNew,
+    'pending_payment' => s.statusPendingPayment,
     'in_progress' => s.statusInProgress,
     'completed' => s.statusCompleted,
     'rejected' => s.statusRejected,
@@ -80,6 +81,7 @@ Widget divider(BuildContext context) {
 
 BadgeStatus badgeStatusFromKey(String status) => switch (status) {
       'new' => BadgeStatus.pending,
+      'pending_payment' => BadgeStatus.pending,
       'in_progress' => BadgeStatus.inProgress,
       'completed' => BadgeStatus.completed,
       'rejected' => BadgeStatus.rejected,

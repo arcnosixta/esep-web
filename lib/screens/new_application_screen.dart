@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../utils/constants.dart';
 import '../services/supabase_service.dart';
+import 'payment_screen.dart';
 
 class NewApplicationScreen extends StatefulWidget {
   const NewApplicationScreen({super.key});
@@ -66,25 +67,56 @@ class _NewApplicationScreenState extends State<NewApplicationScreen> {
         condition: _selectedCondition,
       );
 
-      await SupabaseService.createApplication(
+      final application = await SupabaseService.createApplication(
         propertyId: property['id'],
       );
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text(
-              'Заявка создана!',
-              style: TextStyle(color: Colors.white),
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Заявка создана!',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: c.success,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+
+      // Сохраняем navigator ДО pop — после закрытия экрана контекст мёртв.
+      final navigator = Navigator.of(context);
+      final goPay = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text('Заявка создана'),
+          content: const Text('Перейти к оплате оценки?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Позже'),
             ),
-            backgroundColor: c.success,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Оплатить'),
             ),
+          ],
+        ),
+      );
+
+      navigator.pop(true);
+      if (goPay == true) {
+        navigator.push(
+          MaterialPageRoute(
+            builder: (_) =>
+                PaymentScreen(applicationId: application['id'] as String),
           ),
         );
-        Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) _showError('Ошибка: $e');

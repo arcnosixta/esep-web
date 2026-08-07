@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
+import '../navigation/app_navigator.dart';
+import '../services/payment_service.dart';
+import '../services/supabase_service.dart';
 import '../theme/app_colors.dart';
+import '../utils/whatsapp.dart';
 import '../widgets/option_button.dart';
+import 'new_application_screen.dart';
 
 class PaymentScreen extends StatefulWidget {
-  const PaymentScreen({super.key});
+  /// Если не передан — берётся последняя заявка пользователя.
+  final String? applicationId;
+
+  const PaymentScreen({super.key, this.applicationId});
 
   @override
   State<PaymentScreen> createState() => _PaymentScreenState();
@@ -11,6 +19,125 @@ class PaymentScreen extends StatefulWidget {
 
 class _PaymentScreenState extends State<PaymentScreen> {
   int _selectedMethod = 0;
+  bool _loading = true;
+  bool _submitting = false;
+  Map<String, dynamic>? _application;
+  List<Map<String, dynamic>> _payments = [];
+  String? _error;
+
+  String get _appId => (_application?['id'] as String?) ?? '';
+  bool get _isPaid => _application?['status'] == 'paid';
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      Map<String, dynamic>? app;
+      if (widget.applicationId != null) {
+        app = await SupabaseService.getApplication(widget.applicationId!);
+      } else {
+        final apps = await SupabaseService.getApplications();
+        if (apps.isNotEmpty) app = apps.first;
+      }
+      if (!mounted) return;
+      setState(() {
+        _application = app;
+        _loading = false;
+      });
+      if (app != null) await _loadPayments();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = e.toString();
+      });
+    }
+  }
+
+  Future<void> _loadPayments() async {
+    if (_appId.isEmpty) return;
+    try {
+      final payments = await PaymentService.getPaymentsForApplication(_appId);
+      if (!mounted) return;
+      setState(() => _payments = payments);
+      // Если заявка только что подтверждена админом — подтянуть актуальный статус.
+      final app = await SupabaseService.getApplication(_appId);
+      if (!mounted) return;
+      setState(() => _application = app);
+    } catch (e) {
+      debugPrint('[Payment] load payments error: $e');
+    }
+  }
+
+  Future<void> _submitPayment(String method) async {
+    if (_appId.isEmpty || _submitting) return;
+    setState(() => _submitting = true);
+    try {
+      await PaymentService.createPayment(
+        applicationId: _appId,
+        amount: PaymentService.appraisalPrice,
+        method: method,
+      );
+      await PaymentService.markApplicationPendingPayment(_appId);
+      await _loadPayments();
+
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      await _showSuccessDialog();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Не удалось оформить платёж: $e')),
+      );
+    }
+  }
+
+  Future<void> _showSuccessDialog() async {
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Платёж зарегистрирован'),
+        content: const Text(
+          'Ожидает подтверждения менеджера. '
+          'Обычно это занимает несколько минут — статус заявки обновится автоматически.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Готово'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await WhatsApp.open(
+                text: 'Здравствуйте! Я оплатил(а) заявку ${PaymentService.applicationNumber(_appId)}. '
+                    'Прошу подтвердить оплату.',
+              );
+            },
+            child: const Text('Написать в WhatsApp'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatAmount(int amount) {
+    final s = amount.toString().replaceAllMapped(
+          RegExp(r'(\d)(?=(\d{3})+$)'),
+          (m) => '${m[1]} ',
+        );
+    return '$s ₸';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,149 +175,375 @@ class _PaymentScreenState extends State<PaymentScreen> {
               ),
             ),
 
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-                child: Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: c.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: c.border, width: 1),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.04),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'СУММА К ОПЛАТЕ',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 1.2,
-                          color: c.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        '15 000 ₸',
-                        style: TextStyle(
-                          fontSize: 44,
-                          fontWeight: FontWeight.w900,
-                          color: c.textPrimary,
-                          letterSpacing: -1.5,
-                          height: 1.0,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Оценка · Заявка №FA1D',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: c.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
-                child: Text(
-                  'Способ оплаты',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: c.textSecondary,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-            ),
-
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: c.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: c.border, width: 1),
-                  ),
-                  child: Column(
-                    children: [
-                      _paymentRow(
-                        context: context,
-                        index: 0,
-                        icon: Icons.account_balance_wallet_rounded,
-                        label: 'Kaspi Pay',
-                        subtitle: 'Оплата через приложение Kaspi',
-                        color: const Color(0xFFE8394A),
-                      ),
-                      Container(
-                        height: 1,
-                        margin: const EdgeInsets.only(left: 56),
-                        color: c.divider,
-                      ),
-                      _paymentRow(
-                        context: context,
-                        index: 1,
-                        icon: Icons.credit_card_rounded,
-                        label: 'Банковская карта',
-                        subtitle: 'Visa, Mastercard, Mir',
-                        color: c.accent,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            if (_selectedMethod == 1)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: c.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: c.border, width: 1),
-                    ),
+            if (_loading)
+              const SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+              )
+            else if (_error != null && _application == null)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        _field(context, 'Номер карты', Icons.credit_card_rounded),
+                        Icon(Icons.error_outline_rounded,
+                            size: 48, color: c.error),
                         const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(child: _field(context, 'MM/YY', null)),
-                            const SizedBox(width: 12),
-                            Expanded(child: _field(context, 'CVV', null)),
-                          ],
+                        const Text('Не удалось загрузить данные'),
+                        const SizedBox(height: 16),
+                        OptionButton(
+                          text: 'Повторить',
+                          icon: Icons.refresh_rounded,
+                          onTap: _load,
                         ),
                       ],
                     ),
                   ),
                 ),
-              ),
-
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-                child: OptionButton(
-                  text: 'Оплатить 15 000 ₸',
-                  icon: Icons.lock_rounded,
-                  onTap: () {},
+              )
+            else if (_application == null)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.receipt_long_rounded,
+                            size: 48, color: c.textHint),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Нет заявок для оплаты.\nСоздайте заявку на оценку.',
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        OptionButton(
+                          text: 'Создать заявку',
+                          icon: Icons.add_location_alt_rounded,
+                          onTap: () => AppNavigator.push(
+                              context, const NewApplicationScreen()),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
+              )
+            else ...[
+              _amountCard(c),
+              _methodsSection(c),
+              _paymentHistory(c),
+              _submitSection(c),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Карточка суммы ─────────────────────────────────────────────
+  Widget _amountCard(AppColors c) {
+    final number = PaymentService.applicationNumber(_appId);
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: c.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: c.border, width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _isPaid ? 'ОПЛАЧЕНО' : 'СУММА К ОПЛАТЕ',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.2,
+                  color: _isPaid ? c.success : c.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                _formatAmount(PaymentService.appraisalPrice),
+                style: TextStyle(
+                  fontSize: 44,
+                  fontWeight: FontWeight.w900,
+                  color: c.textPrimary,
+                  letterSpacing: -1.5,
+                  height: 1.0,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Оценка · Заявка $number',
+                style: TextStyle(fontSize: 13, color: c.textSecondary),
+              ),
+              if (_isPaid) ...[
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Icon(Icons.check_circle_rounded,
+                        size: 18, color: c.success),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Оплата прошла успешно',
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: c.success),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Способы оплаты ─────────────────────────────────────────────
+  Widget _methodsSection(AppColors c) {
+    if (_isPaid) return const SliverToBoxAdapter(child: SizedBox.shrink());
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Способ оплаты',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: c.textSecondary,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 14),
+            Container(
+              decoration: BoxDecoration(
+                color: c.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: c.border, width: 1),
+              ),
+              child: Column(
+                children: [
+                  _paymentRow(
+                    context: context,
+                    index: 0,
+                    icon: Icons.account_balance_wallet_rounded,
+                    label: 'Kaspi Pay',
+                    subtitle: 'Перевод на Kaspi — без комиссии',
+                    color: const Color(0xFFE8394A),
+                  ),
+                  Container(
+                    height: 1,
+                    margin: const EdgeInsets.only(left: 56),
+                    color: c.divider,
+                  ),
+                  _paymentRow(
+                    context: context,
+                    index: 1,
+                    icon: Icons.credit_card_rounded,
+                    label: 'Банковская карта',
+                    subtitle: 'Visa, Mastercard, Mir',
+                    color: c.accent,
+                  ),
+                ],
+              ),
+            ),
+
+            if (_selectedMethod == 0) ...[
+              const SizedBox(height: 14),
+              _kaspiBlock(c),
+            ] else ...[
+              const SizedBox(height: 14),
+              _cardBlock(c),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _kaspiBlock(AppColors c) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: c.border, width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.qr_code_2_rounded, size: 20, color: c.textPrimary),
+              const SizedBox(width: 10),
+              Text(
+                'Оплата через Kaspi',
+                style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: c.textPrimary),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          _step(c, '1', 'Откройте приложение Kaspi'),
+          _step(c, '2', 'Переводы → на счёт'),
+          _step(c, '3',
+              'Получатель: ${PaymentService.kaspiBusinessPhone} (ESEP)'),
+          _step(c, '4', 'Сумма: ${_formatAmount(PaymentService.appraisalPrice)}'),
+          _step(c, '5', 'Нажмите «Я оплатил(а)» ниже'),
+          const SizedBox(height: 16),
+          OptionButton(
+            text: _submitting ? 'Отправка…' : 'Я оплатил(а)',
+            icon: Icons.check_rounded,
+            backgroundColor: const Color(0xFFE8394A),
+            onTap: _submitting ? null : () => _submitPayment('kaspi'),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'После нажатия менеджер получит уведомление и подтвердит оплату. '
+            'Заявка перейдёт в статус «Оплачена».',
+            style: TextStyle(fontSize: 12, color: c.textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _cardBlock(AppColors c) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: c.border, width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.lock_rounded, size: 18, color: c.success),
+              const SizedBox(width: 10),
+              Text(
+                'Банковская карта',
+                style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: c.textPrimary),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Оплата картой проходит через защищённую страницу платёжного '
+            'провайдера — данные карты не хранятся в ESEP. '
+            'Подключение провайдера в работе; пока вы можете оформить платёж, '
+            'и менеджер подтвердит его вручную.',
+            style: TextStyle(fontSize: 13, color: c.textSecondary, height: 1.4),
+          ),
+          const SizedBox(height: 16),
+          OptionButton(
+            text: _submitting ? 'Отправка…' : 'Оплатить картой',
+            icon: Icons.credit_card_rounded,
+            onTap: _submitting ? null : () => _submitPayment('card'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _step(AppColors c, String num, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 22,
+            height: 22,
+            decoration: BoxDecoration(
+              color: c.surfaceLight,
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              num,
+              style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: c.textSecondary),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(fontSize: 13.5, color: c.textPrimary, height: 1.3),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── История платежей ───────────────────────────────────────────
+  Widget _paymentHistory(AppColors c) {
+    if (_payments.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Платежи по заявке',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: c.textSecondary,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              decoration: BoxDecoration(
+                color: c.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: c.border, width: 1),
+              ),
+              child: Column(
+                children: [
+                  for (var i = 0; i < _payments.length; i++) ...[
+                    if (i > 0)
+                      Container(
+                        height: 1,
+                        margin: const EdgeInsets.only(left: 20),
+                        color: c.divider,
+                      ),
+                    _paymentRowItem(c, _payments[i]),
+                  ],
+                ],
               ),
             ),
           ],
@@ -199,6 +552,74 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
+  Widget _paymentRowItem(AppColors c, Map<String, dynamic> p) {
+    final status = (p['status'] as String?) ?? 'pending';
+    final paid = status == 'paid';
+    final method = (p['method'] as String?) ?? 'manual';
+    final amount = (p['amount'] as num?)?.toInt() ?? PaymentService.appraisalPrice;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      child: Row(
+        children: [
+          Icon(
+            paid ? Icons.check_circle_rounded : Icons.hourglass_top_rounded,
+            size: 20,
+            color: paid ? c.success : c.warning,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  PaymentService.methodLabel(method),
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: c.textPrimary),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _formatAmount(amount),
+                  style: TextStyle(fontSize: 12, color: c.textSecondary),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            PaymentService.statusLabel(status),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: paid ? c.success : c.warning,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Нижняя кнопка (если метод не выбран — не показываем) ───────
+  Widget _submitSection(AppColors c) {
+    if (_isPaid) return const SliverToBoxAdapter(child: SizedBox.shrink());
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+        child: OptionButton(
+          text: _submitting
+              ? 'Обработка…'
+              : 'Оплатить ${_formatAmount(PaymentService.appraisalPrice)}',
+          icon: Icons.lock_rounded,
+          onTap: _submitting
+              ? null
+              : () => _submitPayment(
+                  _selectedMethod == 0 ? 'kaspi' : 'card'),
+        ),
+      ),
+    );
+  }
+
+  // ── Строка выбора метода ───────────────────────────────────────
   Widget _paymentRow({
     required BuildContext context,
     required int index,
@@ -263,35 +684,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _field(BuildContext context, String hint, IconData? prefix) {
-    final c = AppColors.of(context);
-    return TextField(
-      style: TextStyle(color: c.textPrimary, fontSize: 15),
-      decoration: InputDecoration(
-        hintText: hint,
-        filled: true,
-        fillColor: c.surfaceLight,
-        prefixIcon: prefix != null
-            ? Icon(prefix, size: 20, color: c.textHint)
-            : null,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: c.inputBorder, width: 1),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: c.inputBorder, width: 1),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: c.accent, width: 1.5),
-        ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
     );
   }

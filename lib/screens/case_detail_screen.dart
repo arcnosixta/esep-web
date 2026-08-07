@@ -6,6 +6,7 @@ import '../widgets/option_button.dart';
 import '../widgets/status_badge.dart';
 import '../widgets/case_progress_bar.dart';
 import '../navigation/app_navigator.dart';
+import 'payment_screen.dart';
 import 'report_screen.dart';
 
 class CaseDetailScreen extends StatelessWidget {
@@ -247,11 +248,24 @@ class CaseDetailScreen extends StatelessWidget {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-                child: OptionButton(
-                  text: 'Посмотреть отчёт',
-                  icon: Icons.description_rounded,
-                  onTap: () =>
-                      AppNavigator.push(context, const ReportScreen()),
+                child: Column(
+                  children: [
+                    OptionButton(
+                      text: 'Оплатить',
+                      icon: Icons.payments_rounded,
+                      onTap: () => AppNavigator.push(
+                          context, const PaymentScreen()),
+                    ),
+                    const SizedBox(height: 12),
+                    OptionButton(
+                      text: 'Посмотреть отчёт',
+                      icon: Icons.description_rounded,
+                      backgroundColor: AppColors.of(context).surface,
+                      textColor: AppColors.of(context).textPrimary,
+                      onTap: () =>
+                          AppNavigator.push(context, const ReportScreen()),
+                    ),
+                  ],
                 ),
               ),
             ),
