@@ -65,5 +65,11 @@ CREATE POLICY "Users can mark own application pending payment" ON applications F
 
 -- 4. Аудиторский след: подтверждение оплаты менеджером --------
 INSERT INTO activity_logs (user_id, action, details)
-SELECT NULL, 'migration', 'payments table created + pending_payment status added'
-WHERE NOT EXISTS (SELECT 1 FROM activity_logs WHERE action = 'migration' AND details LIKE '%payments table created%');
+SELECT NULL, 'migration',
+       '{"message": "payments table created + pending_payment status added",
+         "source": "supabase_payments.sql"}'::jsonb
+WHERE NOT EXISTS (
+  SELECT 1 FROM activity_logs
+  WHERE action = 'migration'
+    AND details->>'message' LIKE '%payments table created%'
+);
