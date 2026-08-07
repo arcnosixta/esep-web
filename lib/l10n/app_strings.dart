@@ -302,7 +302,7 @@ class _Ru implements StringsBase {
   @override String get homeGreetingEvening => 'Добрый вечер';
   @override String get homeCurrentApplication => 'Текущая заявка';
   @override String get homeContinueWork => 'Продолжить работу';
-  @override String get homeNewApplication => 'Новая заявка';
+  @override String get homeNewApplication => 'Расчёт стоимости';
   @override String get homeDocuments => 'Документы';
   @override String get homePayment => 'Оплата';
   @override String get homeEvaluate => 'Оценить';
@@ -514,7 +514,7 @@ class _Kk implements StringsBase {
   @override String get homeGreetingEvening => 'Қайырлы кеш';
   @override String get homeCurrentApplication => 'Ағымдағы өтініш';
   @override String get homeContinueWork => 'Жұмысты жалғастыру';
-  @override String get homeNewApplication => 'Жаңа өтініш';
+  @override String get homeNewApplication => 'Құнын есептеу';
   @override String get homeDocuments => 'Құжаттар';
   @override String get homePayment => 'Төлем';
   @override String get homeEvaluate => 'Бағалау';
@@ -726,7 +726,7 @@ class _En implements StringsBase {
   @override String get homeGreetingEvening => 'Good evening';
   @override String get homeCurrentApplication => 'Current application';
   @override String get homeContinueWork => 'Continue working';
-  @override String get homeNewApplication => 'New application';
+  @override String get homeNewApplication => 'Cost estimate';
   @override String get homeDocuments => 'Documents';
   @override String get homePayment => 'Payment';
   @override String get homeEvaluate => 'Evaluate';

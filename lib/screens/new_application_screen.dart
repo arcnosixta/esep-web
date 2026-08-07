@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../utils/constants.dart';
-import '../services/supabase_service.dart';
-import 'payment_screen.dart';
+import '../utils/formatters.dart';
+import '../navigation/app_navigator.dart';
+import 'ai_chat_screen.dart';
 
 class NewApplicationScreen extends StatefulWidget {
   const NewApplicationScreen({super.key});
@@ -19,7 +20,6 @@ class _NewApplicationScreenState extends State<NewApplicationScreen> {
   final _floorController = TextEditingController();
   final _totalFloorsController = TextEditingController();
   String _selectedCondition = 'Косметический ремонт';
-  bool _loading = false;
 
   @override
   void dispose() {
@@ -32,12 +32,8 @@ class _NewApplicationScreenState extends State<NewApplicationScreen> {
   }
 
   Future<void> _submit() async {
-    final c = AppColors.of(context);
     final address = _addressController.text.trim();
     final areaText = _areaController.text.trim();
-    final roomsText = _roomsController.text.trim();
-    final floorText = _floorController.text.trim();
-    final totalFloorsText = _totalFloorsController.text.trim();
 
     if (address.isEmpty) {
       _showError('Введите адрес объекта');
@@ -54,75 +50,268 @@ class _NewApplicationScreenState extends State<NewApplicationScreen> {
       return;
     }
 
-    setState(() => _loading = true);
+    // Заявка не создаётся: это предварительный расчёт. Официальный
+    // документ пользователь получает через ИИ-анализ (вкладка ИИ).
+    _showEstimate(area: area);
+  }
 
-    try {
-      final property = await SupabaseService.addProperty(
-        type: PropertyType.values[_selectedType].dbType,
-        address: address,
-        area: area,
-        rooms: int.tryParse(roomsText),
-        floor: int.tryParse(floorText),
-        totalFloors: int.tryParse(totalFloorsText),
-        condition: _selectedCondition,
-      );
+  /// Базовая цена за м² по типу недвижимости (тенге, ориентир рынка РК).
+  int _basePricePerM2() {
+    return switch (PropertyType.values[_selectedType]) {
+      PropertyType.apartment => 480000,
+      PropertyType.house => 380000,
+      PropertyType.land => 60000,
+      PropertyType.commercial => 620000,
+    };
+  }
 
-      final application = await SupabaseService.createApplication(
-        propertyId: property['id'],
-      );
+  /// Коэффициент состояния/ремонта.
+  double _conditionFactor() {
+    return switch (_selectedCondition) {
+      'Без ремонта' => 0.85,
+      'Косметический ремонт' => 1.0,
+      'Капитальный ремонт' => 1.12,
+      'Дизайнерский ремонт' => 1.25,
+      'Евро ремонт' => 1.15,
+      _ => 1.0,
+    };
+  }
 
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            'Заявка создана!',
-            style: TextStyle(color: Colors.white),
+  /// Примеры рыночных цен по типу (ориентир, из открытых источников).
+  List<String> _marketExamples() {
+    return switch (PropertyType.values[_selectedType]) {
+      PropertyType.apartment => [
+          '1-комн. квартира 40 м², Алматы — 16–20 млн ₸',
+          '3-комн. квартира 80 м², Астана — 28–38 млн ₸',
+          '2-комн. квартира 55 м², Алматы — 24–30 млн ₸',
+        ],
+      PropertyType.house => [
+          'Дом 120 м², Алматы (пригород) — 40–55 млн ₸',
+          'Дом 200 м², Астана — 65–90 млн ₸',
+          'Дом 90 м², Шымкент — 25–35 млн ₸',
+        ],
+      PropertyType.land => [
+          'Участок 10 соток, Алматинская обл. — 8–15 млн ₸',
+          'Участок 6 соток, Астана — 12–20 млн ₸',
+          'Участок 15 соток, Шымкент — 9–14 млн ₸',
+        ],
+      PropertyType.commercial => [
+          'Помещение 60 м², Алматы (1 этаж) — 35–50 млн ₸',
+          'Офис 80 м², Астана — 40–60 млн ₸',
+          'Магазин 45 м², Шымкент — 25–35 млн ₸',
+        ],
+    };
+  }
+
+  /// Диапазон предварительной стоимости: ±15% от расчётной середины.
+  ({int min, int max}) _estimateRange(double area) {
+    final base = _basePricePerM2() * _conditionFactor() * area;
+    final mid = base;
+    final min = (mid * 0.85 / 10000).round() * 10000;
+    final max = (mid * 1.15 / 10000).round() * 10000;
+    return (min: min, max: max);
+  }
+
+  void _showEstimate({required double area}) {
+    final range = _estimateRange(area);
+    final type = PropertyType.values[_selectedType].label;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) {
+        final sc = AppColors.of(sheetCtx);
+        return Container(
+          decoration: BoxDecoration(
+            color: sc.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
-          backgroundColor: c.success,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 12,
+            bottom: MediaQuery.of(sheetCtx).viewPadding.bottom + 24,
           ),
-        ),
-      );
-
-      // Сохраняем navigator ДО pop — после закрытия экрана контекст мёртв.
-      final navigator = Navigator.of(context);
-      final goPay = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: const Text('Заявка создана'),
-          content: const Text('Перейти к оплате оценки?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Позже'),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: sc.border,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Предварительная оценка',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: sc.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Ориентир для $type · ${formatTenge(range.min)} – ${formatTenge(range.max)}',
+                  style: TextStyle(fontSize: 13, color: sc.textSecondary),
+                ),
+                const SizedBox(height: 20),
+                _estimateCard(sc, range),
+                const SizedBox(height: 16),
+                Text(
+                  'Примеры с рынка (открытые источники):',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: sc.textSecondary,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ..._marketExamples().map(
+                  (e) => Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.circle, size: 5, color: sc.textHint),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            e,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: sc.textPrimary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: sc.warning.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: sc.warning.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.info_outline_rounded,
+                          size: 18, color: sc.warning),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Это предварительный расчёт, а не официальный документ. '
+                          'Для получения официального отчёта заполните все данные '
+                          'во вкладке ИИ и следуйте инструкциям ИИ.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            height: 1.4,
+                            color: sc.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: sc.accent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(sheetCtx);
+                      AppNavigator.push(context, const AiChatScreen());
+                    },
+                    child: const Text(
+                      'Перейти к ИИ-анализу',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(sheetCtx),
+                    child: Text(
+                      'Закрыть',
+                      style: TextStyle(fontSize: 14, color: sc.textSecondary),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Оплатить'),
-            ),
-          ],
-        ),
-      );
-
-      navigator.pop(true);
-      if (goPay == true) {
-        navigator.push(
-          MaterialPageRoute(
-            builder: (_) =>
-                PaymentScreen(applicationId: application['id'] as String),
           ),
         );
-      }
-    } catch (e) {
-      if (mounted) _showError('Ошибка: $e');
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
+      },
+    );
+  }
+
+  Widget _estimateCard(
+    AppColors sc,
+    ({int min, int max}) range,
+  ) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [sc.accent.withValues(alpha: 0.12), sc.surfaceLight],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: sc.accent.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Примерная стоимость',
+            style: TextStyle(fontSize: 13, color: sc.textSecondary),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${formatTenge(range.min)} – ${formatTenge(range.max)}',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              color: sc.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '±15% · без учёта документов, осмотра и страховки',
+            style: TextStyle(fontSize: 12, color: sc.textHint),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showError(String message) {
@@ -165,7 +354,7 @@ class _NewApplicationScreenState extends State<NewApplicationScreen> {
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      'Новая заявка',
+                      'Расчёт стоимости',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
@@ -384,17 +573,48 @@ class _NewApplicationScreenState extends State<NewApplicationScreen> {
               ),
 
               Padding(
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: c.info.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: c.info.withValues(alpha: 0.25)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.auto_awesome_rounded,
+                          size: 18, color: c.info),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Здесь вы получите только предварительную оценку — '
+                          'это не официальный документ. Для официального отчёта '
+                          'перейдите во вкладку ИИ, заполните все данные и '
+                          'следуйте инструкциям.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            height: 1.4,
+                            color: c.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              Padding(
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
                 child: GestureDetector(
-                  onTap: _loading ? null : _submit,
+                  onTap: _submit,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     width: double.infinity,
                     height: 56,
                     decoration: BoxDecoration(
-                      color: _loading
-                          ? c.accent.withValues(alpha: 0.5)
-                          : c.accent,
+                      color: c.accent,
                       borderRadius: BorderRadius.circular(14),
                       boxShadow: [
                         BoxShadow(
@@ -404,24 +624,15 @@ class _NewApplicationScreenState extends State<NewApplicationScreen> {
                         ),
                       ],
                     ),
-                    child: Center(
-                      child: _loading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : const Text(
-                              'Создать заявку',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
+                    child: const Center(
+                      child: Text(
+                        'Рассчитать стоимость',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   ),
                 ),

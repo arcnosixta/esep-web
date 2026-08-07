@@ -100,3 +100,16 @@ String caseNumber(String id) {
   final short = id.length >= 4 ? id.substring(0, 4).toUpperCase() : id.toUpperCase();
   return 'Case №$short';
 }
+
+/// Форматирует число в тенге с разделителями: 1234567 → "1 234 567 ₸".
+String formatTenge(num value) {
+  final rounded = value.round();
+  final negative = rounded < 0;
+  final digits = rounded.abs().toString();
+  final buf = StringBuffer();
+  for (var i = 0; i < digits.length; i++) {
+    if (i > 0 && (digits.length - i) % 3 == 0) buf.write(' ');
+    buf.write(digits[i]);
+  }
+  return '${negative ? '-' : ''}$buf ₸';
+}

@@ -217,13 +217,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
                             size: 48, color: c.textHint),
                         const SizedBox(height: 12),
                         const Text(
-                          'Нет заявок для оплаты.\nСоздайте заявку на оценку.',
+                          'Нет заявок для оплаты.\nСначала получите официальный '
+                          'отчёт через ИИ-анализ.',
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
                         OptionButton(
-                          text: 'Создать заявку',
-                          icon: Icons.add_location_alt_rounded,
+                          text: 'Рассчитать стоимость',
+                          icon: Icons.calculate_rounded,
                           onTap: () => AppNavigator.push(
                               context, const NewApplicationScreen()),
                         ),

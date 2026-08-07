@@ -229,7 +229,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       Expanded(
                         child: _quickAction(
-                          Icons.add_location_alt_rounded,
+                          Icons.calculate_rounded,
                           s.homeNewApplication,
                           c.accent,
                           () => AppNavigator.push(
