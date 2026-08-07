@@ -304,6 +304,8 @@ export async function onRequestPost(context) {
     } catch (e) {
       // Gemini недоступен/лимит -> фолбэк на OpenRouter
       console.error('[chat.js] Gemini failed, fallback to OpenRouter:', String(e).slice(0, 300));
+      // ВРЕМЕННО (диагностика): показать реальную ошибку Gemini вместо тихого фолбэка
+      return json({ error: 'Gemini failed: ' + String(e).slice(0, 500) }, 502, corsHeaders(request));
     }
   }
 
