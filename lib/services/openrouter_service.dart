@@ -281,20 +281,27 @@ class OpenRouterService {
   }
 
   // ============================================
-  // REPORT GENERATION (two-step: JSON → PDF)
+  // REPORT GENERATION (Недвижимое имущество — официальный формат)
+  // Аналог структуры "Kaz Etalon Grade" / SDF-YYYYMMDD-NNNNN
   // ============================================
-
+ 
   static const _reportSystemPrompt = '''
-Ты — AI-оценщик недвижимости в системе ESEP (Казахстан).
-Сгенерируй данные для отчёта об оценке в формате JSON.
-
-Входные данные: тип объекта, адрес, площадь, комнаты, этаж, общая этажность, состояние, год постройки, ФИО клиента, ИИН.
-
-Доступные рыночные данные (если есть):
+Ты — AI-оценщик недвижимого имущества в системе ESEP (Казахстан).
+Твоя задача — сгенерировать данные для официального "Отчёта об оценке недвижимого имущества"
+в формате JSON, максимально соответствующего требованиям Приказа МФ РК №501 от 03.05.2018
+"Об утверждении требований к форме и содержанию отчёта об оценке" и Закона РК
+«Об оценочной деятельности» №133-VI от 10.01.2018.
+ 
+Входные данные: тип объекта (квартира/дом/коммерческая недвижимость и т.п.), адрес,
+площадь, количество комнат, этаж/этажность, состояние, год постройки, материал стен (если
+есть), ФИО/БИН заказчика, ФИО/ИИН собственника, номер и дата договора-основания
+(залог/цессия/купля-продажа и т.п.).
+ 
+Доступные рыночные данные (аналоги с площадок krisha.kz и т.п.), если есть:
 ''';
-
-  static Future<ReportData?> generateReportData({
-    required String propertyType,
+ 
+  static Future<RealEstateReportData?> generateReportData({
+    required String propertyType,       // "Квартира", "Жилой дом", "Коммерческая недвижимость"
     required String address,
     required double area,
     required int rooms,
@@ -302,37 +309,58 @@ class OpenRouterService {
     required int totalFloors,
     required String condition,
     required int yearBuilt,
-    required String clientName,
-    required String clientIin,
+    String? wallMaterial,
+    required String location,            // напр. "г.Астана" / "г.Алматы"
+    required String customerName,        // юр./физ. лицо-заказчик
+    required String customerBin,         // БИН/ИИН заказчика
+    required String customerAddress,
+    required String ownerName,
+    required String ownerIin,
+    required String ownerLocation,
+    required String contractBasis,       // "Договор залога №... от ..." / "Договор ипотеки №..."
     String? appraiserName,
+    String? appraiserIin,
+    String? appraiserCertificate,
   }) async {
     final results = await Future.wait([
-      _fetchMarketContext(propertyType: propertyType, limit: 5),
+      _fetchMarketContext(propertyType: propertyType, limit: 3),
       _fetchUserProfile(),
     ]);
-
+ 
     final marketData = results[0] as List<Map<String, dynamic>>;
     final marketContext = _buildMarketContext(marketData);
-
+ 
+    final now = DateTime.now();
+    final reportNumber =
+        'SDF-${now.year}${_pad(now.month)}${_pad(now.day)}-${_randomDigits(5)}';
+ 
     final userPrompt = '''
-Объект для оценки:
-- Тип: $propertyType
+Объект для оценки (Недвижимое имущество):
+- Тип объекта: $propertyType
 - Адрес: $address
-- Площадь: $area м²
-- Комнат: $rooms
-- Этаж: $floor/$totalFloors
+- Площадь, м²: $area
+- Количество комнат: $rooms
+- Этаж/этажность: $floor/$totalFloors
 - Состояние: $condition
 - Год постройки: $yearBuilt
-- Клиент: $clientName (ИИН: $clientIin)
-- Дата оценки: ${DateTime.now().day}.${DateTime.now().month}.${DateTime.now().year}
-- Оценщик: ${appraiserName ?? 'Айдар Нурланович'}
-
+- Материал стен: ${wallMaterial ?? 'не указан'}
+- Местонахождение (город): $location
+- Дата составления/оценки: ${_pad(now.day)}.${_pad(now.month)}.${now.year}
+- Номер отчёта: $reportNumber
+ 
+Заказчик: $customerName, БИН/ИИН: $customerBin, адрес: $customerAddress
+Собственник объекта: $ownerName, ИИН: $ownerIin, местонахождение: $ownerLocation
+Основание оценки: $contractBasis
+Оценщик: ${appraiserName ?? 'Мақсұтұлы Ғазиз'} (ИИН: ${appraiserIin ?? '930226300627'}),
+Сертификат: ${appraiserCertificate ?? 'ESEP-KZ-77829-2026'}
+ 
 $marketContext
-
-Верни ТОЛЬКО валидный JSON без markdown и комментариев:
+ 
+Верни ТОЛЬКО валидный JSON без markdown и комментариев, строго по схеме:
 {
-  "client_name": "string",
-  "client_iin": "string",
+  "report_number": "string (SDF-YYYYMMDD-NNNNN)",
+  "report_date": "DD.MM.YYYY",
+  "object_name": "string (например 'Недвижимое имущество')",
   "property_type": "string",
   "address": "string",
   "area": number,
@@ -341,135 +369,125 @@ $marketContext
   "total_floors": number,
   "condition": "string",
   "year_built": number,
-  "estimated_price": number,
-  "price_range_low": number,
-  "price_range_high": number,
-  "price_per_meter": number,
-  "confidence": number от 0.7 до 0.99,
-  "comparables": [
-    {"address": "string", "area": number, "price": number, "type": "string", "source": "string"}
-  ],
-  "recommendations": [
-    {"icon": "trending_up|home|location|info", "title": "string", "description": "string"}
-  ],
-  "appraisal_date": "DD.MM.YYYY",
+  "wall_material": "string|null",
+  "encumbrance": "string (напр. 'Договор залога №... от ...')",
+  "object_location": "string (город)",
+  "valuation_purpose": "string (Определение рыночной стоимости объекта)",
+  "valuation_assignment": "string (для целей передачи права требования / залога / ипотеки / иное)",
+  "value_type": "Рыночная",
+  "customer_name": "string",
+  "customer_bin": "string",
+  "customer_address": "string",
+  "owner_name": "string",
+  "owner_iin": "string",
+  "owner_location": "string",
   "appraiser_name": "string",
-  "appraiser_certificate": ""
+  "appraiser_iin": "string",
+  "appraiser_certificate": "string",
+  "appraiser_chamber": "string (напр. СРО «Содружество оценщиков Казахстана»)",
+  "legal_entity_name": "string (ТОО, заключившее договор с оценщиком)",
+  "legal_entity_director": "string",
+  "legal_entity_address": "string",
+  "legal_entity_bin": "string",
+  "comparables": [
+    {
+      "source_url": "string",
+      "access_date": "DD.MM.YYYY",
+      "offer_price": number,
+      "address": "string",
+      "area": number,
+      "rooms": number,
+      "floor": number,
+      "total_floors": number,
+      "condition": "string",
+      "year_built": number
+    }
+  ],
+  "corrections": {
+    "trade_correction_pct": -5,
+    "area_correction_pct": 0,
+    "floor_correction_pct": 0,
+    "condition_correction_pct": 0,
+    "location_correction_pct": 0,
+    "year_correction_pct": 0
+  },
+  "price_per_meter": number,
+  "final_value": number,
+  "final_value_words": "string (сумма прописью на русском)",
+  "inspection_date": "DD.MM.YYYY",
+  "inspection_result": "string (краткий вывод по акту осмотра)"
 }
-
-Оцени реалистично на основе рыночных данных. Диапазон ±10-15% от основной оценки.
+ 
+Правила расчёта:
+1. Скорректированная цена каждого аналога = цена предложения × (1 + сумма_корректировок/100),
+   где корректировка на торг применяется первой (обычно -3%..-6% для недвижимости, бери -5%,
+   если нет иных данных).
+2. Остальные корректировки (площадь, этаж, состояние, местоположение, год постройки) = 0%,
+   если объект и аналоги совпадают по этим параметрам, иначе укажи обоснованный % (не более ±10%
+   на каждый фактор).
+3. price_per_meter = final_value / area, округлённое до целого тенге.
+4. final_value = среднеарифметическое (или средневзвешенное, если явно заданы веса) скорректированных
+   цен аналогов, округлённое до целого тенге.
+5. Используй только реалистичные данные, согласованные с рыночным контекстом выше.
+6. Если рыночных данных недостаточно для 3 аналогов — верни минимум 2 аналога, это допустимо.
 ''';
-
+ 
     final apiMessages = [
       {'role': 'system', 'content': _reportSystemPrompt},
       {'role': 'user', 'content': userPrompt},
     ];
-
+ 
     String? lastError;
-
+ 
     for (final model in _textModels) {
       try {
         final body = jsonEncode({
           'model': model,
           'messages': apiMessages,
           'stream': false,
-          'max_tokens': 2048,
+          'max_tokens': 3072,
           'temperature': 0.3,
           'top_p': 0.9,
         });
-
+ 
         final response = await http.post(
           Uri.parse(_baseUrl),
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: {'Content-Type': 'application/json'},
           body: body,
         );
         if (response.statusCode != 200) {
           throw Exception('HTTP ${response.statusCode}: ${response.body}');
         }
-
+ 
         final json = jsonDecode(response.body) as Map<String, dynamic>;
         final choices = json['choices'] as List?;
         if (choices == null || choices.isEmpty) throw Exception('No choices');
-
+ 
         final content = choices[0]['message']?['content'] as String? ?? '';
         if (content.isEmpty) throw Exception('Empty content');
-
+ 
         final cleaned = content
             .replaceAll('```json', '')
             .replaceAll('```', '')
             .trim();
-
+ 
         final reportJson = jsonDecode(cleaned) as Map<String, dynamic>;
         debugPrint('[Report] AI model $model succeeded');
-        return ReportData.fromJson(reportJson);
+        return RealEstateReportData.fromJson(reportJson);
       } catch (e) {
         lastError = e.toString();
         debugPrint('[Report] Model $model failed: $lastError');
         continue;
       }
     }
-
+ 
     debugPrint('[Report] All models failed. Last error: $lastError');
     return null;
   }
-
-  static Stream<String> _streamWithModel({
-    required String model,
-    required List<Map<String, dynamic>> apiMessages,
-  }) async* {
-    final body = jsonEncode({
-      'model': model,
-      'messages': apiMessages,
-      'stream': true,
-      'max_tokens': 4096,
-      'temperature': 0.7,
-      'top_p': 0.9,
-    });
-
-    debugPrint('[AI] Request body length: ${body.length} chars');
-    debugPrint('[AI] Request body preview: ${body.substring(0, body.length > 300 ? 300 : body.length)}');
-
-    final request = http.Request('POST', Uri.parse(_baseUrl))
-      ..headers.addAll({
-        'Content-Type': 'application/json',
-      })
-      ..body = body;
-
-    final streamed = await request.send();
-    if (streamed.statusCode != 200) {
-      final error = await streamed.stream.transform(utf8.decoder).join();
-      throw Exception('HTTP ${streamed.statusCode}: $error');
-    }
-
-    String buffer = '';
-    await for (final chunk in streamed.stream.transform(utf8.decoder)) {
-        buffer += chunk;
-        final lines = buffer.split('\n');
-        buffer = lines.removeLast();
-
-        for (final line in lines) {
-          final trimmed = line.trim();
-          if (trimmed.isEmpty || !trimmed.startsWith('data: ')) continue;
-
-          final data = trimmed.substring(6);
-          if (data == '[DONE]') return;
-
-          try {
-            final json = jsonDecode(data) as Map<String, dynamic>;
-            final choices = json['choices'] as List?;
-            if (choices == null || choices.isEmpty) continue;
-
-            final delta = choices[0]['delta'] as Map<String, dynamic>?;
-            if (delta == null) continue;
-
-            final content = delta['content'] as String?;
-            if (content != null && content.isNotEmpty) {
-              yield content;
-            }
-          } catch (_) {}
-        }
-      }
+ 
+  static String _pad(int n) => n.toString().padLeft(2, '0');
+ 
+  static String _randomDigits(int len) {
+    final rnd = Random();
+    return List.generate(len, (_) => rnd.nextInt(10)).join();
   }
-}
