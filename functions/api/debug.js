@@ -27,7 +27,32 @@ export async function onRequest(context) {
       out.modelsFetchError = String(e).slice(0, 200);
     }
 
-    // 2. Тестовый generateContent с google_search (как в chat.js)
+    // 2. Тест кандидатов моделей (какие реально отвечают новому ключу)
+    const candidates = ['gemini-flash-lite-latest', 'gemini-2.0-flash-lite', 'gemini-2.5-flash', 'gemini-flash-latest'];
+    out.modelTests = [];
+    for (const m of candidates) {
+      try {
+        const body = {
+          contents: [{ role: 'user', parts: [{ text: 'Ответь одним словом: 2+2?' }] }],
+        };
+        const r = await fetch(
+          `${GEMINI_BASE}/models/${encodeURIComponent(m)}:generateContent?key=${encodeURIComponent(key)}`,
+          { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+        );
+        const j = await r.json();
+        if (r.ok) {
+          const cands = j.candidates || [];
+          const parts = (cands[0] && cands[0].content && cands[0].content.parts) || [];
+          out.modelTests.push({ model: m, status: r.status, answer: parts.map((p) => p.text || '').join('').slice(0, 50) });
+        } else {
+          out.modelTests.push({ model: m, status: r.status, error: JSON.stringify(j).slice(0, 160) });
+        }
+      } catch (e) {
+        out.modelTests.push({ model: m, status: 'FETCH_ERR', error: String(e).slice(0, 160) });
+      }
+    }
+
+    // 3. Тестовый generateContent с google_search (как в chat.js)
     try {
       const body = {
         contents: [{ role: 'user', parts: [{ text: 'Какая столица Казахстана? Ответь одним словом.' }] }],
