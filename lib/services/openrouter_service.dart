@@ -17,7 +17,7 @@ class OpenRouterService {
   static const _baseUrl = 'https://esep.pages.dev/api/chat';
 
   static const _textModels = [
-    'gemini-2.5-flash-lite',
+    'gemini-flash-lite-latest',
     'google/gemma-4-31b-it:free',
     'google/gemma-4-26b-a4b-it:free',
   ];

@@ -26,6 +26,13 @@ const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 const OR_TEXT_FALLBACK = 'google/gemma-4-31b-it:free';
 const OR_VISION_FALLBACK = 'google/gemma-4-26b-a4b-it:free';
 
+// Устаревшие имена моделей -> актуальные (Google выводит старые модели из доступа
+// для новых ключей: gemini-2.5-flash-lite -> 404 "no longer available to new users").
+const GEMINI_MODEL_ALIASES = {
+  'gemini-2.5-flash-lite': 'gemini-flash-lite-latest',
+  'gemini-2.0-flash-lite': 'gemini-flash-lite-latest',
+};
+
 function json(obj, status, extra = {}) {
   return new Response(JSON.stringify(obj), {
     status,
@@ -56,10 +63,12 @@ function hasImages(messages) {
 
 function pickGeminiModel(body, hasImg, env) {
   const clientModel = (body.model || '').trim();
-  if (clientModel.startsWith('gemini-')) return clientModel;
+  if (clientModel.startsWith('gemini-')) {
+    return GEMINI_MODEL_ALIASES[clientModel] || clientModel;
+  }
   return hasImg
     ? (env.GEMINI_VISION_MODEL || 'gemini-2.5-flash')
-    : (env.GEMINI_TEXT_MODEL || 'gemini-2.5-flash-lite');
+    : (env.GEMINI_TEXT_MODEL || 'gemini-flash-lite-latest');
 }
 
 function toGeminiParts(content) {
@@ -293,8 +302,6 @@ export async function onRequestPost(context) {
     } catch (e) {
       // Gemini недоступен/лимит -> фолбэк на OpenRouter
       console.error('[chat.js] Gemini failed, fallback to OpenRouter:', String(e).slice(0, 300));
-      // ВРЕМЕННО (диагностика): показать реальную ошибку Gemini вместо тихого фолбэка
-      return json({ error: 'Gemini failed: ' + String(e).slice(0, 500) }, 502, corsHeaders(request));
     }
   }
 
