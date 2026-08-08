@@ -70,7 +70,7 @@ class EsepApp extends StatelessWidget {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          home: const AuthGate(),
+          home: AuthGate(),
         );
       },
     );
@@ -123,7 +123,7 @@ class _AuthGateState extends State<AuthGate> {
     }
   }
 
-  Widget _buildHomeForRole(UserRole? role) {
+  Widget _buildHomeForRole(UserRole? role, String userId) {
     switch (role) {
       case UserRole.admin:
         return const AdminDashboard();
@@ -132,14 +132,17 @@ class _AuthGateState extends State<AuthGate> {
       case UserRole.client:
       case null:
         // Новым пользователям показываем интерактивную инструкцию.
-        if (!appSettings.onboardingDone) {
+        if (!appSettings.onboardingDoneFor(userId)) {
           return OnboardingScreen(
-            onDone: () => appSettings.completeOnboarding(),
-            onSkip: () => appSettings.completeOnboarding(withTour: false),
+            onDone: () => appSettings.completeOnboarding(userId),
+            onSkip: () => appSettings.completeOnboarding(userId, withTour: false),
           );
         }
         // После онбординга — короткая экскурсия по главному экрану.
-        return AppShell(startTour: appSettings.tourPending);
+        return AppShell(
+          userId: userId,
+          startTour: appSettings.tourPendingFor(userId),
+        );
     }
   }
 
@@ -167,7 +170,7 @@ class _AuthGateState extends State<AuthGate> {
           );
         }
 
-        return _buildHomeForRole(_userRole);
+        return _buildHomeForRole(_userRole, session.user.id);
       },
     );
   }

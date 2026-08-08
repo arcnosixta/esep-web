@@ -7,49 +7,58 @@ final appSettings = AppSettings();
 class AppSettings extends ChangeNotifier {
   static const _themeKey = 'theme_mode';
   static const _localeKey = 'locale';
-  static const _onboardingKey = 'onboarding_done';
-  static const _tourKey = 'tour_pending';
+
+  SharedPreferences? _prefs;
 
   ThemeMode _themeMode = ThemeMode.system;
   Locale _locale = const Locale('ru');
-  bool _onboardingDone = false;
-  bool _tourPending = false;
 
   ThemeMode get themeMode => _themeMode;
   Locale get locale => _locale;
-  bool get onboardingDone => _onboardingDone;
-  bool get tourPending => _tourPending;
-
   String get localeCode => _locale.languageCode;
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
+    _prefs = prefs;
     final themeIndex = prefs.getInt(_themeKey) ?? 0;
     _themeMode = ThemeMode.values[themeIndex.clamp(0, 2)];
     final localeCode = prefs.getString(_localeKey) ?? 'ru';
     _locale = _localeFromString(localeCode);
-    _onboardingDone = prefs.getBool(_onboardingKey) ?? false;
-    _tourPending = prefs.getBool(_tourKey) ?? false;
     notifyListeners();
   }
 
-  /// Отметить, что онбординг показан.
-  /// [withTour] — показывать ли экскурсию по интерфейсу после онбординга.
-  Future<void> completeOnboarding({bool withTour = true}) async {
-    _onboardingDone = true;
-    _tourPending = withTour;
-    notifyListeners();
+  // ── Онбординг и экскурсия ─────────────────────────────────────────
+  // Флаги хранятся отдельно для каждого пользователя (по userId),
+  // чтобы новый аккаунт снова увидел вступительную инструкцию,
+  // а у того же пользователя она не повторялась.
+
+  static String _onboardingKeyFor(String userId) => 'onboarding_done_$userId';
+  static String _tourKeyFor(String userId) => 'tour_pending_$userId';
+
+  /// Показывать ли вступительную инструкцию пользователю [userId].
+  bool onboardingDoneFor(String userId) =>
+      _prefs?.getBool(_onboardingKeyFor(userId)) ?? false;
+
+  /// Показывать ли экскурсию по интерфейсу после онбординга.
+  bool tourPendingFor(String userId) =>
+      _prefs?.getBool(_tourKeyFor(userId)) ?? false;
+
+  /// Отметить, что инструкция показана.
+  /// [withTour] — показывать ли экскурсию по интерфейсу после неё.
+  Future<void> completeOnboarding(String userId, {bool withTour = true}) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_onboardingKey, true);
-    await prefs.setBool(_tourKey, withTour);
+    await prefs.setBool(_onboardingKeyFor(userId), true);
+    await prefs.setBool(_tourKeyFor(userId), withTour);
+    notifyListeners();
   }
 
-  Future<void> setTourDone() async {
-    _tourPending = false;
-    notifyListeners();
+  Future<void> setTourDone(String userId) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_tourKey, false);
+    await prefs.setBool(_tourKeyFor(userId), false);
+    notifyListeners();
   }
+
+  // ── Тема и язык ───────────────────────────────────────────────────
 
   Future<void> setThemeMode(ThemeMode mode) async {
     if (_themeMode == mode) return;

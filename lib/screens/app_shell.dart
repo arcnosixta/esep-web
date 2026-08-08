@@ -14,7 +14,10 @@ class AppShell extends StatefulWidget {
   /// Показывать ли экскурсию по интерфейсу при первом открытии.
   final bool startTour;
 
-  const AppShell({super.key, this.startTour = false});
+  /// Id текущего пользователя — для флагов онбординга.
+  final String userId;
+
+  const AppShell({super.key, required this.userId, this.startTour = false});
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -53,7 +56,7 @@ class _AppShellState extends State<AppShell> {
 
   void _finishTour() {
     setState(() => _tourActive = false);
-    appSettings.setTourDone();
+    appSettings.setTourDone(widget.userId);
   }
 
   void _onNavTap(int index) {
