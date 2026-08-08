@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../theme/app_colors.dart';
 import '../utils/constants.dart';
 import '../utils/formatters.dart';
 import '../widgets/app_filter_chip.dart';
 import '../widgets/status_badge.dart';
+import '../widgets/app_card.dart';
 import '../services/supabase_service.dart';
 import '../navigation/app_navigator.dart';
 import 'case_detail_screen.dart';
@@ -81,7 +83,7 @@ class _CasesListScreenState extends State<CasesListScreen> {
                   letterSpacing: -0.5,
                   color: c.textPrimary,
                 ),
-              ),
+              ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.08),
             ),
 
             Padding(
@@ -97,21 +99,28 @@ class _CasesListScreenState extends State<CasesListScreen> {
                       onTap: () => setState(() => _filterIndex = index),
                     );
                   }),
-                ),
+                ).animate(delay: 120.ms).fadeIn(duration: 350.ms).slideY(begin: 0.1),
               ),
             ),
 
             const SizedBox(height: 8),
 
             Expanded(
-              child: _loading
-                  ? Center(
-                      child: CircularProgressIndicator(
-                        color: c.accent,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : filtered.isEmpty
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeIn,
+                child: KeyedSubtree(
+                  key: ValueKey(
+                      'list-$_filterIndex-$_loading-${filtered.length}'),
+                  child: _loading
+                      ? Center(
+                          child: CircularProgressIndicator(
+                            color: c.accent,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : filtered.isEmpty
                       ? _buildEmptyState(context)
                       : RefreshIndicator(
                           onRefresh: _loadApplications,
@@ -136,95 +145,82 @@ class _CasesListScreenState extends State<CasesListScreen> {
                                   : '';
                               final status = app['status'] ?? 'new';
 
-                              return GestureDetector(
+                              return AppCard(
+                                padding: const EdgeInsets.all(18),
                                 onTap: () => AppNavigator.push(
                                   context,
                                   CaseDetailScreen(application: app),
                                 ),
-                                behavior: HitTestBehavior.opaque,
-                                child: Container(
-                                  padding: const EdgeInsets.all(18),
-                                  decoration: BoxDecoration(
-                                    color: c.surface,
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
-                                        color: c.border, width: 1),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black
-                                            .withValues(alpha: 0.03),
-                                        blurRadius: 16,
-                                        offset: const Offset(0, 4),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 44,
+                                      height: 44,
+                                      decoration: BoxDecoration(
+                                        color: c.accent
+                                            .withValues(alpha: 0.08),
+                                        borderRadius:
+                                            BorderRadius.circular(12),
                                       ),
-                                    ],
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 44,
-                                        height: 44,
-                                        decoration: BoxDecoration(
-                                          color: c.accent
-                                              .withValues(alpha: 0.08),
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            '#${(app['id'] ?? '').toString().substring(0, 4).toUpperCase()}',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w700,
-                                              color: c.accent,
-                                            ),
+                                      child: Center(
+                                        child: Text(
+                                          '#${(app['id'] ?? '').toString().substring(0, 4).toUpperCase()}',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                            color: c.accent,
                                           ),
                                         ),
                                       ),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              propertyTypeLabel(context, propType),
-                                              style: TextStyle(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.w600,
-                                                color:
-                                                    c.textPrimary,
-                                              ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            propertyTypeLabel(context, propType),
+                                            style: TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w600,
+                                              color:
+                                                  c.textPrimary,
                                             ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              area.isNotEmpty
-                                                  ? '$area · $address'
-                                                  : address,
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: c
-                                                    .textSecondary,
-                                              ),
-                                              overflow:
-                                                  TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            area.isNotEmpty
+                                                ? '$area · $address'
+                                                : address,
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: c
+                                                  .textSecondary,
                                             ),
-                                          ],
-                                        ),
+                                            overflow:
+                                                TextOverflow.ellipsis,
+                                          ),
+                                        ],
                                       ),
-                                      const SizedBox(width: 10),
-                                      StatusBadge(
-                                        status:
-                                            badgeStatusFromKey(status),
-                                        label: statusLabel(context, status),
-                                        small: true,
-                                      ),
-                                    ],
-                                  ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    StatusBadge(
+                                      status:
+                                          badgeStatusFromKey(status),
+                                      label: statusLabel(context, status),
+                                      small: true,
+                                    ),
+                                  ],
                                 ),
-                              );
+                              ).animate(delay: 60.ms * index)
+                                  .fadeIn(duration: 300.ms)
+                                  .slideY(begin: 0.1);
                             },
                           ),
                         ),
+                      ),
+                    ),
             ),
           ],
         ),

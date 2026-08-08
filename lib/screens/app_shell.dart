@@ -30,6 +30,7 @@ class _AppShellState extends State<AppShell> {
       AppNavigator.push(context, const AiChatScreen());
       return;
     }
+    if (_currentIndex == index) return;
     setState(() => _currentIndex = index);
   }
 
@@ -47,13 +48,34 @@ class _AppShellState extends State<AppShell> {
     ];
 
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _pages,
+      body: Stack(
+        children: List.generate(_pages.length, (i) {
+          final active = i == _currentIndex;
+          return IgnorePointer(
+            ignoring: !active,
+            child: AnimatedSlide(
+              offset: active ? Offset.zero : const Offset(0, 0.015),
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutCubic,
+              child: AnimatedOpacity(
+                opacity: active ? 1 : 0,
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOut,
+                child: TickerMode(
+                  enabled: active,
+                  child: _pages[i],
+                ),
+              ),
+            ),
+          );
+        }),
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: c.surface,
+          border: Border(
+            top: BorderSide(color: c.borderLight, width: 1),
+          ),
         ),
         child: SafeArea(
           child: Padding(
@@ -85,62 +107,117 @@ class _AppShellState extends State<AppShell> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            isAi
-                ? Container(
-                    width: 44,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [c.accent, c.accentLight],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+            AnimatedScale(
+              scale: active ? 1.0 : 0.9,
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOutBack,
+              child: isAi
+                  ? const _AiNavButton()
+                  : AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeOut,
+                      width: 44,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: active
+                            ? c.accent.withValues(alpha: 0.1)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: [
-                        BoxShadow(
-                          color: c.accent.withValues(alpha: 0.25),
-                          blurRadius: 10,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
+                      child: Icon(
+                        icon,
+                        size: 22,
+                        color: active ? c.accent : c.textHint,
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.auto_awesome_rounded,
-                      size: 18,
-                      color: Colors.white,
-                    ),
-                  )
-                : Container(
-                    width: 44,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: active
-                          ? c.accent.withValues(alpha: 0.08)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(
-                      icon,
-                      size: 22,
-                      color: active ? c.accent : c.textHint,
-                    ),
-                  ),
+            ),
             const SizedBox(height: 4),
-            Text(
-              label,
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOut,
               style: TextStyle(
                 fontSize: 10,
-                fontWeight: (active || isAi) ? FontWeight.w600 : FontWeight.w400,
-                color: isAi
-                    ? c.accent
-                    : active
-                        ? c.accent
-                        : c.textHint,
+                fontWeight: (active || isAi) ? FontWeight.w700 : FontWeight.w400,
+                color: (active || isAi) ? c.accent : c.textHint,
               ),
+              child: Text(label),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// AI-кнопка в навбаре: градиент + пульсирующее свечение.
+class _AiNavButton extends StatefulWidget {
+  const _AiNavButton();
+
+  @override
+  State<_AiNavButton> createState() => _AiNavButtonState();
+}
+
+class _AiNavButtonState extends State<_AiNavButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _glow;
+  late final Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1600),
+    )..repeat(reverse: true);
+    _glow = Tween<double>(begin: 0.35, end: 0.9).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+    _scale = Tween<double>(begin: 1.0, end: 1.06).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        return Transform.scale(
+          scale: _scale.value,
+          child: Container(
+            width: 44,
+            height: 32,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [c.accent, c.accentLight],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: c.accent.withValues(alpha: 0.15 * _glow.value),
+                  blurRadius: 6 + 10 * _glow.value,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.auto_awesome_rounded,
+              size: 18,
+              color: Colors.white,
+            ),
+          ),
+        );
+      },
     );
   }
 }

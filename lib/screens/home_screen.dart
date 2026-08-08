@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../theme/app_colors.dart';
 import '../utils/formatters.dart';
+import '../widgets/app_card.dart';
 import '../widgets/case_progress_bar.dart';
 import '../widgets/status_badge.dart';
 import '../l10n/app_strings.dart';
@@ -70,6 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
               parent: ClampingScrollPhysics(),
             ),
             slivers: [
+              // ── Шапка: приветствие + аватар ─────────────────────────
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
@@ -106,8 +109,19 @@ class _HomeScreenState extends State<HomeScreen> {
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            color: c.accent,
+                            gradient: LinearGradient(
+                              colors: [c.accent, c.accentLight],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
                             shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: c.accent.withValues(alpha: 0.25),
+                                blurRadius: 14,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
                           child: Center(
                             child: Text(
@@ -124,91 +138,81 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                     ],
-                  ),
+                  ).animate().fadeIn(duration: 450.ms).slideY(begin: 0.08),
                 ),
               ),
 
+              // ── Hero-карточка: текущая заявка ───────────────────────
               if (!_loading && _recentApps.isNotEmpty)
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
-                    child: GestureDetector(
+                    child: AppCard(
+                      padding: const EdgeInsets.all(20),
                       onTap: () => AppNavigator.push(
                           context,
                           CaseDetailScreen(
                               application: _recentApps.first)),
-                      child: Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: c.surface,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: c.border, width: 1),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.04),
-                              blurRadius: 20,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  s.homeCurrentApplication,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: c.textSecondary,
-                                  ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                s.homeCurrentApplication,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: c.textSecondary,
                                 ),
-                                StatusBadge(
-                                  status: badgeStatusFromKey(
-                                    _recentApps.first['status'] ?? 'new',
-                                  ),
-                                  label: statusLabel(
-                                    context,
-                                    _recentApps.first['status'] ?? 'new',
-                                  ),
-                                  small: true,
+                              ),
+                              StatusBadge(
+                                status: badgeStatusFromKey(
+                                  _recentApps.first['status'] ?? 'new',
                                 ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              caseNumber(
-                                (_recentApps.first['id'] ?? '').toString(),
+                                label: statusLabel(
+                                  context,
+                                  _recentApps.first['status'] ?? 'new',
+                                ),
+                                small: true,
                               ),
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
-                                color: c.textPrimary,
-                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            caseNumber(
+                              (_recentApps.first['id'] ?? '').toString(),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              _buildCaseSubtitle(_recentApps.first),
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: c.textSecondary,
-                              ),
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: c.textPrimary,
                             ),
-                            const SizedBox(height: 16),
-                            CaseProgressBar(
-                              progress: _getProgress(
-                                _recentApps.first['status'] ?? 'new',
-                              ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _buildCaseSubtitle(_recentApps.first),
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: c.textSecondary,
                             ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(height: 16),
+                          CaseProgressBar(
+                            progress: _getProgress(
+                              _recentApps.first['status'] ?? 'new',
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
+                    ).animate(delay: 100.ms)
+                        .fadeIn(duration: 450.ms)
+                        .slideY(begin: 0.12, curve: Curves.easeOutCubic),
                   ),
                 ),
 
+              // ── Быстрые действия ────────────────────────────────────
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
@@ -220,7 +224,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       color: c.textSecondary,
                       letterSpacing: 0.5,
                     ),
-                  ),
+                  ).animate(delay: 200.ms).fadeIn(duration: 350.ms),
                 ),
               ),
 
@@ -236,7 +240,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           c.accent,
                           () => AppNavigator.push(
                               context, const NewApplicationScreen()),
-                        ),
+                        ).animate(delay: 250.ms)
+                            .fadeIn(duration: 350.ms)
+                            .slideY(begin: 0.15),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -245,7 +251,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           s.homeDocuments,
                           c.warning,
                           widget.onDocumentsTap ?? () {},
-                        ),
+                        ).animate(delay: 320.ms)
+                            .fadeIn(duration: 350.ms)
+                            .slideY(begin: 0.15),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -255,7 +263,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           c.success,
                           () => AppNavigator.push(
                               context, const PaymentScreen()),
-                        ),
+                        ).animate(delay: 390.ms)
+                            .fadeIn(duration: 350.ms)
+                            .slideY(begin: 0.15),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -265,13 +275,16 @@ class _HomeScreenState extends State<HomeScreen> {
                           c.gold,
                           () => AppNavigator.push(
                               context, const AiChatScreen()),
-                        ),
+                        ).animate(delay: 460.ms)
+                            .fadeIn(duration: 350.ms)
+                            .slideY(begin: 0.15),
                       ),
                     ],
                   ),
                 ),
               ),
 
+              // ── Недавние заявки ─────────────────────────────────────
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
@@ -302,7 +315,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                     ],
-                  ),
+                  ).animate(delay: 500.ms).fadeIn(duration: 350.ms),
                 ),
               ),
 
@@ -368,78 +381,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ? '$area · $address'
                                         : address;
 
-                                    return GestureDetector(
-                                      onTap: () => AppNavigator.push(
-                                          context,
-                                          CaseDetailScreen(
-                                              application: app)),
-                                      behavior: HitTestBehavior.opaque,
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 20, vertical: 16),
-                                        child: Row(
-                                          children: [
-                                            Container(
-                                              width: 42,
-                                              height: 42,
-                                              decoration: BoxDecoration(
-                                                color: c.accent
-                                                    .withValues(alpha: 0.08),
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                              ),
-                                              child: Center(
-                                                child: Text(
-                                                  '#${(app['id'] ?? '').toString().substring(0, 4).toUpperCase()}',
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    fontWeight:
-                                                        FontWeight.w700,
-                                                    color: c.accent,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 14),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    propertyTypeLabel(
-                                                        context, propType),
-                                                    style: TextStyle(
-                                                      fontSize: 15,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      color: c.textPrimary,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 3),
-                                                  Text(
-                                                    detail,
-                                                    style: TextStyle(
-                                                      fontSize: 12,
-                                                      color: c.textSecondary,
-                                                    ),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            StatusBadge(
-                                              status:
-                                                  badgeStatusFromKey(status),
-                                              label: statusLabel(
-                                                  context, status),
-                                              small: true,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
+                                    return _RecentAppTile(
+                                      app: app,
+                                      propType: propType,
+                                      detail: detail,
+                                      status: status,
+                                    ).animate(
+                                        delay: 560.ms + 80.ms *
+                                            _recentApps.indexOf(app))
+                                        .fadeIn(duration: 300.ms)
+                                        .slideX(begin: -0.06);
                                   }),
                                 ],
                               ),
@@ -483,7 +434,7 @@ class _HomeScreenState extends State<HomeScreen> {
     VoidCallback onTap,
   ) {
     final c = AppColors.of(context);
-    return GestureDetector(
+    return _HoverCard(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 20),
@@ -514,6 +465,157 @@ class _HomeScreenState extends State<HomeScreen> {
               textAlign: TextAlign.center,
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Строка заявки в списке «Недавние»: hover-подсветка.
+class _RecentAppTile extends StatefulWidget {
+  final Map<String, dynamic> app;
+  final String propType;
+  final String detail;
+  final String status;
+
+  const _RecentAppTile({
+    required this.app,
+    required this.propType,
+    required this.detail,
+    required this.status,
+  });
+
+  @override
+  State<_RecentAppTile> createState() => _RecentAppTileState();
+}
+
+class _RecentAppTileState extends State<_RecentAppTile> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () => AppNavigator.push(
+            context, CaseDetailScreen(application: widget.app)),
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          color: _hovered
+              ? c.accent.withValues(alpha: 0.03)
+              : Colors.transparent,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: c.accent.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(
+                  child: Text(
+                    '#${(widget.app['id'] ?? '').toString().substring(0, 4).toUpperCase()}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: c.accent,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      propertyTypeLabel(context, widget.propType),
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: c.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      widget.detail,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: c.textSecondary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              StatusBadge(
+                status: badgeStatusFromKey(widget.status),
+                label: statusLabel(context, widget.status),
+                small: true,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Карточка с hover-подъёмом и press-сжатием (для быстрых действий).
+class _HoverCard extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onTap;
+
+  const _HoverCard({required this.child, required this.onTap});
+
+  @override
+  State<_HoverCard> createState() => _HoverCardState();
+}
+
+class _HoverCardState extends State<_HoverCard> {
+  bool _hovered = false;
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapUp: (_) => setState(() => _pressed = false),
+        onTapCancel: () => setState(() => _pressed = false),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          transform: Matrix4.translationValues(
+            0.0,
+            _pressed ? 1.0 : (_hovered ? -2.0 : 0.0),
+            0.0,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: _hovered
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ]
+                : null,
+          ),
+          child: widget.child,
         ),
       ),
     );

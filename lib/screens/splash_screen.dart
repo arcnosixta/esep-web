@@ -15,11 +15,13 @@ class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
   late AnimationController _logoController;
   late AnimationController _contentController;
+  late AnimationController _glowController;
 
   late Animation<double> _logoOpacity;
   late Animation<Offset> _logoSlide;
   late Animation<double> _contentOpacity;
   late Animation<Offset> _contentSlide;
+  late Animation<double> _glow;
 
   @override
   void initState() {
@@ -33,6 +35,10 @@ class _SplashScreenState extends State<SplashScreen>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
+    _glowController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    )..repeat(reverse: true);
 
     _logoOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _logoController, curve: Curves.easeOut),
@@ -52,6 +58,9 @@ class _SplashScreenState extends State<SplashScreen>
     ).animate(
       CurvedAnimation(parent: _contentController, curve: Curves.easeOutCubic),
     );
+    _glow = Tween<double>(begin: 0.4, end: 1.0).animate(
+      CurvedAnimation(parent: _glowController, curve: Curves.easeInOut),
+    );
 
     _logoController.forward();
     Future.delayed(const Duration(milliseconds: 500), () {
@@ -63,6 +72,7 @@ class _SplashScreenState extends State<SplashScreen>
   void dispose() {
     _logoController.dispose();
     _contentController.dispose();
+    _glowController.dispose();
     super.dispose();
   }
 
@@ -82,14 +92,35 @@ class _SplashScreenState extends State<SplashScreen>
                 position: _logoSlide,
                 child: FadeTransition(
                   opacity: _logoOpacity,
-                  child: Text(
-                    'ESEP',
-                    style: TextStyle(
-                      fontSize: 48,
-                      fontWeight: FontWeight.w900,
-                      color: c.textPrimary,
-                      letterSpacing: 8,
-                    ),
+                  child: AnimatedBuilder(
+                    animation: _glow,
+                    builder: (context, _) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 28, vertical: 16),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: c.accent.withValues(
+                                alpha: 0.10 * _glow.value,
+                              ),
+                              blurRadius: 20 + 30 * _glow.value,
+                              spreadRadius: 2 + 6 * _glow.value,
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          'ESEP',
+                          style: TextStyle(
+                            fontSize: 48,
+                            fontWeight: FontWeight.w900,
+                            color: c.textPrimary,
+                            letterSpacing: 8,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),

@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 
 import '../services/supabase_service.dart';
@@ -181,7 +182,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                           color: c.textPrimary,
                           letterSpacing: -0.5,
                         ),
-                      ),
+                      ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.08),
                       const SizedBox(height: 6),
                       Text(
                         _documents.isEmpty
@@ -191,7 +192,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                           fontSize: 14,
                           color: c.textSecondary,
                         ),
-                      ),
+                      ).animate(delay: 100.ms).fadeIn(duration: 350.ms),
                     ],
                   ),
                 ),
@@ -200,72 +201,77 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
                 sliver: SliverToBoxAdapter(
-                  child: GestureDetector(
-                    onTap: _uploading ? null : _pickAndUpload,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 36),
-                      decoration: BoxDecoration(
-                        color: _uploading
-                            ? c.accent.withValues(alpha: 0.04)
-                            : c.surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
+                  child: MouseRegion(
+                    cursor: _uploading
+                        ? SystemMouseCursors.wait
+                        : SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: _uploading ? null : _pickAndUpload,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 36),
+                        decoration: BoxDecoration(
                           color: _uploading
-                              ? c.accent.withValues(alpha: 0.3)
-                              : c.accent.withValues(alpha: 0.2),
-                          width: 1.5,
+                              ? c.accent.withValues(alpha: 0.04)
+                              : c.surface,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: _uploading
+                                ? c.accent.withValues(alpha: 0.3)
+                                : c.accent.withValues(alpha: 0.2),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            if (_uploading)
+                              SizedBox(
+                                width: 28,
+                                height: 28,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  color: c.accent,
+                                ),
+                              )
+                            else
+                              Container(
+                                width: 56,
+                                height: 56,
+                                decoration: BoxDecoration(
+                                  color: c.accent.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Icon(
+                                  Icons.cloud_upload_rounded,
+                                  size: 28,
+                                  color: c.accent,
+                                ),
+                              ),
+                            const SizedBox(height: 14),
+                            Text(
+                              _uploading ? 'Загрузка...' : 'Нажмите для выбора файлов',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: _uploading
+                                    ? c.accent
+                                    : c.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'PDF, JPG, PNG',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: c.textHint,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      child: Column(
-                        children: [
-                          if (_uploading)
-                            SizedBox(
-                              width: 28,
-                              height: 28,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.5,
-                                color: c.accent,
-                              ),
-                            )
-                          else
-                            Container(
-                              width: 56,
-                              height: 56,
-                              decoration: BoxDecoration(
-                                color: c.accent.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Icon(
-                                Icons.cloud_upload_rounded,
-                                size: 28,
-                                color: c.accent,
-                              ),
-                            ),
-                          const SizedBox(height: 14),
-                          Text(
-                            _uploading ? 'Загрузка...' : 'Нажмите для выбора файлов',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: _uploading
-                                  ? c.accent
-                                  : c.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            'PDF, JPG, PNG',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: c.textHint,
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
-                  ),
+                  ).animate(delay: 150.ms).fadeIn(duration: 400.ms).scale(begin: const Offset(0.97, 0.97), curve: Curves.easeOutCubic),
                 ),
               ),
 
@@ -477,7 +483,9 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                                       ],
                                     ),
                                   ),
-                                );
+                                ).animate(delay: 150.ms + 60.ms * i)
+                                    .fadeIn(duration: 300.ms)
+                                    .slideY(begin: 0.08);
                               },
                               childCount: _documents.length,
                             ),
