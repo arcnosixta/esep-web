@@ -6,6 +6,7 @@ import '../utils/formatters.dart';
 import '../widgets/app_filter_chip.dart';
 import '../widgets/status_badge.dart';
 import '../widgets/app_card.dart';
+import '../widgets/empty_state.dart';
 import '../services/supabase_service.dart';
 import '../navigation/app_navigator.dart';
 import 'case_detail_screen.dart';
@@ -229,35 +230,10 @@ class _CasesListScreenState extends State<CasesListScreen> {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    final c = AppColors.of(context);
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.folder_open_rounded,
-            size: 56,
-            color: c.muted,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Нет заявок',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: c.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Создайте первую заявку на оценку',
-            style: TextStyle(
-              fontSize: 13,
-              color: c.textHint,
-            ),
-          ),
-        ],
-      ),
+    return const EmptyState(
+      icon: Icons.folder_open_rounded,
+      title: 'Нет заявок',
+      subtitle: 'Создайте первую заявку на оценку',
     );
   }
 }

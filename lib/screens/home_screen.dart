@@ -4,6 +4,7 @@ import '../theme/app_colors.dart';
 import '../utils/formatters.dart';
 import '../widgets/app_card.dart';
 import '../widgets/case_progress_bar.dart';
+import '../widgets/empty_state.dart';
 import '../widgets/status_badge.dart';
 import '../l10n/app_strings.dart';
 import '../navigation/app_navigator.dart';
@@ -333,24 +334,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       ? SliverToBoxAdapter(
                           child: Padding(
                             padding: const EdgeInsets.all(40),
-                            child: Center(
-                              child: Column(
-                                children: [
-                                  Icon(
-                                    Icons.folder_open_rounded,
-                                    size: 48,
-                                    color: c.muted,
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    s.homeNoApplications,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: c.textHint,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                            child: EmptyState(
+                              icon: Icons.folder_open_rounded,
+                              title: s.homeNoApplications,
                             ),
                           ),
                         )

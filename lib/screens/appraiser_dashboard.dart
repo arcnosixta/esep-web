@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../theme/app_colors.dart';
 import '../services/supabase_service.dart';
 import '../models/user_profile.dart';
 import '../utils/formatters.dart';
 import '../widgets/status_badge.dart';
 import '../widgets/app_filter_chip.dart';
+import '../widgets/animated_count.dart';
 import 'document_upload_screen.dart';
 import 'report_screen.dart';
 
@@ -242,11 +244,29 @@ class _AppraiserHomeState extends State<_AppraiserHome> {
                   padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
                   child: Row(
                     children: [
-                      Expanded(child: _statCard(c, 'Новые', '$_newCount', Icons.fiber_new_rounded, c.warning)),
+                      Expanded(
+                        child: _statCard(c, 'Новые', _newCount,
+                                Icons.fiber_new_rounded, c.warning)
+                            .animate(delay: 80.ms)
+                            .fadeIn(duration: 400.ms)
+                            .slideY(begin: 0.1),
+                      ),
                       const SizedBox(width: 10),
-                      Expanded(child: _statCard(c, 'В работе', '$_inProgressCount', Icons.work_rounded, c.info)),
+                      Expanded(
+                        child: _statCard(c, 'В работе', _inProgressCount,
+                                Icons.work_rounded, c.info)
+                            .animate(delay: 160.ms)
+                            .fadeIn(duration: 400.ms)
+                            .slideY(begin: 0.1),
+                      ),
                       const SizedBox(width: 10),
-                      Expanded(child: _statCard(c, 'Готово', '$_completedCount', Icons.check_circle_rounded, c.success)),
+                      Expanded(
+                        child: _statCard(c, 'Готово', _completedCount,
+                                Icons.check_circle_rounded, c.success)
+                            .animate(delay: 240.ms)
+                            .fadeIn(duration: 400.ms)
+                            .slideY(begin: 0.1),
+                      ),
                     ],
                   ),
                 ),
@@ -358,7 +378,7 @@ class _AppraiserHomeState extends State<_AppraiserHome> {
     );
   }
 
-  Widget _statCard(AppColors c, String label, String value, IconData icon, Color color) {
+  Widget _statCard(AppColors c, String label, int value, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -378,9 +398,10 @@ class _AppraiserHomeState extends State<_AppraiserHome> {
             child: Icon(icon, color: color, size: 20),
           ),
           const SizedBox(height: 10),
-          Text(
+          AnimatedCountText(
             value,
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: c.textPrimary),
+            style: TextStyle(
+                fontSize: 22, fontWeight: FontWeight.w800, color: c.textPrimary),
           ),
           const SizedBox(height: 2),
           Text(

@@ -32,6 +32,7 @@ dependencies:
   path_provider: ^2.1.0
   url_launcher: ^6.3.2
   flutter_animate: ^4.5.2
+  confetti: ^0.8.0
 
 dev_dependencies:
   flutter_test:

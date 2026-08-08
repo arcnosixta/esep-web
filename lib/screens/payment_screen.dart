@@ -1,3 +1,6 @@
+import 'dart:math' as math;
+
+import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import '../navigation/app_navigator.dart';
 import '../services/payment_service.dart';
@@ -24,6 +27,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   Map<String, dynamic>? _application;
   List<Map<String, dynamic>> _payments = [];
   String? _error;
+  late final ConfettiController _confettiController;
 
   String get _appId => (_application?['id'] as String?) ?? '';
   bool get _isPaid => _application?['status'] == 'paid';
@@ -31,7 +35,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
   @override
   void initState() {
     super.initState();
+    _confettiController = ConfettiController(
+      duration: const Duration(seconds: 3),
+    );
     _load();
+  }
+
+  @override
+  void dispose() {
+    _confettiController.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -91,6 +104,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
       if (!mounted) return;
       setState(() => _submitting = false);
+      _confettiController.play();
       await _showSuccessDialog();
     } catch (e) {
       if (!mounted) return;
@@ -144,7 +158,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final c = AppColors.of(context);
     return Scaffold(
       backgroundColor: c.background,
-      body: SafeArea(
+      body: Stack(
+        children: [
+          SafeArea(
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
@@ -241,6 +257,28 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ],
           ],
         ),
+        ),
+        Align(
+          alignment: Alignment.topCenter,
+          child: ConfettiWidget(
+            confettiController: _confettiController,
+            blastDirection: -math.pi / 2,
+            emissionFrequency: 0.08,
+            numberOfParticles: 20,
+            gravity: 0.25,
+            maxBlastForce: 14,
+            minBlastForce: 6,
+            particleDrag: 0.4,
+            colors: [
+              c.accent,
+              c.accentLight,
+              c.gold,
+              c.success,
+              c.warning,
+            ],
+          ),
+        ),
+        ],
       ),
     );
   }
