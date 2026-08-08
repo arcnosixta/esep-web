@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../models/chat_message.dart';
@@ -1056,7 +1057,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        if (msg.imagePaths.isNotEmpty || msg.imageBase64.isNotEmpty) _buildImageGrid(msg),
+        if (msg.imagePaths.isNotEmpty || msg.imageBase64.isNotEmpty)
+          _buildImageGrid(msg),
         if (msg.text.isNotEmpty)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -1073,7 +1075,10 @@ class _AiChatScreenState extends State<AiChatScreen> {
                 height: 1.4,
               ),
             ),
-          ),
+          )
+              .animate()
+              .fadeIn(duration: 250.ms)
+              .slideY(begin: 0.1, curve: Curves.easeOutCubic),
       ],
     );
   }
@@ -1098,7 +1103,10 @@ class _AiChatScreenState extends State<AiChatScreen> {
                 height: 1.5,
               ),
             ),
-    );
+    )
+        .animate()
+        .fadeIn(duration: 250.ms)
+        .slideY(begin: 0.1, curve: Curves.easeOutCubic);
   }
 
   Widget _buildImageGrid(ChatMessage msg) {
