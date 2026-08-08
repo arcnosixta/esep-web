@@ -57,12 +57,12 @@ class OpenRouterService {
 
 ### Сценарий А — Пользователь только начал диалог:
 1. Поприветствуйся кратко
-2. Предложи два варианта:
-   «Пришлите два фото:
+2. Предложи варианты (по порядку):
+   «Загрузите документы во вкладку "Документы" — страховку, план или фото объекта (я учту их при оценке).
+   Или пришлите фото прямо сюда:
    📄 Фото страхового полиса (адрес, площадь, данные)
    🏠 Фото самого объекта (состояние, отделка)
-
-   Или напишите текстом — укажите тип, адрес, площадь, этаж, состояние»
+   Либо напишите текстом — тип, адрес, площадь, этаж, состояние»
 3. Жди ввод
 
 ### Сценарий Б — Пользователь прислал фото:
@@ -141,6 +141,21 @@ class OpenRouterService {
 - «Оформлю официальный отчёт об оценке для банка или сделки»
 - Не навязывай, но упоминай
 
+## ДОКУМЕНТЫ ПОЛЬЗОВАТЕЛЯ (вкладка «Документы» в приложении):
+В контексте диалога может быть раздел «ДОКУМЕНТЫ ПОЛЬЗОВАТЕЛЯ» — список файлов, которые пользователь загрузил во вкладку «Документы» (фото имущества, страховка, PDF, планы, договоры).
+
+ПРАВИЛО: ПЕРЕД тем как просить пользователя прислать фото/документы — СНАЧАЛА проверь этот список:
+1. Если нужные документы (страховка, фото объекта, план) УЖЕ загружены — НЕ проси их повторно. Считай их наличие и сразу переходи к анализу.
+2. Если есть частично — поблагодари за загруженное и попроси недостающее КОНКРЕТНО: «Загрузите во вкладку "Документы": ...» (назови, чего именно не хватает).
+3. Если список пуст — предложи два пути: загрузить документы во вкладку «Документы» (это ускорит и уточнит оценку) или описать объект текстом / прислать фото в чат.
+4. В [ESTIMATE] ставь has_documents: true, если в списке есть документы на объект ИЛИ пользователь прислал фото в чат.
+
+## ОФИЦИАЛЬНЫЙ ОТЧЁТ И ОПЛАТА:
+- Любая оценка в чате — ПРЕДВАРИТЕЛЬНАЯ и НЕ является официальным документом, не имеет юридической силы.
+- Официальный подписанный отчёт (для банка, сделки, нотариуса) пользователь получает после ОПЛАТЫ заявки в приложении.
+- После КАЖДОЙ оценки ОБЯЗАТЕЛЬНО добавляй дисклеймер одной строкой:
+  «⚠️ Это предварительная оценка, не официальный документ. Для официального подписанного отчёта оплатите заявку в приложении.»
+
 ## ФОРМАТ ОТВЕТОВ:
 - Короткие, структурированные
 - Эмодзи для заголовков
@@ -192,6 +207,43 @@ class OpenRouterService {
       debugPrint('[AI] Properties fetch error: $e');
       return [];
     }
+  }
+
+  static Future<List<Map<String, dynamic>>> _fetchUserDocuments() async {
+    try {
+      return await SupabaseService.getDocuments();
+    } catch (e) {
+      debugPrint('[AI] Documents fetch error: $e');
+      return [];
+    }
+  }
+
+  static String _formatDocSize(double bytes) {
+    if (bytes < 1024) return '${bytes.round()} B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(0)} KB';
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+  }
+
+  /// Список документов, загруженных пользователем во вкладку «Документы».
+  static String _buildDocumentsContext(List<Map<String, dynamic>> docs) {
+    if (docs.isEmpty) return '';
+
+    final buffer = StringBuffer('\n## ДОКУМЕНТЫ ПОЛЬЗОВАТЕЛЯ\n');
+    buffer.writeln('Пользователь загрузил во вкладку «Документы» '
+        '(${docs.length} файл(ов)):');
+    for (int i = 0; i < docs.length; i++) {
+      final d = docs[i];
+      final name = d['name'] ?? 'без имени';
+      final type = (d['file_type'] ?? '').toString().toUpperCase();
+      final size = d['file_size'];
+      final sizeLabel =
+          size != null ? ' (${_formatDocSize((size as num).toDouble())})' : '';
+      buffer.writeln('${i + 1}. $name [$type]$sizeLabel');
+    }
+    buffer.writeln(
+        'Используй эти документы при анализе. Недостающие проси загрузить '
+        'во вкладку «Документы» в приложении.');
+    return buffer.toString();
   }
 
   static String _buildMarketContext(List<Map<String, dynamic>> marketData) {
@@ -271,16 +323,20 @@ class OpenRouterService {
       _fetchMarketContext(),
       _fetchUserProfile(),
       _fetchUserProperties(),
+      _fetchUserDocuments(),
     ]);
 
     final marketData = results[0] as List<Map<String, dynamic>>;
     final profile = results[1] as Map<String, dynamic>?;
     final properties = results[2] as List<Map<String, dynamic>>;
+    final documents = results[3] as List<Map<String, dynamic>>;
 
     final marketContext = _buildMarketContext(marketData);
     final userContext = _buildUserContext(profile, properties);
+    final docsContext = _buildDocumentsContext(documents);
 
-    final fullSystemPrompt = _systemPrompt + marketContext + userContext;
+    final fullSystemPrompt =
+        _systemPrompt + marketContext + userContext + docsContext;
 
     final apiMessages = <Map<String, dynamic>>[
       {'role': 'system', 'content': fullSystemPrompt},

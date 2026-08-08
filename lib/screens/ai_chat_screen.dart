@@ -969,6 +969,33 @@ class _AiChatScreenState extends State<AiChatScreen> {
             ),
           ),
           const SizedBox(height: 14),
+          // Дисклеймер: оценка предварительная, официальный отчёт — после оплаты.
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: c.gold.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline_rounded, size: 15, color: c.gold),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Это предварительная оценка, не официальный документ. '
+                    'Официальный подписанный отчёт — после оплаты заявки.',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: c.textSecondary,
+                      height: 1.35,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
           if (e.hasDocuments) ...[
             OptionButton(
               text: _creatingApplication

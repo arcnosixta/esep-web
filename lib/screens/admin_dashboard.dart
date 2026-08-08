@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_colors.dart';
 import '../services/payment_service.dart';
 import '../services/supabase_service.dart';
@@ -2019,6 +2021,136 @@ class _AdminDocumentsState extends State<_AdminDocuments> {
     }
   }
 
+  /// Открыть документ: изображение — превью в диалоге, PDF — новая вкладка.
+  Future<void> _openDocument(Map<String, dynamic> doc) async {
+    final filePath = doc['file_url']?.toString();
+    if (filePath == null || filePath.isEmpty) return;
+
+    final String url;
+    try {
+      url = await SupabaseService.getDocumentUrl(filePath);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка открытия документа: $e')),
+        );
+      }
+      return;
+    }
+
+    final fileType = (doc['file_type'] ?? '').toString().toLowerCase();
+    if (!mounted) return;
+
+    if (fileType == 'jpg' || fileType == 'jpeg' || fileType == 'png') {
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) {
+          final c = AppColors.of(ctx);
+          return Dialog(
+            backgroundColor: c.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 8, 0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          doc['name'] ?? 'Просмотр',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: c.textPrimary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                    ],
+                  ),
+                ),
+                Flexible(
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      bottom: Radius.circular(18),
+                    ),
+                    child: Image.network(
+                      url,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, _, _) => Padding(
+                        padding: const EdgeInsets.all(40),
+                        child: Icon(Icons.broken_image_rounded,
+                            size: 48, color: c.muted),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    } else {
+      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    }
+  }
+
+  /// Удалить документ с подтверждением (и файл из Storage, и запись).
+  Future<void> _deleteDocument(Map<String, dynamic> doc) async {
+    final c = AppColors.of(context);
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: c.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Удалить документ?'),
+        content: Text(
+          '«${doc['name']}» будет удалён. '
+          'Пользователь сможет загрузить его заново.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Отмена'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('Удалить', style: TextStyle(color: c.error)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      await SupabaseService.deleteDocument(
+        doc['id'].toString(),
+        filePath: doc['file_url']?.toString(),
+      );
+      await _loadData();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Документ удалён')),
+        );
+      }
+    } catch (e) {
+      debugPrint('[AdminDocs] delete error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Ошибка удаления')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
@@ -2096,47 +2228,74 @@ class _AdminDocumentsState extends State<_AdminDocuments> {
                                   ? _formatDate(createdAt)
                                   : '';
 
-                              return Container(
-                                padding: const EdgeInsets.all(14),
-                                decoration: BoxDecoration(
-                                  color: c.surface,
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(color: c.border, width: 1),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 42,
-                                      height: 42,
-                                      decoration: BoxDecoration(
-                                        color: _fileColor(c, fileType).withValues(alpha: 0.1),
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Icon(_fileIcon(fileType), color: _fileColor(c, fileType), size: 20),
+                              return GestureDetector(
+                                onTap: () => _openDocument(doc),
+                                child: MouseRegion(
+                                  cursor: SystemMouseCursors.click,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(14),
+                                    decoration: BoxDecoration(
+                                      color: c.surface,
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(color: c.border, width: 1),
                                     ),
-                                    const SizedBox(width: 14),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            doc['name'] ?? '',
-                                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: c.textPrimary),
-                                            overflow: TextOverflow.ellipsis,
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 42,
+                                          height: 42,
+                                          decoration: BoxDecoration(
+                                            color: _fileColor(c, fileType).withValues(alpha: 0.1),
+                                            borderRadius: BorderRadius.circular(10),
                                           ),
-                                          const SizedBox(height: 3),
-                                          Text(
-                                            userName.isNotEmpty ? '$userName · $sizeLabel' : sizeLabel,
-                                            style: TextStyle(fontSize: 12, color: c.textSecondary),
+                                          child: Icon(_fileIcon(fileType), color: _fileColor(c, fileType), size: 20),
+                                        ),
+                                        const SizedBox(width: 14),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                doc['name'] ?? '',
+                                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: c.textPrimary),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              const SizedBox(height: 3),
+                                              Text(
+                                                userName.isNotEmpty ? '$userName · $sizeLabel' : sizeLabel,
+                                                style: TextStyle(fontSize: 12, color: c.textSecondary),
+                                              ),
+                                            ],
                                           ),
-                                        ],
-                                      ),
+                                        ),
+                                        if (dateLabel.isNotEmpty)
+                                          Text(dateLabel, style: TextStyle(fontSize: 11, color: c.textHint)),
+                                        const SizedBox(width: 4),
+                                        IconButton(
+                                          tooltip: 'Открыть',
+                                          icon: Icon(
+                                            Icons.visibility_outlined,
+                                            size: 20,
+                                            color: c.accent,
+                                          ),
+                                          onPressed: () => _openDocument(doc),
+                                        ),
+                                        IconButton(
+                                          tooltip: 'Удалить',
+                                          icon: Icon(
+                                            Icons.delete_outline_rounded,
+                                            size: 20,
+                                            color: c.error,
+                                          ),
+                                          onPressed: () => _deleteDocument(doc),
+                                        ),
+                                      ],
                                     ),
-                                    if (dateLabel.isNotEmpty)
-                                      Text(dateLabel, style: TextStyle(fontSize: 11, color: c.textHint)),
-                                  ],
+                                  ),
                                 ),
-                              );
+                              ).animate(delay: 60.ms * index)
+                                  .fadeIn(duration: 300.ms)
+                                  .slideY(begin: 0.08);
                             },
                           ),
                         ),

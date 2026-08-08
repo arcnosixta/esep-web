@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 
 import '../services/supabase_service.dart';
 import '../theme/app_colors.dart';
+import '../widgets/animated_count.dart';
 
 class DocumentUploadScreen extends StatefulWidget {
   const DocumentUploadScreen({super.key});
@@ -19,6 +20,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
   List<Map<String, dynamic>> _documents = [];
   bool _loading = true;
   bool _uploading = false;
+  bool _hovered = false;
   String? _uploadError;
 
   @override
@@ -184,15 +186,71 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                         ),
                       ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.08),
                       const SizedBox(height: 6),
-                      Text(
-                        _documents.isEmpty
-                            ? 'Загрузите документы для оценки'
-                            : '${_documents.length} файл(ов) загружено',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: c.textSecondary,
+                      _documents.isEmpty
+                          ? Text(
+                              'Загрузите документы — ИИ учтёт их при оценке',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: c.textSecondary,
+                              ),
+                            ).animate(delay: 100.ms).fadeIn(duration: 350.ms)
+                          : Row(
+                              children: [
+                                AnimatedCountText(
+                                  _documents.length,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: c.accent,
+                                  ),
+                                ),
+                                Text(
+                                  ' файл(ов) загружено',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: c.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ).animate(delay: 100.ms).fadeIn(duration: 350.ms),
+                      const SizedBox(height: 14),
+                      // Чип: ИИ учитывает документы при оценке.
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
                         ),
-                      ).animate(delay: 100.ms).fadeIn(duration: 350.ms),
+                        decoration: BoxDecoration(
+                          color: c.accent.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: c.accent.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.auto_awesome_rounded,
+                              size: 15,
+                              color: c.accent,
+                            ),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                'ИИ учитывает документы при оценке',
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: c.accent,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ).animate(delay: 200.ms)
+                          .fadeIn(duration: 400.ms)
+                          .slideX(begin: -0.08),
                     ],
                   ),
                 ),
@@ -205,9 +263,15 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                     cursor: _uploading
                         ? SystemMouseCursors.wait
                         : SystemMouseCursors.click,
+                    onEnter: (_) => setState(() => _hovered = true),
+                    onExit: (_) => setState(() => _hovered = false),
                     child: GestureDetector(
                       onTap: _uploading ? null : _pickAndUpload,
-                      child: AnimatedContainer(
+                      child: AnimatedScale(
+                        scale: _hovered && !_uploading ? 1.02 : 1.0,
+                        duration: const Duration(milliseconds: 180),
+                        curve: Curves.easeOut,
+                        child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(vertical: 36),
@@ -271,6 +335,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                         ),
                       ),
                     ),
+                  ),
                   ).animate(delay: 150.ms).fadeIn(duration: 400.ms).scale(begin: const Offset(0.97, 0.97), curve: Curves.easeOutCubic),
                 ),
               ),
