@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../l10n/app_strings.dart';
 import '../navigation/app_navigator.dart';
+import '../providers/app_settings.dart';
+import '../widgets/app_tour.dart';
 import 'ai_chat_screen.dart';
 import 'home_screen.dart';
 import 'cases_list_screen.dart';
@@ -9,7 +11,10 @@ import 'document_upload_screen.dart';
 import 'profile_screen.dart';
 
 class AppShell extends StatefulWidget {
-  const AppShell({super.key});
+  /// Показывать ли экскурсию по интерфейсу при первом открытии.
+  final bool startTour;
+
+  const AppShell({super.key, this.startTour = false});
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -17,13 +22,39 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
+  bool _tourActive = false;
+
+  // Цели экскурсии: ключи навигационных элементов.
+  final _homeNewAppKey = GlobalKey();
+  final _aiNavKey = GlobalKey();
+  final _casesNavKey = GlobalKey();
+  final _documentsNavKey = GlobalKey();
 
   late final List<Widget> _pages = [
-    HomeScreen(onDocumentsTap: () => setState(() => _currentIndex = 2)),
+    HomeScreen(
+      onDocumentsTap: () => setState(() => _currentIndex = 2),
+      newAppKey: _homeNewAppKey,
+    ),
     const CasesListScreen(),
     const DocumentUploadScreen(),
     const ProfileScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.startTour) {
+      // Ждём кадр, чтобы все цели отрисовались.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _tourActive = true);
+      });
+    }
+  }
+
+  void _finishTour() {
+    setState(() => _tourActive = false);
+    appSettings.setTourDone();
+  }
 
   void _onNavTap(int index) {
     if (index == 4) {
@@ -47,7 +78,7 @@ class _AppShellState extends State<AppShell> {
       (index: 3, icon: Icons.person_rounded, label: s.navProfile),
     ];
 
-    return Scaffold(
+    final shell = Scaffold(
       body: Stack(
         children: List.generate(_pages.length, (i) {
           final active = i == _currentIndex;
@@ -92,7 +123,60 @@ class _AppShellState extends State<AppShell> {
         ),
       ),
     );
+
+    // Поверх оболочки — экскурсия (затемнение с подсветкой целей).
+    return Stack(
+      children: [
+        shell,
+        if (_tourActive)
+          AppTour(
+            steps: [
+              TourStep(
+                targetKey: _homeNewAppKey,
+                title: 'Новая заявка',
+                description:
+                    'Всё начинается здесь: выберите тип недвижимости, '
+                    'укажите адрес и площадь — и отправьте заявку. '
+                    'Чем больше деталей, тем точнее оценка.',
+                icon: Icons.edit_note_rounded,
+              ),
+              TourStep(
+                targetKey: _aiNavKey,
+                title: 'ИИ-оценка',
+                description:
+                    'Не хотите заполнять форму? Напишите ИИ пару слов или '
+                    'пришлите фото — он сам составит заявку и оценит объект.',
+                icon: Icons.auto_awesome_rounded,
+              ),
+              TourStep(
+                targetKey: _casesNavKey,
+                title: 'Заявки',
+                description:
+                    'Здесь живут все ваши заявки. Статус обновляется '
+                    'автоматически: от «Новой» до готового отчёта.',
+                icon: Icons.folder_rounded,
+              ),
+              TourStep(
+                targetKey: _documentsNavKey,
+                title: 'Документы',
+                description:
+                    'Приложите документы по объекту — правоустанавливающие '
+                    'бумаги, план или фото. Это ускоряет оценку.',
+                icon: Icons.description_rounded,
+              ),
+            ],
+            onFinished: _finishTour,
+          ),
+      ],
+    );
   }
+
+  GlobalKey? _navKeyFor(int index) => switch (index) {
+        1 => _casesNavKey,
+        2 => _documentsNavKey,
+        4 => _aiNavKey,
+        _ => null,
+      };
 
   Widget _navItem(int index, IconData icon, String label) {
     final c = AppColors.of(context);
@@ -103,6 +187,7 @@ class _AppShellState extends State<AppShell> {
       onTap: () => _onNavTap(index),
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
+        key: _navKeyFor(index),
         width: 56,
         child: Column(
           mainAxisSize: MainAxisSize.min,

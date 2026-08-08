@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../main.dart';
+import '../providers/app_settings.dart';
 import '../services/egov_service.dart';
 import '../theme/app_colors.dart';
 import '../l10n/app_strings.dart';

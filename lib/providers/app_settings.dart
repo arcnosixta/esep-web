@@ -1,15 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Глобальный экземпляр настроек приложения.
+final appSettings = AppSettings();
+
 class AppSettings extends ChangeNotifier {
   static const _themeKey = 'theme_mode';
   static const _localeKey = 'locale';
+  static const _onboardingKey = 'onboarding_done';
+  static const _tourKey = 'tour_pending';
 
   ThemeMode _themeMode = ThemeMode.system;
   Locale _locale = const Locale('ru');
+  bool _onboardingDone = false;
+  bool _tourPending = false;
 
   ThemeMode get themeMode => _themeMode;
   Locale get locale => _locale;
+  bool get onboardingDone => _onboardingDone;
+  bool get tourPending => _tourPending;
 
   String get localeCode => _locale.languageCode;
 
@@ -19,7 +28,27 @@ class AppSettings extends ChangeNotifier {
     _themeMode = ThemeMode.values[themeIndex.clamp(0, 2)];
     final localeCode = prefs.getString(_localeKey) ?? 'ru';
     _locale = _localeFromString(localeCode);
+    _onboardingDone = prefs.getBool(_onboardingKey) ?? false;
+    _tourPending = prefs.getBool(_tourKey) ?? false;
     notifyListeners();
+  }
+
+  /// Отметить, что онбординг показан.
+  /// [withTour] — показывать ли экскурсию по интерфейсу после онбординга.
+  Future<void> completeOnboarding({bool withTour = true}) async {
+    _onboardingDone = true;
+    _tourPending = withTour;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_onboardingKey, true);
+    await prefs.setBool(_tourKey, withTour);
+  }
+
+  Future<void> setTourDone() async {
+    _tourPending = false;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_tourKey, false);
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {

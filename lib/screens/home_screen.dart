@@ -19,7 +19,10 @@ import 'profile_screen.dart';
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onDocumentsTap;
 
-  const HomeScreen({super.key, this.onDocumentsTap});
+  /// Ключ для кнопки «Новая заявка» — цель экскурсии по приложению.
+  final GlobalKey? newAppKey;
+
+  const HomeScreen({super.key, this.onDocumentsTap, this.newAppKey});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -235,12 +238,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Row(
                     children: [
                       Expanded(
-                        child: _quickAction(
-                          Icons.calculate_rounded,
-                          s.homeNewApplication,
-                          c.accent,
-                          () => AppNavigator.push(
-                              context, const NewApplicationScreen()),
+                        child: KeyedSubtree(
+                          key: widget.newAppKey,
+                          child: _quickAction(
+                            Icons.calculate_rounded,
+                            s.homeNewApplication,
+                            c.accent,
+                            () => AppNavigator.push(
+                                context, const NewApplicationScreen()),
+                          ),
                         ).animate(delay: 250.ms)
                             .fadeIn(duration: 350.ms)
                             .slideY(begin: 0.15),

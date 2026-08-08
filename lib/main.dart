@@ -8,6 +8,7 @@ import 'screens/splash_screen.dart';
 import 'screens/app_shell.dart';
 import 'screens/appraiser_dashboard.dart';
 import 'screens/admin_dashboard.dart';
+import 'screens/onboarding_screen.dart';
 import 'providers/app_settings.dart';
 import 'l10n/app_strings.dart';
 import 'models/user_profile.dart';
@@ -16,8 +17,6 @@ import 'services/supabase_service.dart';
 const supabaseUrl = 'https://rphsqxhwfrkavvxzvnuv.supabase.co';
 const supabaseAnonKey =
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwaHNxeGh3ZnJrYXZ2eHp2bnV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ0NTQ4ODcsImV4cCI6MjEwMDAzMDg4N30.dFa8Py2xK0Jw7OSCJSRlPwAgwRGlTYzq8JfSBUkh_TU';
-
-final appSettings = AppSettings();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -132,7 +131,15 @@ class _AuthGateState extends State<AuthGate> {
         return const AppraiserDashboard();
       case UserRole.client:
       case null:
-        return const AppShell();
+        // Новым пользователям показываем интерактивную инструкцию.
+        if (!appSettings.onboardingDone) {
+          return OnboardingScreen(
+            onDone: () => appSettings.completeOnboarding(),
+            onSkip: () => appSettings.completeOnboarding(withTour: false),
+          );
+        }
+        // После онбординга — короткая экскурсия по главному экрану.
+        return AppShell(startTour: appSettings.tourPending);
     }
   }
 
