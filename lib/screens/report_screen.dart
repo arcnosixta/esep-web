@@ -73,6 +73,18 @@ class _ReportScreenState extends State<ReportScreen> {
         setState(() {
           _reportData = data;
           _loading = false;
+
+          // Восстанавливаем статус ЭЦП-подписи из БД (если отчёт уже подписан)
+          final signerName = app['signer_name'] ?? '';
+          final signedAtRaw = app['signed_at'];
+          if (signerName.toString().isNotEmpty && signedAtRaw != null) {
+            _signatureInfo = CmsSignatureInfo(
+              signerName: signerName.toString(),
+              signerIin: (app['signer_iin'] ?? '').toString(),
+              organization: '',
+            );
+            _signedAt = DateTime.tryParse(signedAtRaw.toString());
+          }
         });
       }
     } catch (e) {
