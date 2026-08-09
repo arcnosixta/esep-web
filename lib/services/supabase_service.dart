@@ -316,6 +316,39 @@ class SupabaseService {
     }).eq('id', applicationId);
   }
 
+  /// Прикрепить реальную CMS-подпись (ЭЦП через NCALayer) к заявке.
+  ///
+  /// Загружает .cms в storage (bucket user-docs) и сохраняет данные
+  /// подписанта в таблице applications. Возвращает путь в storage.
+  static Future<String> attachCmsSignature({
+    required String applicationId,
+    required Uint8List cmsBytes,
+    required String signerName,
+    required String signerIin,
+  }) async {
+    if (userId == null) throw Exception('Не авторизован');
+
+    final ts = DateTime.now().millisecondsSinceEpoch;
+    final path = _storagePath('ecp_signatures/${applicationId}_$ts.cms');
+
+    await supabase.storage.from(_storageBucket).uploadBinary(
+          path,
+          cmsBytes,
+          fileOptions: const FileOptions(upsert: true),
+        );
+
+    await supabase.from('applications').update({
+      'signature': 'ECP-CMS',
+      'signature_path': path,
+      'signed_by': userId,
+      'signed_at': DateTime.now().toIso8601String(),
+      'signer_name': signerName,
+      'signer_iin': signerIin,
+    }).eq('id', applicationId);
+
+    return path;
+  }
+
   static Future<Map<String, dynamic>> getApplication(String id) async {
     final data = await supabase
         .from('applications')
