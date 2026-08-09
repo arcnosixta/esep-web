@@ -1,6 +1,7 @@
 class ReportData {
   final String clientName;
   final String clientIin;
+  final bool clientIsOrg;
   final String propertyType;
   final String address;
   final double area;
@@ -23,6 +24,7 @@ class ReportData {
   const ReportData({
     required this.clientName,
     required this.clientIin,
+    this.clientIsOrg = false,
     required this.propertyType,
     required this.address,
     required this.area,
@@ -47,6 +49,7 @@ class ReportData {
     return ReportData(
       clientName: json['client_name'] as String? ?? 'Не указано',
       clientIin: json['client_iin'] as String? ?? '',
+      clientIsOrg: json['client_is_org'] as bool? ?? false,
       propertyType: json['property_type'] as String? ?? 'Квартира',
       address: json['address'] as String? ?? '',
       area: (json['area'] as num?)?.toDouble() ?? 0,

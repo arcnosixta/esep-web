@@ -7,6 +7,7 @@ import 'package:printing/printing.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/report_template.dart';
 import '../services/cms_signature_parser.dart';
+import '../services/cms_signature_verifier.dart';
 import '../services/ncalayer_service.dart';
 import '../services/report_service.dart';
 import '../services/supabase_service.dart';
@@ -55,6 +56,7 @@ class _ReportScreenState extends State<ReportScreen> {
 
       final prop = app['properties'] ?? {};
       final profile = app['profiles'] ?? {};
+      final isOrg = (profile['client_type'] ?? 'person') == 'org';
 
       final data = await ReportService.generateReportData(
         propertyType: prop['type'] ?? 'Квартира',
@@ -65,8 +67,13 @@ class _ReportScreenState extends State<ReportScreen> {
         totalFloors: prop['total_floors'] ?? 0,
         condition: prop['condition'] ?? 'Не указано',
         yearBuilt: prop['year_built'] ?? 0,
-        clientName: profile['full_name'] ?? 'Не указано',
-        clientIin: profile['iin'] ?? '',
+        clientName: isOrg
+            ? (profile['org_name'] ?? 'Не указано')
+            : (profile['full_name'] ?? 'Не указано'),
+        clientIin: isOrg
+            ? (profile['bin'] ?? '')
+            : (profile['iin'] ?? ''),
+        clientIsOrg: isOrg,
       );
 
       if (mounted) {
@@ -151,6 +158,7 @@ class _ReportScreenState extends State<ReportScreen> {
   CmsSignatureInfo? _signatureInfo;
   DateTime? _signedAt;
   bool _signing = false;
+  Uint8List? _cmsBytes;
 
   Future<void> _signWithNcalayer() async {
     final c = AppColors.of(context);
@@ -299,6 +307,8 @@ class _ReportScreenState extends State<ReportScreen> {
         return;
       }
 
+      _cmsBytes = bytes;
+
       final appId = widget.applicationId;
       if (appId == null) {
         if (!mounted) return;
@@ -326,6 +336,85 @@ class _ReportScreenState extends State<ReportScreen> {
     } catch (e) {
       _showErrorSnack('Ошибка загрузки: $e');
     }
+  }
+
+  Future<void> _verifySignature() async {
+    final c = AppColors.of(context);
+    final bytes = _cmsBytes;
+    if (bytes == null) {
+      _showErrorSnack(
+          'Сначала загрузите .cms подпись (или подпишите через NCALayer)');
+      return;
+    }
+
+    final result = CmsSignatureVerifier.verify(bytes);
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(
+              result.verified
+                  ? Icons.verified_rounded
+                  : Icons.gpp_maybe_rounded,
+              color: result.verified ? c.success : c.warning,
+              size: 22,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(result.verified ? 'Подпись действительна' : 'Проверка'),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                result.message,
+                style: TextStyle(
+                    color: result.verified ? c.textPrimary : c.warning,
+                    fontSize: 13.5,
+                    height: 1.4),
+              ),
+              if (result.signer != null) ...[
+                const SizedBox(height: 10),
+                Text(
+                  'Подписант: ${result.signer!.signerName}',
+                  style: TextStyle(color: c.textPrimary, fontSize: 13),
+                ),
+                if (result.signer!.signerIin.isNotEmpty)
+                  Text(
+                    'ИИН: ${result.signer!.signerIin}',
+                    style: TextStyle(color: c.textSecondary, fontSize: 13),
+                  ),
+              ],
+              const SizedBox(height: 8),
+              Text(
+                'Проверка цепочки сертификатов НУЦ — на ezsigner.kz/#!/checkCMS',
+                style: TextStyle(color: c.textSecondary, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Закрыть', style: TextStyle(color: c.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _openUrl('https://ezsigner.kz/#!/checkCMS');
+            },
+            child: Text('Проверить на ezSigner', style: TextStyle(color: c.accent)),
+          ),
+        ],
+      ),
+    );
   }
 
   void _openUrl(String url) {
@@ -881,6 +970,19 @@ class _ReportScreenState extends State<ReportScreen> {
               ),
             ],
           ),
+          if (signed) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OptionButton(
+                text: 'Проверить подпись',
+                icon: Icons.verified_user_rounded,
+                backgroundColor: c.surfaceLight,
+                textColor: c.accent,
+                onTap: _verifySignature,
+              ),
+            ),
+          ],
         ],
       ),
     );

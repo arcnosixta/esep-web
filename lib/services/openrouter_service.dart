@@ -391,6 +391,7 @@ class OpenRouterService {
     required int yearBuilt,
     required String clientName,
     required String clientIin,
+    bool clientIsOrg = false,
     String? appraiserName,
   }) async {
     final results = await Future.wait([
@@ -489,6 +490,7 @@ $marketContext
             .trim();
 
         final reportJson = jsonDecode(cleaned) as Map<String, dynamic>;
+        reportJson['client_is_org'] = clientIsOrg;
         debugPrint('[Report] AI model $model succeeded');
         return ReportData.fromJson(reportJson);
       } catch (e) {

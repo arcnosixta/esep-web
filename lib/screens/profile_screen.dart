@@ -5,6 +5,7 @@ import '../widgets/information_tile.dart';
 import '../widgets/status_badge.dart';
 import '../services/supabase_service.dart';
 import '../utils/formatters.dart';
+import '../utils/iin_validator.dart';
 import 'egov_screen.dart';
 import 'settings_screen.dart';
 
@@ -931,6 +932,9 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
   late final TextEditingController _nameController;
   late final TextEditingController _phoneController;
   late final TextEditingController _iinController;
+  late final TextEditingController _orgNameController;
+  late bool _isOrg;
+  String? _iinError;
   bool _saving = false;
 
   @override
@@ -941,7 +945,10 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     _phoneController = TextEditingController(
         text: widget.profile?['phone'] ?? '');
     _iinController = TextEditingController(
-        text: widget.profile?['iin'] ?? '');
+        text: widget.profile?['iin'] ?? widget.profile?['bin'] ?? '');
+    _orgNameController = TextEditingController(
+        text: widget.profile?['org_name'] ?? '');
+    _isOrg = (widget.profile?['client_type'] ?? 'person') == 'org';
   }
 
   @override
@@ -949,6 +956,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     _nameController.dispose();
     _phoneController.dispose();
     _iinController.dispose();
+    _orgNameController.dispose();
     super.dispose();
   }
 
@@ -962,13 +970,40 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       return;
     }
 
+    // Валидация ИИН/БИН (обязателен: это основа идентификации клиента).
+    final idNumber = _iinController.text.trim();
+    if (idNumber.isEmpty) {
+      setState(() => _iinError = 'ИИН/БИН обязателен для заказа оценки');
+      return;
+    }
+    final idCheck = IinValidator.validate(idNumber);
+    if (!idCheck.valid) {
+      setState(() => _iinError = idCheck.error);
+      return;
+    }
+    if (_isOrg && !idCheck.isOrg) {
+      setState(() => _iinError = 'Похоже, это ИИН физлица, а выбран тип «Юрлицо»');
+      return;
+    }
+    if (!_isOrg && idCheck.isOrg) {
+      setState(() => _iinError = 'Похоже, это БИН юрлица — выберите тип «Юрлицо»');
+      return;
+    }
+    if (_isOrg && _orgNameController.text.trim().isEmpty) {
+      setState(() => _iinError = 'Укажите наименование организации');
+      return;
+    }
+
     setState(() => _saving = true);
 
     try {
       await SupabaseService.updateProfile(
         fullName: name,
         phone: _phoneController.text.trim(),
-        iin: _iinController.text.trim(),
+        iin: _isOrg ? null : idNumber,
+        clientType: _isOrg ? 'org' : 'person',
+        orgName: _isOrg ? _orgNameController.text.trim() : null,
+        bin: _isOrg ? idNumber : null,
       );
       if (mounted) {
         widget.onSaved();
@@ -1042,13 +1077,52 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                 keyboardType: TextInputType.phone,
               ),
               const SizedBox(height: 16),
+              // Тип клиента: физлицо (ИИН) / юрлицо (БИН + организация)
+              Row(
+                children: [
+                  _typeChip('Физлицо', !_isOrg, () {
+                    setState(() {
+                      _isOrg = false;
+                      _iinError = null;
+                    });
+                  }),
+                  const SizedBox(width: 12),
+                  _typeChip('Юрлицо', _isOrg, () {
+                    setState(() {
+                      _isOrg = true;
+                      _iinError = null;
+                    });
+                  }),
+                ],
+              ),
+              const SizedBox(height: 16),
+              if (_isOrg) ...[
+                _buildField(
+                  controller: _orgNameController,
+                  label: 'Наименование организации',
+                  icon: Icons.business_rounded,
+                  keyboardType: TextInputType.text,
+                ),
+                const SizedBox(height: 16),
+              ],
               _buildField(
                 controller: _iinController,
-                label: s.profileIin,
+                label: _isOrg ? 'БИН' : s.profileIin,
                 icon: Icons.badge_rounded,
                 keyboardType: TextInputType.number,
                 maxLength: 12,
               ),
+              if (_iinError != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  _iinError!,
+                  style: TextStyle(
+                    color: c.error,
+                    fontSize: 12.5,
+                    height: 1.3,
+                  ),
+                ),
+              ],
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
@@ -1082,6 +1156,32 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _typeChip(String label, bool selected, VoidCallback onTap) {
+    final c = AppColors.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? c.accent : c.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: selected ? c.accent : c.border,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13.5,
+            fontWeight: FontWeight.w600,
+            color: selected ? Colors.white : c.textSecondary,
           ),
         ),
       ),

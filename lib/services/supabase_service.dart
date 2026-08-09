@@ -137,6 +137,9 @@ class SupabaseService {
     String? iin,
     String? phone,
     String? email,
+    String? clientType,
+    String? orgName,
+    String? bin,
   }) async {
     if (userId == null) return;
     final updates = <String, dynamic>{};
@@ -144,6 +147,9 @@ class SupabaseService {
     if (iin != null) updates['iin'] = iin;
     if (phone != null) updates['phone'] = phone;
     if (email != null) updates['email'] = email;
+    if (clientType != null) updates['client_type'] = clientType;
+    if (orgName != null) updates['org_name'] = orgName;
+    if (bin != null) updates['bin'] = bin;
     if (updates.isNotEmpty) {
       await supabase.from('profiles').update(updates).eq('user_id', userId!);
     }
@@ -368,7 +374,7 @@ class SupabaseService {
 
     final profilesData = await supabase
         .from('profiles')
-        .select('user_id, full_name, iin')
+        .select('user_id, full_name, iin, bin, org_name, client_type, phone, email')
         .eq('user_id', data['user_id'])
         .maybeSingle();
     data['profiles'] = profilesData;

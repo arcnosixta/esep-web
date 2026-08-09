@@ -27,6 +27,7 @@ class ReportService {
     required int yearBuilt,
     required String clientName,
     required String clientIin,
+    bool clientIsOrg = false,
     String? appraiserName,
   }) async {
     return OpenRouterService.generateReportData(
@@ -40,6 +41,7 @@ class ReportService {
       yearBuilt: yearBuilt,
       clientName: clientName,
       clientIin: clientIin,
+      clientIsOrg: clientIsOrg,
       appraiserName: appraiserName,
     );
   }
@@ -158,8 +160,9 @@ class ReportService {
             style: pw.TextStyle(font: fontBold, fontSize: 12, color: PdfColors.blue800),
           ),
           pw.SizedBox(height: 12),
-          _infoRow('ФИО', data.clientName, font, fontBold),
-          if (data.clientIin.isNotEmpty) _infoRow('ИИН', data.clientIin, font, fontBold),
+          _infoRow(data.clientIsOrg ? 'Наименование' : 'ФИО', data.clientName, font, fontBold),
+          if (data.clientIin.isNotEmpty)
+            _infoRow(data.clientIsOrg ? 'БИН' : 'ИИН', data.clientIin, font, fontBold),
         ],
       ),
     );

@@ -13,8 +13,10 @@ import '../services/supabase_service.dart';
 import '../theme/app_colors.dart';
 import '../utils/formatters.dart';
 import '../navigation/app_navigator.dart';
+import '../utils/iin_validator.dart';
 import '../widgets/option_button.dart';
 import 'payment_screen.dart';
+import 'profile_screen.dart';
 
 class AiChatScreen extends StatefulWidget {
   const AiChatScreen({super.key});
@@ -527,6 +529,17 @@ class _AiChatScreenState extends State<AiChatScreen> {
     if (_creatingApplication) return;
     setState(() => _creatingApplication = true);
     try {
+      // Идентификация клиента: ИИН/БИН обязателен (в профиле).
+      final profile = await SupabaseService.getProfile();
+      final idNumber = (profile?['iin'] ?? profile?['bin'] ?? '').toString();
+      final idOk = idNumber.isNotEmpty && IinValidator.validate(idNumber).valid;
+      if (!mounted) return;
+      if (!idOk) {
+        setState(() => _creatingApplication = false);
+        await _showIinRequiredDialog();
+        return;
+      }
+
       final property = await SupabaseService.addProperty(
         type: _dbTypeFromEstimate(e.propertyType),
         address: e.address,
@@ -554,6 +567,36 @@ class _AiChatScreenState extends State<AiChatScreen> {
         SnackBar(content: Text('Не удалось создать заявку: $err')),
       );
     }
+  }
+
+  /// Диалог: для заказа нужен ИИН/БИН в профиле.
+  Future<void> _showIinRequiredDialog() async {
+    final c = AppColors.of(context);
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Нужен ИИН/БИН'),
+        content: Text(
+          'Для заказа оценки вы должны быть идентифицированы. '
+          'Укажите ИИН (физлицо) или БИН и наименование (юрлицо) в профиле — '
+          'это займёт минуту.',
+          style: TextStyle(color: c.textSecondary, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Позже', style: TextStyle(color: c.textSecondary)),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              AppNavigator.push(ctx, const ProfileScreen());
+            },
+            child: const Text('Заполнить профиль'),
+          ),
+        ],
+      ),
+    );
   }
 
   String _dbTypeFromEstimate(String t) {
