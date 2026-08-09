@@ -9,6 +9,7 @@ import '../models/user_profile.dart';
 import '../utils/formatters.dart';
 import '../widgets/status_badge.dart';
 import '../widgets/app_filter_chip.dart';
+import 'admin_user_info_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -704,6 +705,15 @@ class _AdminUsersState extends State<_AdminUsers> {
                   ],
                 ),
               ),
+              _actionTile(c, Icons.info_outline_rounded, 'Информация по ИИН', c.accent, () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => AdminUserInfoScreen(user: user),
+                  ),
+                );
+              }),
               _actionTile(c, Icons.edit_rounded, 'Редактировать профиль', c.accent, () {
                 Navigator.pop(context);
                 _showEditDialog(user);
@@ -968,6 +978,30 @@ class _AdminUsersState extends State<_AdminUsers> {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(roleLabel, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: roleColor)),
+                ),
+                const SizedBox(width: 2),
+                // Кнопка «Инфо» — вся доступная информация по ИИН.
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AdminUserInfoScreen(user: user),
+                      ),
+                    );
+                  },
+                  child: Tooltip(
+                    message: 'Информация по ИИН',
+                    child: Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: c.accent.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(Icons.info_outline_rounded,
+                          size: 18, color: c.accent),
+                    ),
+                  ),
                 ),
               ],
             ),
