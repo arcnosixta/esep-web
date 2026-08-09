@@ -6,6 +6,8 @@ import '../widgets/app_card.dart';
 import '../widgets/case_progress_bar.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/status_badge.dart';
+import '../widgets/aurora_background.dart';
+import '../widgets/scroll_reveal.dart';
 import '../l10n/app_strings.dart';
 import '../navigation/app_navigator.dart';
 import '../services/supabase_service.dart';
@@ -67,7 +69,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: c.background,
-      body: SafeArea(
+      body: Stack(
+        children: [
+          const AuroraBackground(),
+          SafeArea(
         child: RefreshIndicator(
           onRefresh: _loadData,
           color: c.accent,
@@ -151,7 +156,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
-                    child: AppCard(
+                    child: ScrollReveal(
+                      delay: 100.ms,
+                      child: AppCard(
                       padding: const EdgeInsets.all(20),
                       onTap: () => AppNavigator.push(
                           context,
@@ -210,9 +217,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ],
                       ),
-                    ).animate(delay: 100.ms)
-                        .fadeIn(duration: 450.ms)
-                        .slideY(begin: 0.12, curve: Curves.easeOutCubic),
+                      ),
+                    ),
                   ),
                 ),
 
@@ -373,16 +379,18 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ? '$area · $address'
                                         : address;
 
-                                    return _RecentAppTile(
-                                      app: app,
-                                      propType: propType,
-                                      detail: detail,
-                                      status: status,
-                                    ).animate(
-                                        delay: 560.ms + 80.ms *
-                                            _recentApps.indexOf(app))
-                                        .fadeIn(duration: 300.ms)
-                                        .slideX(begin: -0.06);
+                                    return ScrollReveal(
+                                      delay: 80.ms *
+                                          _recentApps.indexOf(app),
+                                      duration: 300.ms,
+                                      slideFrom: 0.08,
+                                      child: _RecentAppTile(
+                                        app: app,
+                                        propType: propType,
+                                        detail: detail,
+                                        status: status,
+                                      ),
+                                    );
                                   }),
                                 ],
                               ),
@@ -396,8 +404,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
-      ),
-    );
+        ),
+      ],
+    ),
+  );
   }
 
   String _buildCaseSubtitle(Map<String, dynamic> app) {

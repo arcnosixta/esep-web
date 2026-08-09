@@ -7,6 +7,7 @@ import '../widgets/app_filter_chip.dart';
 import '../widgets/status_badge.dart';
 import '../widgets/app_card.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/scroll_reveal.dart';
 import '../services/supabase_service.dart';
 import '../navigation/app_navigator.dart';
 import 'case_detail_screen.dart';
@@ -146,7 +147,11 @@ class _CasesListScreenState extends State<CasesListScreen> {
                                   : '';
                               final status = app['status'] ?? 'new';
 
-                              return AppCard(
+                              return ScrollReveal(
+                                delay: 60.ms * index,
+                                duration: 300.ms,
+                                slideFrom: 0.1,
+                                child: AppCard(
                                 padding: const EdgeInsets.all(18),
                                 onTap: () => AppNavigator.push(
                                   context,
@@ -214,9 +219,8 @@ class _CasesListScreenState extends State<CasesListScreen> {
                                     ),
                                   ],
                                 ),
-                              ).animate(delay: 60.ms * index)
-                                  .fadeIn(duration: 300.ms)
-                                  .slideY(begin: 0.1);
+                                ),
+                              );
                             },
                           ),
                         ),

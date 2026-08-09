@@ -58,6 +58,8 @@ class EsepApp extends StatelessWidget {
           theme: AppTheme.light,
           darkTheme: AppTheme.dark,
           themeMode: appSettings.themeMode,
+          themeAnimationDuration: const Duration(milliseconds: 450),
+          themeAnimationCurve: Curves.easeInOutCubic,
           locale: appSettings.locale,
           supportedLocales: const [
             Locale('ru'),

@@ -18,21 +18,76 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="ESEP — оценка недвижимости в Казахстане. Загрузите документы, получите предварительную оценку от ИИ и официальный отчёт после оплаты.">
+  <meta name="theme-color" content="#2358FF">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="esep">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ESEP">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>esep</title>
+  <title>ESEP — оценка недвижимости</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- Splash-экран: показывается, пока загружается приложение -->
+  <style>
+    #splash {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #2358FF 0%, #4A6FFF 100%);
+      transition: opacity 0.4s ease;
+    }
+    #splash.hide {
+      opacity: 0;
+      pointer-events: none;
+    }
+    #splash .logo {
+      width: 104px;
+      height: 104px;
+      border-radius: 26px;
+      background: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 18px 50px rgba(10, 20, 60, 0.35);
+      animation: splashPulse 1.7s ease-in-out infinite;
+    }
+    @keyframes splashPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.07); }
+    }
+  </style>
 </head>
 <body>
+  <div id="splash">
+    <div class="logo">
+      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M3 11.5L12 4l9 7.5" stroke="#2358FF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M5.5 10.5V20h13v-9.5" stroke="#2358FF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M10 20v-5h4v5" stroke="#2358FF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  </div>
+
+  <script>
+    // Скрываем splash после первого отрисованного кадра приложения.
+    window.addEventListener('flutter-first-frame', function () {
+      var s = document.getElementById('splash');
+      if (s) {
+        s.classList.add('hide');
+        setTimeout(function () { if (s.parentNode) s.parentNode.removeChild(s); }, 450);
+      }
+    });
+  </script>
+
   <!--
     You can customize the "flutter_bootstrap.js" script.
     This is useful to provide a custom configuration to the Flutter loader
