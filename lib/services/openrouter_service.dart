@@ -375,7 +375,7 @@ class OpenRouterService {
 Ты — AI-оценщик недвижимости в системе ESEP (Казахстан).
 Сгенерируй данные для отчёта об оценке в формате JSON.
 
-Входные данные: тип объекта, адрес, площадь, комнаты, этаж, общая этажность, состояние, год постройки, ФИО клиента, ИИН.
+Входные данные: тип объекта, адрес, площадь, комнаты, этаж, общая этажность, состояние, год постройки, ФИО клиента, ИИН, телефон, email.
 
 Доступные рыночные данные (если есть):
 ''';
@@ -391,6 +391,8 @@ class OpenRouterService {
     required int yearBuilt,
     required String clientName,
     required String clientIin,
+    String? clientPhone,
+    String? clientEmail,
     bool clientIsOrg = false,
     String? appraiserName,
   }) async {
@@ -411,7 +413,7 @@ class OpenRouterService {
 - Этаж: $floor/$totalFloors
 - Состояние: $condition
 - Год постройки: $yearBuilt
-- Клиент: $clientName (ИИН: $clientIin)
+- Клиент: $clientName (ИИН: $clientIin${(clientPhone != null && clientPhone.isNotEmpty) ? ', тел: $clientPhone' : ''}${(clientEmail != null && clientEmail.isNotEmpty) ? ', email: $clientEmail' : ''})
 - Дата оценки: ${DateTime.now().day}.${DateTime.now().month}.${DateTime.now().year}
 - Оценщик: ${appraiserName ?? 'Айдар Нурланович'}
 

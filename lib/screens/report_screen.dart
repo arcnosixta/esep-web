@@ -73,6 +73,8 @@ class _ReportScreenState extends State<ReportScreen> {
         clientIin: isOrg
             ? (profile['bin'] ?? '')
             : (profile['iin'] ?? ''),
+        clientPhone: (profile['phone'] ?? '').toString(),
+        clientEmail: (profile['email'] ?? '').toString(),
         clientIsOrg: isOrg,
       );
 

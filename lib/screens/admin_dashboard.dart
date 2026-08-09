@@ -640,6 +640,11 @@ class _AdminUsersState extends State<_AdminUsers> {
     final name = user['full_name'] ?? 'Пользователь';
     final role = user['role'] ?? 'client';
     final blocked = user['is_blocked'] == true;
+    final iin = (user['iin'] ?? '').toString();
+    final bin = (user['bin'] ?? '').toString();
+    final orgName = (user['org_name'] ?? '').toString();
+    final phone = (user['phone'] ?? '').toString();
+    final email = (user['email'] ?? '').toString();
 
     showModalBottomSheet(
       context: context,
@@ -685,6 +690,14 @@ class _AdminUsersState extends State<_AdminUsers> {
                         children: [
                           Text(name.toString(), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: c.textPrimary)),
                           Text(role == 'appraiser' ? 'Оценщик' : 'Клиент', style: TextStyle(fontSize: 13, color: c.textSecondary)),
+                          if (iin.isNotEmpty)
+                            Text('ИИН: $iin', style: TextStyle(fontSize: 12, color: c.textSecondary)),
+                          if (bin.isNotEmpty)
+                            Text('БИН: $bin${orgName.isNotEmpty ? ' · $orgName' : ''}', style: TextStyle(fontSize: 12, color: c.textSecondary)),
+                          if (phone.isNotEmpty)
+                            Text('Тел: $phone', style: TextStyle(fontSize: 12, color: c.textSecondary)),
+                          if (email.isNotEmpty)
+                            Text(email, style: TextStyle(fontSize: 12, color: c.textSecondary)),
                         ],
                       ),
                     ),
@@ -876,6 +889,9 @@ class _AdminUsersState extends State<_AdminUsers> {
     final name = user['full_name'] ?? '';
     final email = user['email'] ?? '';
     final phone = user['phone'] ?? '';
+    final iin = (user['iin'] ?? '').toString();
+    final bin = (user['bin'] ?? '').toString();
+    final orgName = (user['org_name'] ?? '').toString();
     final role = user['role'] ?? 'client';
     final blocked = user['is_blocked'] == true;
     final roleColor = role == 'appraiser' ? c.success : c.accent;
@@ -936,6 +952,11 @@ class _AdminUsersState extends State<_AdminUsers> {
                       Text(email, style: TextStyle(fontSize: 12, color: c.textSecondary), overflow: TextOverflow.ellipsis),
                       if (phone.isNotEmpty)
                         Text(phone, style: TextStyle(fontSize: 11, color: c.textHint)),
+                      if (iin.isNotEmpty)
+                        Text('ИИН: $iin', style: TextStyle(fontSize: 11, color: c.textHint, fontWeight: FontWeight.w500)),
+                      if (bin.isNotEmpty)
+                        Text('БИН: $bin${orgName.isNotEmpty ? ' · $orgName' : ''}',
+                            style: TextStyle(fontSize: 11, color: c.textHint, fontWeight: FontWeight.w500)),
                     ],
                   ),
                 ),
@@ -1420,6 +1441,7 @@ class _AdminRequestsState extends State<_AdminRequests> {
                               final status = app['status'] ?? 'new';
                               final userName = (app['profiles']?['full_name'] ?? '').toString();
                               final iin = (app['profiles']?['iin'] ?? '').toString();
+                              final bin = (app['profiles']?['bin'] ?? '').toString();
                               final prop = app['properties'];
                               final address = prop?['address'] ?? '';
                               final propType = prop?['type'] ?? '';
@@ -1475,6 +1497,8 @@ class _AdminRequestsState extends State<_AdminRequests> {
                                                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: c.textPrimary)),
                                                 if (iin.isNotEmpty)
                                                   Text('ИИН: $iin', style: TextStyle(fontSize: 11, color: c.textSecondary)),
+                                                if (bin.isNotEmpty)
+                                                  Text('БИН: $bin', style: TextStyle(fontSize: 11, color: c.textSecondary)),
                                               ],
                                             ),
                                           ),

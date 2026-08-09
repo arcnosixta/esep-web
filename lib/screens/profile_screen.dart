@@ -1013,7 +1013,13 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
         );
       }
     } catch (e) {
-      if (mounted) {
+      if (!mounted) return;
+      final msg = e.toString();
+      // Уникальный индекс profiles_iin_unique → код 23505 (unique_violation).
+      if (msg.contains('23505') || msg.contains('duplicate key')) {
+        setState(() => _iinError =
+            'Этот ИИН/БИН уже привязан к другому аккаунту. Один ИИН — один аккаунт.');
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('$e')),
         );

@@ -27,6 +27,8 @@ class ReportService {
     required int yearBuilt,
     required String clientName,
     required String clientIin,
+    String? clientPhone,
+    String? clientEmail,
     bool clientIsOrg = false,
     String? appraiserName,
   }) async {
@@ -41,6 +43,8 @@ class ReportService {
       yearBuilt: yearBuilt,
       clientName: clientName,
       clientIin: clientIin,
+      clientPhone: clientPhone,
+      clientEmail: clientEmail,
       clientIsOrg: clientIsOrg,
       appraiserName: appraiserName,
     );

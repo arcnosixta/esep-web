@@ -143,11 +143,21 @@ class SupabaseService {
   }) async {
     if (userId == null) return;
     final updates = <String, dynamic>{};
+    if (clientType != null) {
+      updates['client_type'] = clientType;
+      if (clientType == 'org') {
+        // Юрлицо: ИИН не нужен — освобождаем его (1 ИИН = 1 аккаунт).
+        updates['iin'] = '';
+      } else {
+        // Физлицо: сбрасываем поля юрлица.
+        updates['bin'] = '';
+        updates['org_name'] = '';
+      }
+    }
     if (fullName != null) updates['full_name'] = fullName;
     if (iin != null) updates['iin'] = iin;
     if (phone != null) updates['phone'] = phone;
     if (email != null) updates['email'] = email;
-    if (clientType != null) updates['client_type'] = clientType;
     if (orgName != null) updates['org_name'] = orgName;
     if (bin != null) updates['bin'] = bin;
     if (updates.isNotEmpty) {
