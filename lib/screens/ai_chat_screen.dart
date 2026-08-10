@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import '../models/chat_message.dart';
 import '../utils/chat_image.dart';
 import '../services/openrouter_service.dart';
+import '../services/report_service.dart';
 import '../services/supabase_service.dart';
 import '../theme/app_colors.dart';
 import '../utils/formatters.dart';
@@ -554,6 +555,45 @@ class _AiChatScreenState extends State<AiChatScreen> {
         source: 'ai',
         estimatedPrice: e.priceMid,
       );
+
+      // Создаём черновик отчёта (draft) сразу при создании заявки —
+      // в нём будут храниться данные и PDF, статус обновится после оплаты/подписи.
+      try {
+        final reportRow = await SupabaseService.createReport(
+          applicationId: app['id'],
+          reportNumber: 'G-${DateTime.now().year}-${app['id'].toString().substring(0, 4).toUpperCase()}',
+        );
+        debugPrint('[AI] report draft created: ${reportRow['id']}');
+      } catch (reportErr) {
+        debugPrint('[AI] createReport error: $reportErr');
+      }
+
+      // Генерируем ПРЕДВАРИТЕЛЬНЫЙ PDF (с водяным знаком) и загружаем —
+      // клиент видит предпросмотр, официальный появится после оплаты.
+      try {
+        final reportData = await ReportService.generateReportData(
+          propertyType: e.propertyType,
+          address: e.address,
+          area: e.area ?? 0,
+          rooms: e.rooms ?? 0,
+          floor: e.floor ?? 0,
+          totalFloors: e.totalFloors ?? 0,
+          condition: e.condition,
+          yearBuilt: e.yearBuilt ?? 0,
+          clientName: (profile?['full_name'] ?? '').toString(),
+          clientIin: idNumber,
+          clientIsOrg: (profile?['client_type'] ?? 'person') == 'org',
+        );
+        if (reportData != null) {
+          final filled = ReportService.fillCompanyData(reportData);
+          final pdfBytes = await ReportService.generatePdf(filled, preview: true);
+          final url = await ReportService.uploadReportPdf(pdfBytes, app['id']);
+          debugPrint('[AI] preview PDF uploaded: $url');
+        }
+      } catch (pdfErr) {
+        debugPrint('[AI] preview PDF error: $pdfErr');
+      }
+
       if (!mounted) return;
       setState(() => _creatingApplication = false);
       AppNavigator.push(

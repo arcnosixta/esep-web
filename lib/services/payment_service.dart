@@ -1,4 +1,5 @@
 import '../main.dart' show supabase;
+import 'supabase_service.dart';
 
 /// Сервис платежей ESEP.
 ///
@@ -65,6 +66,14 @@ class PaymentService {
           .from('applications')
           .update({'status': 'paid'})
           .eq('id', applicationId);
+
+      // Отчёт становится оплаченным → клиент может скачать официальный PDF.
+      try {
+        final report = await SupabaseService.getReportForApplication(applicationId);
+        if (report != null) {
+          await SupabaseService.markReportPaid(report['id'].toString());
+        }
+      } catch (_) {}
     }
   }
 

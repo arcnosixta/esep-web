@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_colors.dart';
 import '../utils/formatters.dart';
 import '../widgets/information_tile.dart';
@@ -6,6 +7,7 @@ import '../widgets/option_button.dart';
 import '../widgets/status_badge.dart';
 import '../widgets/case_progress_bar.dart';
 import '../navigation/app_navigator.dart';
+import '../services/supabase_service.dart';
 import 'payment_screen.dart';
 import 'report_screen.dart';
 
@@ -13,6 +15,54 @@ class CaseDetailScreen extends StatelessWidget {
   final Map<String, dynamic> application;
 
   const CaseDetailScreen({super.key, required this.application});
+
+  /// Есть ли официальный (оплаченный) отчёт для скачивания.
+  Future<String?> _officialReportUrl(String applicationId) async {
+    try {
+      final report = await SupabaseService.getReportForApplication(applicationId);
+      if (report == null) return null;
+      final status = report['status'] ?? '';
+      // Официальный PDF доступен только после оплаты И подписи
+      if (status != 'paid' && status != 'signed') return null;
+      final url = report['file_url'] ?? '';
+      return url.toString().isEmpty ? null : url.toString();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _downloadReport(BuildContext context, String applicationId) async {
+    final c = AppColors.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+
+    final url = await _officialReportUrl(applicationId);
+    if (url == null) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            'Официальный отчёт появится после оплаты и подписания оценщиком',
+            style: const TextStyle(color: Colors.white),
+          ),
+          backgroundColor: c.warning,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    // Открываем PDF в новой вкладке (web) — клиент может скачать/сохранить.
+    try {
+      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    } catch (_) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: const Text('Не удалось открыть отчёт'),
+          backgroundColor: c.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -297,6 +347,14 @@ class CaseDetailScreen extends StatelessWidget {
                         ReportScreen(applicationId: id),
                       ),
                     ),
+                    if (status == 'paid' || status == 'completed') ...[
+                      const SizedBox(height: 12),
+                      OptionButton(
+                        text: 'Скачать официальный отчёт',
+                        icon: Icons.download_rounded,
+                        onTap: () => _downloadReport(context, id),
+                      ),
+                    ],
                   ],
                 ),
               ),

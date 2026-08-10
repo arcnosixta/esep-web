@@ -32,6 +32,7 @@ class _ReportScreenState extends State<ReportScreen> {
   bool _loading = false;
   bool _generating = false;
   String? _error;
+  bool _isPaid = false;
 
   @override
   void initState() {
@@ -53,6 +54,8 @@ class _ReportScreenState extends State<ReportScreen> {
     try {
       final appId = widget.applicationId!;
       final app = await SupabaseService.getApplication(appId);
+
+      _isPaid = app['status'] == 'paid' || app['status'] == 'completed';
 
       final prop = app['properties'] ?? {};
       final profile = app['profiles'] ?? {};
@@ -80,7 +83,7 @@ class _ReportScreenState extends State<ReportScreen> {
 
       if (mounted) {
         setState(() {
-          _reportData = data;
+          _reportData = data == null ? null : ReportService.fillCompanyData(data);
           _loading = false;
 
           // Восстанавливаем статус ЭЦП-подписи из БД (если отчёт уже подписан)
@@ -109,10 +112,19 @@ class _ReportScreenState extends State<ReportScreen> {
   Future<void> _downloadPdf() async {
     if (_reportData == null) return;
 
+    // Вариант А: до оплаты скачивание официального PDF заблокировано.
+    if (!_isPaid) {
+      _showPreviewLockedDialog();
+      return;
+    }
+
     setState(() => _generating = true);
 
     try {
-      final pdfBytes = await ReportService.generatePdf(_reportData!);
+      final pdfBytes = await ReportService.generatePdf(
+        _reportData!,
+        signature: _signatureInfo,
+      );
 
       if (mounted) {
         await Printing.layoutPdf(
@@ -129,6 +141,30 @@ class _ReportScreenState extends State<ReportScreen> {
     } finally {
       if (mounted) setState(() => _generating = false);
     }
+  }
+
+  Future<void> _showPreviewLockedDialog() async {
+    final c = AppColors.of(context);
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Отчёт станет доступен после оплаты'),
+        content: SingleChildScrollView(
+          child: Text(
+            'Сейчас вы видите предварительный вариант отчёта — он не имеет '
+            'юридической силы. После оплаты оценщик подготовит и подпишет '
+            'официальный отчёт, который можно будет скачать.',
+            style: TextStyle(color: c.textSecondary, height: 1.4),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Понятно', style: TextStyle(color: c.textSecondary)),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _sharePdf() async {
@@ -328,6 +364,9 @@ class _ReportScreenState extends State<ReportScreen> {
         signerName: info.signerName,
         signerIin: info.signerIin,
       );
+
+      // Отмечаем отчёт как подписанный + встраиваем подпись в PDF
+      await _markReportSigned(info);
 
       if (!mounted) return;
       setState(() {
@@ -853,24 +892,70 @@ class _ReportScreenState extends State<ReportScreen> {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-                child: Row(
+                child: Column(
                   children: [
-                    Expanded(
-                      child: OptionButton(
-                        text: 'Скачать PDF',
-                        icon: Icons.download_rounded,
-                        onTap: _downloadPdf,
+                    // Плашка статуса: предварительный / официальный
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: _isPaid
+                            ? c.success.withValues(alpha: 0.1)
+                            : c.warning.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _isPaid
+                              ? c.success.withValues(alpha: 0.4)
+                              : c.warning.withValues(alpha: 0.4),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            _isPaid
+                                ? Icons.verified_rounded
+                                : Icons.info_outline_rounded,
+                            color: _isPaid ? c.success : c.warning,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              _isPaid
+                                  ? 'Отчёт оплачен и действителен. Можно скачать официальный PDF.'
+                                  : 'Предварительный отчёт — не имеет юридической силы. '
+                                      'Официальный станет доступен после оплаты.',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: _isPaid ? c.textPrimary : c.textSecondary,
+                                height: 1.35,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: OptionButton(
-                        text: 'Поделиться',
-                        icon: Icons.share_rounded,
-                        backgroundColor: Colors.transparent,
-                        textColor: c.accent,
-                        onTap: _sharePdf,
-                      ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OptionButton(
+                            text: _isPaid ? 'Скачать PDF' : 'Скачать (после оплаты)',
+                            icon: Icons.download_rounded,
+                            onTap: _downloadPdf,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: OptionButton(
+                            text: 'Поделиться',
+                            icon: Icons.share_rounded,
+                            backgroundColor: Colors.transparent,
+                            textColor: c.accent,
+                            onTap: _sharePdf,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -988,6 +1073,57 @@ class _ReportScreenState extends State<ReportScreen> {
         ],
       ),
     );
+  }
+
+  /// Отметить отчёт как подписанный и встроить ЭЦП-подпись в PDF.
+  Future<void> _markReportSigned(CmsSignatureInfo info) async {
+    try {
+      final appId = widget.applicationId;
+      if (appId == null || _reportData == null) return;
+
+      // 1. Обновляем запись в таблице reports
+      final report = await SupabaseService.getReportForApplication(appId);
+      Map<String, dynamic>? created;
+      if (report == null) {
+        // Отчёта ещё нет — создаём черновик, потом подписываем
+        created = await SupabaseService.createReport(
+          applicationId: appId,
+          reportNumber: 'G-${DateTime.now().year}',
+        );
+        await SupabaseService.markReportSigned(
+          created['id'].toString(),
+          signerName: info.signerName,
+          signerIin: info.signerIin,
+        );
+      } else {
+        await SupabaseService.markReportSigned(
+          report['id'].toString(),
+          signerName: info.signerName,
+          signerIin: info.signerIin,
+        );
+      }
+
+      // 2. Генерируем официальный PDF со встроенной подписью и загружаем
+      final pdfBytes = await ReportService.generatePdf(
+        _reportData!,
+        signature: info,
+      );
+      final url = await ReportService.uploadReportPdf(pdfBytes, appId);
+
+      if (url != null) {
+        // Обновляем отчёт (если создали черновик выше — берём его id)
+        final reportId = (report ?? created)?['id']?.toString();
+        if (reportId != null) {
+          await SupabaseService.updateReport(
+            reportId,
+            fileUrl: url,
+            reportData: _reportData!.toJson(),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('[Report] markReportSigned error: $e');
+    }
   }
 
   Widget _recItem(BuildContext context, IconData icon, String title, String subtitle) {

@@ -393,6 +393,82 @@ class SupabaseService {
   }
 
   // ============================================
+  // REPORTS (отчёты об оценке, привязанные к заявкам)
+  // ============================================
+
+  /// Получить отчёт по заявке (если есть).
+  static Future<Map<String, dynamic>?> getReportForApplication(
+      String applicationId) async {
+    final data = await supabase
+        .from('reports')
+        .select()
+        .eq('application_id', applicationId)
+        .maybeSingle();
+    return data;
+  }
+
+  /// Создать черновик отчёта для заявки (status = draft).
+  static Future<Map<String, dynamic>> createReport({
+    required String applicationId,
+    String? reportNumber,
+    Map<String, dynamic>? reportData,
+  }) async {
+    final data = await supabase.from('reports').insert({
+      'application_id': applicationId,
+      'user_id': userId,
+      'status': 'draft',
+      'report_number': reportNumber,
+      'report_data': reportData,
+    }).select().single();
+    return data;
+  }
+
+  /// Обновить отчёт (статус, ссылку на PDF, данные, подпись).
+  static Future<void> updateReport(
+    String reportId, {
+    String? status,
+    String? fileUrl,
+    String? pdfPath,
+    Map<String, dynamic>? reportData,
+    String? signerName,
+    String? signerIin,
+    String? signaturePath,
+  }) async {
+    final updates = <String, dynamic>{};
+    if (status != null) updates['status'] = status;
+    if (fileUrl != null) updates['file_url'] = fileUrl;
+    if (pdfPath != null) updates['pdf_path'] = pdfPath;
+    if (reportData != null) updates['report_data'] = reportData;
+    if (signerName != null) updates['signer_name'] = signerName;
+    if (signerIin != null) updates['signer_iin'] = signerIin;
+    if (signaturePath != null) updates['signature_path'] = signaturePath;
+    if (updates.isNotEmpty) {
+      await supabase.from('reports').update(updates).eq('id', reportId);
+    }
+  }
+
+  /// Отметить отчёт как подписанный (после ЭЦП).
+  static Future<void> markReportSigned(
+    String reportId, {
+    required String signerName,
+    required String signerIin,
+    String? signaturePath,
+  }) async {
+    await updateReport(
+      reportId,
+      status: 'signed',
+      signerName: signerName,
+      signerIin: signerIin,
+      signaturePath: signaturePath,
+    );
+  }
+
+  /// Отметить отчёт как оплаченный (клиент может скачать официальный PDF).
+  static Future<void> markReportPaid(String reportId) async {
+    await updateReport(reportId, status: 'paid');
+  }
+
+  // ============================================
   // APPRAISALS
   // ============================================
 
