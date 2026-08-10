@@ -1079,42 +1079,18 @@ class _AiChatScreenState extends State<AiChatScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          if (e.hasDocuments) ...[
-            OptionButton(
-              text: _creatingApplication
-                  ? 'Создание заявки…'
-                  : '💳 Оплатить официальный отчёт',
-              icon: Icons.payments_rounded,
-              onTap: _creatingApplication ? null : () => _startPayment(e),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'После оплаты заявка уйдёт оценщику — он подготовит и подпишет официальный отчёт.',
-              style: TextStyle(fontSize: 12, color: c.textSecondary, height: 1.35),
-            ),
-          ] else ...[
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: c.gold.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: c.gold.withValues(alpha: 0.3)),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.warning_amber_rounded, size: 18, color: c.gold),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Для официального отчёта нужны документы. Пришлите фото страховки и объекта — и сможете оформить заявку.',
-                      style: TextStyle(fontSize: 12.5, color: c.textPrimary, height: 1.35),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+          OptionButton(
+            text: _creatingApplication
+                ? 'Создание заявки…'
+                : '💳 Оплатить официальный отчёт',
+            icon: Icons.payments_rounded,
+            onTap: _creatingApplication ? null : () => _startPayment(e),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'После оплаты заявка уйдёт оценщику — он подготовит и подпишет официальный отчёт.',
+            style: TextStyle(fontSize: 12, color: c.textSecondary, height: 1.35),
+          ),
         ],
       ),
     );
