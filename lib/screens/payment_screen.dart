@@ -385,10 +385,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   _paymentRow(
                     context: context,
                     index: 0,
-                    icon: Icons.account_balance_wallet_rounded,
-                    label: 'Kaspi Pay',
-                    subtitle: 'Перевод на Kaspi — без комиссии',
-                    color: const Color(0xFFE8394A),
+                    icon: Icons.account_balance_rounded,
+                    label: 'Банковский перевод',
+                    subtitle: 'На счёт ТОО «GaMa Group»',
+                    color: c.accent,
                   ),
                   Container(
                     height: 1,
@@ -398,10 +398,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   _paymentRow(
                     context: context,
                     index: 1,
-                    icon: Icons.credit_card_rounded,
-                    label: 'Банковская карта',
-                    subtitle: 'Visa, Mastercard, Mir',
-                    color: c.accent,
+                    icon: Icons.account_balance_wallet_rounded,
+                    label: 'Kaspi Pay',
+                    subtitle: 'Перевод на Kaspi — без комиссии',
+                    color: const Color(0xFFE8394A),
                   ),
                 ],
               ),
@@ -409,10 +409,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
             if (_selectedMethod == 0) ...[
               const SizedBox(height: 14),
-              _kaspiBlock(c),
+              _bankBlock(c),
             ] else ...[
               const SizedBox(height: 14),
-              _cardBlock(c),
+              _kaspiBlock(c),
             ],
           ],
         ),
@@ -469,7 +469,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
-  Widget _cardBlock(AppColors c) {
+  Widget _bankBlock(AppColors c) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -482,10 +482,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.lock_rounded, size: 18, color: c.success),
+              Icon(Icons.account_balance_rounded,
+                  size: 20, color: c.textPrimary),
               const SizedBox(width: 10),
               Text(
-                'Банковская карта',
+                'Реквизиты для перевода',
                 style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
@@ -493,19 +494,62 @@ class _PaymentScreenState extends State<PaymentScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            'Оплата картой проходит через защищённую страницу платёжного '
-            'провайдера — данные карты не хранятся в ESEP. '
-            'Подключение провайдера в работе; пока вы можете оформить платёж, '
-            'и менеджер подтвердит его вручную.',
-            style: TextStyle(fontSize: 13, color: c.textSecondary, height: 1.4),
-          ),
+          const SizedBox(height: 14),
+          _reqRow(c, 'Получатель', 'ТОО «GaMa Group»'),
+          _reqRow(c, 'БИН', '160840018855'),
+          _reqRow(c, 'ИИК', 'KZ646017131000019202', copyable: true),
+          _reqRow(c, 'БИК', 'HSBKKZKX'),
+          _reqRow(c, 'Банк', 'АО «Народный банк Казахстана»'),
+          _reqRow(c, 'Телефон', '+7 (727) 327-27-73'),
           const SizedBox(height: 16),
           OptionButton(
-            text: _submitting ? 'Отправка…' : 'Оплатить картой',
-            icon: Icons.credit_card_rounded,
-            onTap: _submitting ? null : () => _submitPayment('card'),
+            text: _submitting ? 'Отправка…' : 'Я оплатил(а)',
+            icon: Icons.check_rounded,
+            onTap: _submitting ? null : () => _submitPayment('bank'),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'После нажатия менеджер проверит перевод и подтвердит оплату. '
+            'Заявка перейдёт в статус «Оплачена».',
+            style: TextStyle(fontSize: 12, color: c.textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _reqRow(AppColors c, String label, String value,
+      {bool copyable = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 92,
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 12.5, color: c.textSecondary),
+            ),
+          ),
+          Expanded(
+            child: copyable
+                ? SelectableText(
+                    value,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: c.textPrimary,
+                    ),
+                  )
+                : Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: c.textPrimary,
+                    ),
+                  ),
           ),
         ],
       ),
@@ -652,7 +696,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           onTap: _submitting
               ? null
               : () => _submitPayment(
-                  _selectedMethod == 0 ? 'kaspi' : 'card'),
+                  _selectedMethod == 0 ? 'bank' : 'kaspi'),
         ),
       ),
     );

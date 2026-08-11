@@ -66,9 +66,9 @@ ReportData _sampleData() {
     legalEntityName: 'ТОО «GaMa Group»',
     legalEntityAddress: 'РК, г. Алматы, ул. Жамбыла, д. 114/85',
     legalEntityBin: '160840018855',
-    legalEntityIik: 'KZ908562203137810717',
-    legalEntityBik: 'KCJBKZKX',
-    legalEntityBank: 'АО Банк ЦентрКредит',
+    legalEntityIik: 'KZ646017131000019202',
+    legalEntityBik: 'HSBKKZKX',
+    legalEntityBank: 'АО «Народный банк Казахстана»',
     legalEntityKbe: '17',
     legalEntityPhone: '+7 (727) 327-27-73',
   );

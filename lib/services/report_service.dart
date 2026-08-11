@@ -31,11 +31,12 @@ class ReportService {
   static const String companyName = 'ТОО «GaMa Group»';
   static const String companyAddress = 'РК, г. Алматы, Алмалинский район, ул. Жамбыла, д.114/85, оф.133';
   static const String companyBin = '160840018855';
-  static const String companyIik = 'KZ908562203137810717';
-  static const String companyBik = 'KCJBKZKX';
-  static const String companyBank = 'АО Банк ЦентрКредит';
+  static const String companyIik = 'KZ646017131000019202';
+  static const String companyBik = 'HSBKKZKX';
+  static const String companyBank = 'АО «Народный банк Казахстана»';
   static const String companyKbe = '17';
   static const String companyPhone = '+7 (727) 327-27-73';
+  static const String directorName = 'Максутылы Гани';
   static const String appraiserName = 'Мақсұтұлы Ғазиз';
   static const String appraiserIin = '930226300627';
   static const String appraiserCertificate = 'Свидетельство № 00207 от 13.07.2018 г., № 00232 от 13.07.2018 г.';
@@ -295,7 +296,7 @@ class ReportService {
         ),
         pw.SizedBox(height: 4),
         pw.Text(
-          '________________  Мақсутұлы Ғ.',
+          '________________  ${ReportService.directorName}',
           style: pw.TextStyle(font: font, fontSize: 12),
         ),
         pw.SizedBox(height: 30),

@@ -114,6 +114,17 @@ abstract class StringsBase {
   String get profileEgovTitle;
   String get profileEgovSubtitle;
   String get profileEgovOpen;
+  String get profileEcpStatus;
+  String get profileEmail;
+  String get profileClientTypePerson;
+  String get profileClientTypeOrg;
+  String get profileOrgName;
+  String get profileBin;
+  String get profileIinRequired;
+  String get profileIinOrgMismatch;
+  String get profileBinPersonMismatch;
+  String get profileOrgNameRequired;
+  String get profileIinTaken;
 
   // Settings
   String get settingsTitle;
@@ -342,6 +353,17 @@ class _Ru implements StringsBase {
   @override String get profileEgovTitle => 'ГОСУСЛУГИ (EGOV)';
   @override String get profileEgovSubtitle => 'Подключение к Госуслугам';
   @override String get profileEgovOpen => 'Открыть';
+  @override String get profileEcpStatus => 'ЭЦП статус';
+  @override String get profileEmail => 'Email';
+  @override String get profileClientTypePerson => 'Физлицо';
+  @override String get profileClientTypeOrg => 'Юрлицо';
+  @override String get profileOrgName => 'Наименование организации';
+  @override String get profileBin => 'БИН';
+  @override String get profileIinRequired => 'ИИН/БИН обязателен для заказа оценки';
+  @override String get profileIinOrgMismatch => 'Похоже, это ИИН физлица, а выбран тип «Юрлицо»';
+  @override String get profileBinPersonMismatch => 'Похоже, это БИН юрлица — выберите тип «Юрлицо»';
+  @override String get profileOrgNameRequired => 'Укажите наименование организации';
+  @override String get profileIinTaken => 'Этот ИИН/БИН уже привязан к другому аккаунту. Один ИИН — один аккаунт.';
 
   @override String get settingsTitle => 'Настройки';
   @override String get settingsGeneral => 'Общие';
@@ -554,6 +576,17 @@ class _Kk implements StringsBase {
   @override String get profileEgovTitle => 'МЕМЛЕКЕТТІК ҚЫЗМЕТТЕР (EGOV)';
   @override String get profileEgovSubtitle => 'Мемлекеттік қызметтерге қосылу';
   @override String get profileEgovOpen => 'Ашу';
+  @override String get profileEcpStatus => 'ЭЦП мәртебесі';
+  @override String get profileEmail => 'Эл. пошта';
+  @override String get profileClientTypePerson => 'Жеке тұлға';
+  @override String get profileClientTypeOrg => 'Заңды тұлға';
+  @override String get profileOrgName => 'Ұйым атауы';
+  @override String get profileBin => 'БСН';
+  @override String get profileIinRequired => 'Бағалауға тапсырыс беру үшін ЖСН/БСН міндетті';
+  @override String get profileIinOrgMismatch => 'Бұл жеке тұлғаның ЖСН-і сияқты, ал «Заңды тұлға» таңдалған';
+  @override String get profileBinPersonMismatch => 'Бұл заңды тұлғаның БСН-і сияқты — «Заңды тұлға» таңдаңыз';
+  @override String get profileOrgNameRequired => 'Ұйым атауын көрсетіңіз';
+  @override String get profileIinTaken => 'Бұл ЖСН/БСН басқа аккаунтқа тіркелген. Бір ЖСН — бір аккаунт.';
 
   @override String get settingsTitle => 'Баптаулар';
   @override String get settingsGeneral => 'Жалпы';
@@ -623,7 +656,7 @@ class _Kk implements StringsBase {
 
   @override String get aiTitle => 'AI Бағалау';
   @override String get aiPlaceholder => 'Сұрақ қойыңыз...';
-  @override String get aiGreeting => 'Чем көмектесе аламын?';
+  @override String get aiGreeting => 'Қалай көмектесе аламын?';
   @override String get aiGreetingSubtitle => '📸 Сурет жіберіңіз немесе ✍️ мәтінмен жазыңыз\nБағалау алатын екі жол бар';
   @override String get aiError => 'AI қызметіне қосылу мүмкін болмады.';
   @override String get aiSuggestions => 'Ұсыныстар';
@@ -766,6 +799,17 @@ class _En implements StringsBase {
   @override String get profileEgovTitle => 'GOV SERVICES (EGOV)';
   @override String get profileEgovSubtitle => 'Connect to Gov services';
   @override String get profileEgovOpen => 'Open';
+  @override String get profileEcpStatus => 'ECP status';
+  @override String get profileEmail => 'Email';
+  @override String get profileClientTypePerson => 'Individual';
+  @override String get profileClientTypeOrg => 'Legal entity';
+  @override String get profileOrgName => 'Organization name';
+  @override String get profileBin => 'BIN';
+  @override String get profileIinRequired => 'IIN/BIN is required to order an appraisal';
+  @override String get profileIinOrgMismatch => 'This looks like an individual IIN, but "Legal entity" is selected';
+  @override String get profileBinPersonMismatch => 'This looks like a company BIN — select "Legal entity"';
+  @override String get profileOrgNameRequired => 'Enter the organization name';
+  @override String get profileIinTaken => 'This IIN/BIN is already linked to another account. One IIN — one account.';
 
   @override String get settingsTitle => 'Settings';
   @override String get settingsGeneral => 'General';

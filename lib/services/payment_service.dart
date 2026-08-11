@@ -110,6 +110,7 @@ class PaymentService {
   static String methodLabel(String method) => switch (method) {
         'kaspi' => 'Kaspi Pay',
         'card' => 'Банковская карта',
+        'bank' => 'Банковский перевод',
         _ => 'Вручную',
       };
 

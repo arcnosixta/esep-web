@@ -17,6 +17,7 @@ import '../utils/formatters.dart';
 import '../widgets/information_tile.dart';
 import '../widgets/option_button.dart';
 import '../widgets/case_progress_bar.dart';
+import 'report_edit_screen.dart';
 
 class ReportScreen extends StatefulWidget {
   final String? applicationId;
@@ -124,6 +125,20 @@ class _ReportScreenState extends State<ReportScreen> {
           _error = 'Ошибка: $e';
         });
       }
+    }
+  }
+
+  /// Открыть экран редактирования отчёта (доступно оценщику/админу).
+  Future<void> _editReport() async {
+    final data = _reportData;
+    if (data == null) return;
+    final edited = await Navigator.push<ReportData>(
+      context,
+      MaterialPageRoute(builder: (_) => ReportEditScreen(data: data)),
+    );
+    if (edited != null && mounted) {
+      setState(() => _reportData = edited);
+      _showSuccessSnack('Данные отчёта обновлены');
     }
   }
 
@@ -993,6 +1008,20 @@ class _ReportScreenState extends State<ReportScreen> {
                         ),
                       ],
                     ),
+                    // Оценщик/админ может поправить данные отчёта перед подписанием.
+                    if (_canSign) ...[
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OptionButton(
+                          text: 'Редактировать отчёт',
+                          icon: Icons.edit_rounded,
+                          backgroundColor: c.surfaceLight,
+                          textColor: c.accent,
+                          onTap: _editReport,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

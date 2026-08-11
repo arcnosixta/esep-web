@@ -337,7 +337,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                               divider(context),
                               infoRow(context, s.profilePhone, phone),
                               divider(context),
-                              infoRow(context, 'Email', email),
+                              infoRow(context, s.profileEmail, email),
                               divider(context),
                               infoRow(context, s.profileRole, role),
                             ],
@@ -390,7 +390,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          'ЭЦП статус',
+                                          s.profileEcpStatus,
                                           style: TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w600,
@@ -799,7 +799,13 @@ class _ProfileScreenState extends State<ProfileScreen>
             ),
             child: Center(
               child: Text(
-                '#${(item['id'] ?? '').toString().substring(0, 4).toUpperCase()}',
+                () {
+                  final rawId = (item['id'] ?? '').toString();
+                  final short = rawId.length >= 4
+                      ? rawId.substring(0, 4).toUpperCase()
+                      : rawId.toUpperCase();
+                  return '#$short';
+                }(),
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -973,7 +979,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     // Валидация ИИН/БИН (обязателен: это основа идентификации клиента).
     final idNumber = _iinController.text.trim();
     if (idNumber.isEmpty) {
-      setState(() => _iinError = 'ИИН/БИН обязателен для заказа оценки');
+      setState(() => _iinError = s.profileIinRequired);
       return;
     }
     final idCheck = IinValidator.validate(idNumber);
@@ -982,15 +988,15 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       return;
     }
     if (_isOrg && !idCheck.isOrg) {
-      setState(() => _iinError = 'Похоже, это ИИН физлица, а выбран тип «Юрлицо»');
+      setState(() => _iinError = s.profileIinOrgMismatch);
       return;
     }
     if (!_isOrg && idCheck.isOrg) {
-      setState(() => _iinError = 'Похоже, это БИН юрлица — выберите тип «Юрлицо»');
+      setState(() => _iinError = s.profileBinPersonMismatch);
       return;
     }
     if (_isOrg && _orgNameController.text.trim().isEmpty) {
-      setState(() => _iinError = 'Укажите наименование организации');
+      setState(() => _iinError = s.profileOrgNameRequired);
       return;
     }
 
@@ -1017,8 +1023,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       final msg = e.toString();
       // Уникальный индекс profiles_iin_unique → код 23505 (unique_violation).
       if (msg.contains('23505') || msg.contains('duplicate key')) {
-        setState(() => _iinError =
-            'Этот ИИН/БИН уже привязан к другому аккаунту. Один ИИН — один аккаунт.');
+        setState(() => _iinError = s.profileIinTaken);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('$e')),
@@ -1086,14 +1091,14 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
               // Тип клиента: физлицо (ИИН) / юрлицо (БИН + организация)
               Row(
                 children: [
-                  _typeChip('Физлицо', !_isOrg, () {
+                  _typeChip(s.profileClientTypePerson, !_isOrg, () {
                     setState(() {
                       _isOrg = false;
                       _iinError = null;
                     });
                   }),
                   const SizedBox(width: 12),
-                  _typeChip('Юрлицо', _isOrg, () {
+                  _typeChip(s.profileClientTypeOrg, _isOrg, () {
                     setState(() {
                       _isOrg = true;
                       _iinError = null;
@@ -1105,7 +1110,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
               if (_isOrg) ...[
                 _buildField(
                   controller: _orgNameController,
-                  label: 'Наименование организации',
+                  label: s.profileOrgName,
                   icon: Icons.business_rounded,
                   keyboardType: TextInputType.text,
                 ),
@@ -1113,7 +1118,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
               ],
               _buildField(
                 controller: _iinController,
-                label: _isOrg ? 'БИН' : s.profileIin,
+                label: _isOrg ? s.profileBin : s.profileIin,
                 icon: Icons.badge_rounded,
                 keyboardType: TextInputType.number,
                 maxLength: 12,
