@@ -9,8 +9,9 @@
 
 ```mermaid
 flowchart TB
-    subgraph Client["Клиент (браузер / PWA)"]
-        UI["Flutter Web UI"]
+    subgraph Client["Клиенты — единый Flutter-код"]
+        WEB["Flutter Web<br/>(браузер / PWA)"]
+        MOB["Flutter app<br/>(iOS / Android)"]
     end
 
     subgraph CF["Cloudflare Pages"]
@@ -29,14 +30,18 @@ flowchart TB
         OR["OpenRouter<br/>(фолбэк: Gemma free)"]
     end
 
-    UI -->|"HTTPS"| STATIC
-    UI -->|"REST + JWT"| EDGE
+    WEB -->|"HTTPS"| STATIC
+    WEB -->|"REST + JWT"| EDGE
+    MOB -->|"REST + JWT"| EDGE
     EDGE --> GEM
     EDGE -.->|"при лимитах"| OR
-    UI -->|"Supabase SDK"| AUTH
+    WEB -->|"Supabase SDK"| AUTH
+    MOB -->|"Supabase SDK"| AUTH
     AUTH --> DB
-    UI --> DB
-    UI --> STO
+    WEB --> DB
+    MOB --> DB
+    WEB --> STO
+    MOB --> STO
     EDGE -->|"проверка профиля"| DB
 
     style GEM fill:#1a73e8,color:#fff
@@ -55,7 +60,7 @@ flowchart LR
     B --> C["3. Профиль<br/>ФИО + ИИН/БИН<br/>(1 ИИН = 1 аккаунт)"]
     C --> D["4. ИИ-чат<br/>описание текстом или фото"]
     D --> E["5. Оценка стоимости<br/>±10-15% #91;ESTIMATE#93;"]
-    E --> F["6. Оплата<br/>15 000 ₸ (Kaspi/карта)"]
+    E --> F["6. Оплата<br/>15 000 ₸ (Kaspi / перевод)"]
     F --> G["7. Оценщик работает<br/>статус in_progress"]
     G --> H["8. Предпросмотр PDF<br/>с водяным знаком"]
     H --> I["9. ЭЦП-подпись оценщика<br/>(NCALayer / .cms)"]
@@ -111,7 +116,7 @@ flowchart TB
 
 ```mermaid
 timeline
-    title ESEP — Roadmap 2026-2027
+    title ESEP — Roadmap 2026
     19.07 - 11.08.2026 : Этап 1 — MVP (готово)
                        : ИИ-оценка по тексту/фото
                        : Оплата (ручное подтверждение)
@@ -123,15 +128,6 @@ timeline
                          : eGov QR-подпись (Smart Bridge)
                          : Нативные iOS/Android
                          : Уведомления (push, WhatsApp)
-    Октябрь-декабрь 2026 : Этап 3 — Рост
-                         : Лендинг + SEO
-                         : ГБД ФЛ, кадастр ЕГКН
-                         : B2B API v1
-                         : Массовое подписание
-    2027 : Этап 4 — Масштаб
-         : Сеть оценщиков по регионам
-         : Аналитика рынка
-         : Новые продукты (коммерция, бизнес)
 ```
 
 ---
