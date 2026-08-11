@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.esep.esep"
+    namespace = "kz.esep.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -15,11 +15,9 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.esep.esep"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        applicationId = "kz.esep.app"
+        // minSdk 24: требуется flutter_secure_storage (v9) и local_auth.
+        minSdk = 24
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

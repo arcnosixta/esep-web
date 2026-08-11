@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../navigation/app_navigator.dart';
 import '../services/payment_service.dart';
 import '../services/supabase_service.dart';
@@ -113,6 +114,59 @@ class _PaymentScreenState extends State<PaymentScreen> {
         SnackBar(content: Text('Не удалось оформить платёж: $e')),
       );
     }
+  }
+
+  /// Kaspi Pay (онлайн): создаём сессию через edge-функцию и открываем
+  /// checkout-страницу (сейчас — демо; статус обновится через вебхук).
+  Future<void> _submitKaspiOnline() async {
+    if (_appId.isEmpty || _submitting) return;
+    setState(() => _submitting = true);
+    try {
+      final checkoutUrl = await PaymentService.createKaspiSession(
+        applicationId: _appId,
+        amount: PaymentService.appraisalPrice,
+      );
+      if (!mounted) return;
+      setState(() => _submitting = false);
+
+      final opened = await launchUrl(
+        Uri.parse(checkoutUrl),
+        mode: LaunchMode.externalApplication,
+      );
+      if (opened) {
+        await _showKaspiDialog();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Не удалось открыть страницу оплаты')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Kaspi Pay: $e')),
+      );
+    }
+  }
+
+  Future<void> _showKaspiDialog() async {
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Оплата через Kaspi Pay'),
+        content: const Text(
+          'Открылась страница Kaspi Pay. После оплаты заявка автоматически '
+          'перейдёт в статус «Оплачена» — подтверждение менеджера не нужно.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Понятно'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _showSuccessDialog() async {
@@ -403,6 +457,19 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     subtitle: 'Перевод на Kaspi — без комиссии',
                     color: const Color(0xFFE8394A),
                   ),
+                  Container(
+                    height: 1,
+                    margin: const EdgeInsets.only(left: 56),
+                    color: c.divider,
+                  ),
+                  _paymentRow(
+                    context: context,
+                    index: 2,
+                    icon: Icons.bolt_rounded,
+                    label: 'Kaspi Pay (онлайн)',
+                    subtitle: 'Автоподтверждение — без ожидания менеджера',
+                    color: const Color(0xFFE8394A),
+                  ),
                 ],
               ),
             ),
@@ -410,9 +477,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
             if (_selectedMethod == 0) ...[
               const SizedBox(height: 14),
               _bankBlock(c),
-            ] else ...[
+            ] else if (_selectedMethod == 1) ...[
               const SizedBox(height: 14),
               _kaspiBlock(c),
+            ] else ...[
+              const SizedBox(height: 14),
+              _kaspiOnlineBlock(c),
             ],
           ],
         ),
@@ -463,6 +533,66 @@ class _PaymentScreenState extends State<PaymentScreen> {
             'После нажатия менеджер получит уведомление и подтвердит оплату. '
             'Заявка перейдёт в статус «Оплачена».',
             style: TextStyle(fontSize: 12, color: c.textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _kaspiOnlineBlock(AppColors c) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: c.border, width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.bolt_rounded, size: 20, color: const Color(0xFFE8394A)),
+              const SizedBox(width: 10),
+              Text(
+                'Kaspi Pay — онлайн',
+                style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: c.textPrimary),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'Оплата через Kaspi Pay с автоматическим подтверждением: '
+            'после оплаты заявка сразу перейдёт в статус «Оплачена», '
+            'ждать менеджера не нужно.',
+            style: TextStyle(fontSize: 13, color: c.textSecondary, height: 1.4),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE8394A).withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              '⚠️ Тестовый режим: реальный Kaspi Pay подключим после договора '
+              'с Kaspi. Сейчас откроется демо-страница оплаты.',
+              style: TextStyle(
+                fontSize: 12,
+                color: const Color(0xFFB45309),
+                height: 1.4,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          OptionButton(
+            text: _submitting ? 'Отправка…' : 'Оплатить через Kaspi Pay',
+            icon: Icons.bolt_rounded,
+            backgroundColor: const Color(0xFFE8394A),
+            onTap: _submitting ? null : () => _submitKaspiOnline(),
           ),
         ],
       ),
@@ -695,8 +825,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
           icon: Icons.lock_rounded,
           onTap: _submitting
               ? null
-              : () => _submitPayment(
-                  _selectedMethod == 0 ? 'bank' : 'kaspi'),
+              : () => _submitPayment(switch (_selectedMethod) {
+                    0 => 'bank',
+                    1 => 'kaspi',
+                    _ => 'kaspi_online',
+                  }),
         ),
       ),
     );

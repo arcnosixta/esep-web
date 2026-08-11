@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
+
 import '../main.dart' show supabase;
 import 'supabase_service.dart';
 
@@ -19,6 +23,10 @@ class PaymentService {
   /// Номер Kaspi-счёта/телефона для переводов (международный формат, без +).
   /// TODO: заменить на реальный номер ИП/компании.
   static const String kaspiBusinessPhone = '77029315415';
+
+  /// Базовый URL Cloudflare Pages Functions (/api/*).
+  /// TODO: вынести в конфиг/домен esep.kz, когда подключим.
+  static const String apiBaseUrl = 'https://esep.pages.dev';
 
   static const String _table = 'payments';
 
@@ -109,10 +117,35 @@ class PaymentService {
   /// Метка способа оплаты для UI.
   static String methodLabel(String method) => switch (method) {
         'kaspi' => 'Kaspi Pay',
+        'kaspi_online' => 'Kaspi Pay (онлайн)',
         'card' => 'Банковская карта',
         'bank' => 'Банковский перевод',
         _ => 'Вручную',
       };
+
+  /// Создать сессию Kaspi Pay через edge-функцию /api/kaspi/create.
+  /// Возвращает checkout_url (мок-страница, пока Kaspi не подключён).
+  static Future<String> createKaspiSession({
+    required String applicationId,
+    required int amount,
+  }) async {
+    final token = SupabaseService.accessToken;
+    final resp = await http.post(
+      Uri.parse('$apiBaseUrl/api/kaspi/create'),
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'application_id': applicationId, 'amount': amount}),
+    );
+    if (resp.statusCode != 200) {
+      throw Exception('Kaspi Pay: ${resp.body}');
+    }
+    final data = jsonDecode(utf8.decode(resp.bodyBytes)) as Map<String, dynamic>;
+    final url = data['checkout_url'] as String?;
+    if (url == null) throw Exception('Kaspi Pay: пустой checkout_url');
+    return url;
+  }
 
   /// Метка статуса платежа для UI.
   static String statusLabel(String status) => switch (status) {

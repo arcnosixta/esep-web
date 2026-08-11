@@ -1,7 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- local_auth: биометрия (отпечаток / Face) -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
+    <!-- image_picker: камера для фото объекта -->
+    <uses-permission android:name="android.permission.CAMERA"/>
     <application
-        android:label="esep"
+        android:label="ESEP"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
