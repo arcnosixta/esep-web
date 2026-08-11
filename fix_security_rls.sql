@@ -1,15 +1,22 @@
 -- ============================================================
--- ESEP — Защита от уязвимостей (RLS-ужесточение) — v1
+-- ESEP — Защита от уязвимостей (RLS-ужесточение) — v2
 -- Запусти ВЕСЬ скрипт в Supabase SQL Editor (идемпотентно).
+--
+-- v2: ИСПРАВЛЕНО — политики больше НЕ используют NEW./OLD.
+-- (PostgreSQL принимает NEW/OLD только в триггерах и функциях,
+--  в CREATE POLICY это даёт ERROR 42P01 "missing FROM-clause
+--  entry for table "new""). Защита полей вынесена в триггеры,
+--  которые проверяют изменения и запрещают их неавторизованным.
 --
 -- Что закрывает:
 --   1. ЭСКАЛАЦИЯ ПРИВИЛЕГИЙ: пользователь мог обновить СВОЙ профиль
 --      и выдать себе роль 'admin'/'appraiser' или снять блокировку.
---      Теперь роль/is_blocked/user_id может менять только админ.
+--      Теперь role/is_blocked/user_id может менять только админ
+--      (триггер protect_profiles).
 --   2. ЭЦП ОБЫЧНОМУ ПОЛЬЗОВАТЕЛЮ: клиент мог «подписать» свою заявку —
 --      проставить signer_name/signer_iin/signature/signed_at, оставив
---      status='new' (WITH CHECK проходил). Теперь эти поля клиент
---      менять не может — только оценщик (или админ).
+--      status='new'. Теперь эти поля менять может только оценщик/админ
+--      (триггер protect_application_signature).
 --   3. ОТЧЁТЫ (reports): владелец (клиент) мог сам пометить отчёт
 --      status='paid'/'signed' — обход оплаты и подписи. Обновлять
 --      отчёты теперь могут только оценщик и админ; клиент — читать.
@@ -57,12 +64,18 @@ DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
 CREATE POLICY "Users can update own profile" ON profiles
   FOR UPDATE TO authenticated
   USING ((SELECT auth.uid()) = user_id)
-  WITH CHECK (
-    (SELECT auth.uid()) = user_id
-    AND NEW.user_id = OLD.user_id
-    AND NEW.role IS NOT DISTINCT FROM OLD.role
-    AND NEW.is_blocked IS NOT DISTINCT FROM OLD.is_blocked
-  );
+  WITH CHECK ((SELECT auth.uid()) = user_id);
+
+-- ВАЖНО: PostgreSQL для UPDATE/DELETE дополнительно требует, чтобы строка
+-- проходила SELECT-политику (иначе UPDATE молча обновляет 0 строк).
+-- Поэтому нужны SELECT-политики на profiles:
+DROP POLICY IF EXISTS profiles_select_own ON public.profiles;
+CREATE POLICY profiles_select_own ON public.profiles
+  FOR SELECT TO authenticated USING ((SELECT auth.uid()) = user_id);
+
+DROP POLICY IF EXISTS profiles_select_admin ON public.profiles;
+CREATE POLICY profiles_select_admin ON public.profiles
+  FOR SELECT TO authenticated USING (public.is_admin());
 
 DROP POLICY IF EXISTS "Users can insert own profile" ON profiles;
 CREATE POLICY "Users can insert own profile" ON profiles
@@ -77,12 +90,42 @@ CREATE POLICY "Admins can update all profiles" ON profiles
   FOR UPDATE TO authenticated USING (public.is_admin())
   WITH CHECK (public.is_admin());
 
+-- Триггер: защита user_id / role / is_blocked от самоизменения.
+-- Клиент может обновлять свой профиль, но не менять роль/блокировку/владельца.
+CREATE OR REPLACE FUNCTION public.protect_profiles()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  -- Служебный доступ (SQL Editor / сервисные роли) — не ограничиваем.
+  IF auth.uid() IS NULL THEN
+    RETURN NEW;
+  END IF;
+  -- Админ может менять всё.
+  IF public.is_admin() THEN
+    RETURN NEW;
+  END IF;
+  IF NEW.user_id IS DISTINCT FROM OLD.user_id
+     OR NEW.role IS DISTINCT FROM OLD.role
+     OR NEW.is_blocked IS DISTINCT FROM OLD.is_blocked THEN
+    RAISE EXCEPTION 'Изменение user_id/role/is_blocked запрещено (только админ)';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_protect_profiles ON public.profiles;
+CREATE TRIGGER trg_protect_profiles
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.protect_profiles();
+
 -- ============================================================
 -- 2. APPLICATIONS — клиент не трогает поля подписи
 -- ============================================================
 
 -- Клиент: только перевод СВОЕЙ заявки new <-> pending_payment.
--- Поля подписи (signer_*, signature, signed_*) — только оценщик/админ.
+-- Поля подписи (signer_*, signature, signed_*) защищает триггер.
 DROP POLICY IF EXISTS "Users can mark own application pending payment" ON applications;
 CREATE POLICY "Users can mark own application pending payment" ON applications
   FOR UPDATE TO authenticated
@@ -90,12 +133,6 @@ CREATE POLICY "Users can mark own application pending payment" ON applications
   WITH CHECK (
     (SELECT auth.uid()) = user_id
     AND status IN ('new', 'pending_payment')
-    AND NEW.signer_name IS NOT DISTINCT FROM OLD.signer_name
-    AND NEW.signer_iin IS NOT DISTINCT FROM OLD.signer_iin
-    AND NEW.signature IS NOT DISTINCT FROM OLD.signature
-    AND NEW.signature_path IS NOT DISTINCT FROM OLD.signature_path
-    AND NEW.signed_at IS NOT DISTINCT FROM OLD.signed_at
-    AND NEW.signed_by IS NOT DISTINCT FROM OLD.signed_by
   );
 
 -- Оценщик: свои/доступные заявки; статус — только рабочие
@@ -114,9 +151,39 @@ CREATE POLICY "Appraisers can update assigned applications" ON applications
       (SELECT auth.uid()) = appraiser_id
       OR (status = 'new' AND appraiser_id IS NULL)
     )
-    AND NEW.status IN ('new', 'in_progress', 'completed')
-    AND NEW.user_id IS NOT DISTINCT FROM OLD.user_id
+    AND status IN ('new', 'in_progress', 'completed')
   );
+
+-- Триггер: клиент не может проставить себе подпись/подписанта.
+-- Подписывать отчёт (ЭЦП) может только оценщик или админ.
+CREATE OR REPLACE FUNCTION public.protect_application_signature()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RETURN NEW;
+  END IF;
+  IF public.is_appraiser() OR public.is_admin() THEN
+    RETURN NEW;
+  END IF;
+  IF NEW.signer_name IS DISTINCT FROM OLD.signer_name
+     OR NEW.signer_iin IS DISTINCT FROM OLD.signer_iin
+     OR NEW.signature IS DISTINCT FROM OLD.signature
+     OR NEW.signature_path IS DISTINCT FROM OLD.signature_path
+     OR NEW.signed_at IS DISTINCT FROM OLD.signed_at
+     OR NEW.signed_by IS DISTINCT FROM OLD.signed_by THEN
+    RAISE EXCEPTION 'Изменение полей подписи доступно только оценщику/админу';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_protect_application_signature ON public.applications;
+CREATE TRIGGER trg_protect_application_signature
+  BEFORE UPDATE ON public.applications
+  FOR EACH ROW EXECUTE FUNCTION public.protect_application_signature();
 
 -- ============================================================
 -- 3. REPORTS — клиент только читает, пишут оценщик/админ
