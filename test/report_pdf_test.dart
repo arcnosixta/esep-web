@@ -124,6 +124,11 @@ void main() {
     final bytes = await ReportService.generatePdf(data, preview: false);
     expect(bytes.length, greaterThan(50000));
 
+    // Регрессия объёма: отчёт должен быть не менее 40 страниц (требование продакшена)
+    final pages = RegExp(r'/Type\s*/Page[^s]').allMatches(String.fromCharCodes(bytes)).length;
+    expect(pages, greaterThanOrEqualTo(40),
+        reason: 'Отчёт должен содержать 40+ страниц, фактически $pages');
+
     // Сохраняем полную версию для проверки количества страниц
     final file = File('/tmp/esep_test_report_full.pdf');
     file.writeAsBytesSync(bytes);
@@ -134,6 +139,9 @@ void main() {
     final photo = File('/tmp/test_photo.jpg').readAsBytesSync();
     final bytes = await ReportService.generatePdf(data, preview: false, photos: [photo, photo, photo]);
     expect(bytes.length, greaterThan(50000));
+    final pages = RegExp(r'/Type\s*/Page[^s]').allMatches(String.fromCharCodes(bytes)).length;
+    expect(pages, greaterThanOrEqualTo(40),
+        reason: 'Отчёт с фото должен содержать 40+ страниц, фактически $pages');
     final file = File('/tmp/esep_test_report_photos.pdf');
     file.writeAsBytesSync(bytes);
   });
