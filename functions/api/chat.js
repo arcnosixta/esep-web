@@ -16,6 +16,8 @@
 //   GEMINI_API_KEY      — основной ключ (бесплатный, aistudio.google.com/apikey).
 //   GEMINI_TEXT_MODEL    — опционально: текстовая модель.
 //   GEMINI_VISION_MODEL  — опционально: vision-модель с поиском.
+//   SUPABASE_URL         — авторизация: проверяем JWT пользователя.
+//   SUPABASE_ANON_KEY    — авторизация: публичный ключ Supabase.
 //
 // Маршрут:  POST /api/chat
 // Тело:     OpenAI-формат {model, messages, stream, ...} — клиент НЕ меняется.
@@ -278,6 +280,64 @@ function geminiStreamToOpenAI(resp, request) {
 }
 
 // ============================================================
+// AUTH: проверка Supabase JWT
+// ============================================================
+// /api/chat — платный прокси (Gemini/OpenRouter). Без авторизации любой,
+// кто узнает URL, сможет жечь квоту ключей. Требуем JWT пользователя:
+//   Authorization: Bearer <access_token из supabase.auth>
+// Проверяем через /auth/v1/user (не нужны крипто-библиотеки).
+// Если SUPABASE_URL / SUPABASE_ANON_KEY не заданы — пропускаем (back-compat).
+
+async function authorizeRequest(request, env) {
+  if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) return null; // не настроено — пропустить
+
+  const auth = request.headers.get('Authorization') || '';
+  if (!auth.startsWith('Bearer ')) {
+    return { status: 401, message: 'Unauthorized: missing Bearer token' };
+  }
+  const token = auth.slice(7).trim();
+  if (!token) return { status: 401, message: 'Unauthorized: empty token' };
+
+  let user;
+  try {
+    const resp = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        apikey: env.SUPABASE_ANON_KEY,
+      },
+    });
+    if (!resp.ok) return { status: 401, message: 'Unauthorized: invalid token' };
+    user = await resp.json();
+  } catch (_) {
+    return { status: 503, message: 'Auth service unavailable' };
+  }
+
+  // Заблокированные пользователи (profiles.is_blocked) не пользуются ИИ.
+  try {
+    const uid = user && user.id;
+    if (uid) {
+      const pResp = await fetch(
+        `${env.SUPABASE_URL}/rest/v1/profiles?user_id=eq.${uid}&select=is_blocked`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            apikey: env.SUPABASE_ANON_KEY,
+          },
+        }
+      );
+      if (pResp.ok) {
+        const rows = await pResp.json();
+        if (Array.isArray(rows) && rows.length > 0 && rows[0].is_blocked === true) {
+          return { status: 403, message: 'Account blocked' };
+        }
+      }
+    }
+  } catch (_) { /* не блокируем запрос из-за сбоя проверки */ }
+
+  return null; // ок
+}
+
+// ============================================================
 // ENTRY POINT
 // ============================================================
 
@@ -286,6 +346,11 @@ export async function onRequestPost(context) {
 
   if (request.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: corsHeaders(request) });
+  }
+
+  const authError = await authorizeRequest(request, env);
+  if (authError) {
+    return json({ error: authError.message }, authError.status, corsHeaders(request));
   }
 
   let body;

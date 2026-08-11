@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/report_template.dart';
+import '../models/user_profile.dart';
 import '../services/cms_signature_parser.dart';
 import '../services/cms_signature_verifier.dart';
 import '../services/ncalayer_service.dart';
@@ -34,9 +35,16 @@ class _ReportScreenState extends State<ReportScreen> {
   String? _error;
   bool _isPaid = false;
 
+  /// Роль текущего пользователя: подписывать ЭЦП может только оценщик/админ.
+  UserRole? _myRole;
+
+  /// Владелец заявки (клиент) — ему принадлежит строка отчёта в БД.
+  String? _ownerUserId;
+
   @override
   void initState() {
     super.initState();
+    _loadMyRole();
     final rd = widget.reportData;
     if (rd != null) {
       _reportData = rd;
@@ -44,6 +52,15 @@ class _ReportScreenState extends State<ReportScreen> {
       _loadApplicationData();
     }
   }
+
+  Future<void> _loadMyRole() async {
+    final role = await SupabaseService.getUserRole();
+    if (!mounted) return;
+    setState(() => _myRole = role);
+  }
+
+  /// Может ли текущий пользователь ПОДПИСЫВАТЬ отчёт (оценщик или админ).
+  bool get _canSign => _myRole == UserRole.appraiser || _myRole == UserRole.admin;
 
   Future<void> _loadApplicationData() async {
     setState(() {
@@ -56,6 +73,7 @@ class _ReportScreenState extends State<ReportScreen> {
       final app = await SupabaseService.getApplication(appId);
 
       _isPaid = app['status'] == 'paid' || app['status'] == 'completed';
+      _ownerUserId = (app['user_id'] ?? '').toString();
 
       final prop = app['properties'] ?? {};
       final profile = app['profiles'] ?? {};
@@ -173,7 +191,13 @@ class _ReportScreenState extends State<ReportScreen> {
     setState(() => _generating = true);
 
     try {
-      final pdfBytes = await ReportService.generatePdf(_reportData!);
+      // До оплаты можно поделиться только ПРЕДВАРИТЕЛЬНЫМ вариантом
+      // (с водяным знаком) — официальный PDF доступен после оплаты.
+      final pdfBytes = await ReportService.generatePdf(
+        _reportData!,
+        preview: !_isPaid,
+        signature: _isPaid ? _signatureInfo : null,
+      );
       await Printing.sharePdf(bytes: pdfBytes, filename: 'report.pdf');
     } catch (e) {
       if (mounted) {
@@ -199,6 +223,10 @@ class _ReportScreenState extends State<ReportScreen> {
   Uint8List? _cmsBytes;
 
   Future<void> _signWithNcalayer() async {
+    if (!_canSign) {
+      _showErrorSnack('Подписывать отчёт может только оценщик');
+      return;
+    }
     final c = AppColors.of(context);
     setState(() => _signing = true);
     try {
@@ -321,6 +349,10 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Future<void> _uploadCms() async {
+    if (!_canSign) {
+      _showErrorSnack('Подписывать отчёт может только оценщик');
+      return;
+    }
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -380,6 +412,10 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Future<void> _verifySignature() async {
+    if (!_canSign) {
+      _showErrorSnack('Проверка подписи доступна оценщику');
+      return;
+    }
     final c = AppColors.of(context);
     final bytes = _cmsBytes;
     if (bytes == null) {
@@ -1030,45 +1066,50 @@ class _ReportScreenState extends State<ReportScreen> {
             const SizedBox(height: 10),
           ] else
             Text(
-              'Подпишите PDF-отчёт своей ЭЦП (NCALayer, десктоп) или '
-              'загрузите готовый .cms файл с ezsigner.kz.',
+              _canSign
+                  ? 'Подпишите PDF-отчёт своей ЭЦП (NCALayer, десктоп) или '
+                      'загрузите готовый .cms файл с ezsigner.kz.'
+                  : 'После оплаты оценщик подпишет официальный отчёт ЭЦП — '
+                      'статус подписи появится здесь.',
               style: TextStyle(
                   fontSize: 13, color: c.textSecondary, height: 1.4),
             ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: OptionButton(
-                  text: _signing ? 'Подписание…' : 'Подписать ЭЦП',
-                  icon: Icons.draw_rounded,
-                  onTap: _signing ? null : _signWithNcalayer,
+          if (_canSign) ...[
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: OptionButton(
+                    text: _signing ? 'Подписание…' : 'Подписать ЭЦП',
+                    icon: Icons.draw_rounded,
+                    onTap: _signing ? null : _signWithNcalayer,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OptionButton(
+                    text: 'Загрузить .cms',
+                    icon: Icons.upload_file_rounded,
+                    backgroundColor: Colors.transparent,
+                    textColor: c.accent,
+                    onTap: _uploadCms,
+                  ),
+                ),
+              ],
+            ),
+            if (signed) ...[
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
                 child: OptionButton(
-                  text: 'Загрузить .cms',
-                  icon: Icons.upload_file_rounded,
-                  backgroundColor: Colors.transparent,
+                  text: 'Проверить подпись',
+                  icon: Icons.verified_user_rounded,
+                  backgroundColor: c.surfaceLight,
                   textColor: c.accent,
-                  onTap: _uploadCms,
+                  onTap: _verifySignature,
                 ),
               ),
             ],
-          ),
-          if (signed) ...[
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: OptionButton(
-                text: 'Проверить подпись',
-                icon: Icons.verified_user_rounded,
-                backgroundColor: c.surfaceLight,
-                textColor: c.accent,
-                onTap: _verifySignature,
-              ),
-            ),
           ],
         ],
       ),
@@ -1085,9 +1126,11 @@ class _ReportScreenState extends State<ReportScreen> {
       final report = await SupabaseService.getReportForApplication(appId);
       Map<String, dynamic>? created;
       if (report == null) {
-        // Отчёта ещё нет — создаём черновик, потом подписываем
+        // Отчёта ещё нет — создаём черновик, потом подписываем.
+        // user_id отчёта = владелец заявки (клиент), а не оценщик.
         created = await SupabaseService.createReport(
           applicationId: appId,
+          ownerId: _ownerUserId,
           reportNumber: 'G-${DateTime.now().year}',
         );
         await SupabaseService.markReportSigned(
@@ -1121,6 +1164,10 @@ class _ReportScreenState extends State<ReportScreen> {
           );
         }
       }
+
+      // Работа оценщика по заявке завершена: in_progress -> completed.
+      // (Раньше это делала фейковая signApplication-заглушка.)
+      await SupabaseService.updateApplicationStatus(appId, 'completed');
     } catch (e) {
       debugPrint('[Report] markReportSigned error: $e');
     }

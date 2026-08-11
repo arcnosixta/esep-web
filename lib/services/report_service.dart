@@ -855,13 +855,17 @@ class ReportService {
 
   static Future<String?> uploadReportPdf(Uint8List bytes, String applicationId) async {
     try {
-      final fileName = 'reports/report_${applicationId}_${DateTime.now().millisecondsSinceEpoch}.pdf';
+      // Путь: <applicationId>/report_<ts>.pdf — первая папка = id заявки,
+      // по ней storage-RLS проверяет владельца (клиента) / оценщика.
+      final fileName =
+          '$applicationId/report_${DateTime.now().millisecondsSinceEpoch}.pdf';
 
       await supabase.storage.from('reports').uploadBinary(fileName, bytes);
 
-      final url = supabase.storage.from('reports').getPublicUrl(fileName);
-      debugPrint('[Report] PDF uploaded: $url');
-      return url;
+      // Бакет приватный — храним ПУТЬ, а не публичный URL; ссылку
+      // (signed URL) генерируем при скачивании через getReportPdfUrl.
+      debugPrint('[Report] PDF uploaded: $fileName');
+      return fileName;
     } catch (e) {
       debugPrint('[Report] Upload error: $e');
       return null;

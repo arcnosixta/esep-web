@@ -484,47 +484,9 @@ class _AppraiserRequestsState extends State<_AppraiserRequests> {
     }
   }
 
-  /// ЭЦП-заглушка: подтверждает подпись и закрывает заявку (status=completed).
-  Future<void> _signApplication(String applicationId) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Подписать отчёт ЭЦП?'),
-        content: const Text(
-          'Заявка будет завершена и помечена как подписанная '
-          '(тестовая подпись — интеграция с NCALayer позже).',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Отмена'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Подписать'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !mounted) return;
-
-    try {
-      await SupabaseService.signApplication(applicationId);
-      await _loadData();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Отчёт подписан ЭЦП (тест)')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка: $e')),
-        );
-      }
-    }
-  }
+  /// Настоящая ЭЦП-подпись (NCALayer / загрузка .cms) выполняется
+  /// в ReportScreen. Раньше здесь была тестовая заглушка signApplication
+  /// (ECP-TEST) — она удалена, чтобы не помечать заявки фейковой подписью.
 
   @override
   Widget build(BuildContext context) {
@@ -807,7 +769,7 @@ class _AppraiserRequestsState extends State<_AppraiserRequests> {
                   );
                 },
                 icon: const Icon(Icons.description_rounded, size: 18),
-                label: const Text('Сгенерировать отчёт', style: TextStyle(fontWeight: FontWeight.w600)),
+                label: const Text('Сгенерировать и подписать отчёт', style: TextStyle(fontWeight: FontWeight.w600)),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: c.accent,
                   side: BorderSide(color: c.accent),
@@ -816,22 +778,8 @@ class _AppraiserRequestsState extends State<_AppraiserRequests> {
                 ),
               ),
             ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () => _signApplication(applicationId),
-                icon: const Icon(Icons.verified_user_rounded, size: 18),
-                label: const Text('Подписать ЭЦП', style: TextStyle(fontWeight: FontWeight.w600)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: c.success,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  elevation: 0,
-                ),
-              ),
-            ),
+            // Настоящая ЭЦП-подпись (NCALayer / .cms) — внутри ReportScreen;
+            // фейковая «Подписать ЭЦП» (ECP-TEST) удалена.
           ],
         ],
       ),

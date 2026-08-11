@@ -15,6 +15,9 @@ class SupabaseService {
   static User? get currentUser => supabase.auth.currentUser;
   static String? get userId => currentUser?.id;
 
+  /// JWT-токен текущей сессии (для авторизации в /api/chat и storage).
+  static String? get accessToken => supabase.auth.currentSession?.accessToken;
+
   static Future<AuthResponse> signUp({
     required String email,
     required String password,
@@ -322,16 +325,6 @@ class SupabaseService {
     return data;
   }
 
-  /// Пометить заявку как подписанную оценщиком (ЭЦП-заглушка).
-  static Future<void> signApplication(String applicationId) async {
-    await supabase.from('applications').update({
-      'status': 'completed',
-      'signed_at': DateTime.now().toIso8601String(),
-      'signed_by': userId,
-      'signature': 'ECP-TEST-${applicationId.substring(0, 8).toUpperCase()}',
-    }).eq('id', applicationId);
-  }
-
   /// Прикрепить реальную CMS-подпись (ЭЦП через NCALayer) к заявке.
   ///
   /// Загружает .cms в storage (bucket user-docs) и сохраняет данные
@@ -407,15 +400,31 @@ class SupabaseService {
     return data;
   }
 
+  /// Ссылка на PDF отчёта для скачивания.
+  ///
+  /// [pathOrUrl] — путь в storage bucket 'reports' (новый формат) или уже
+  /// готовый http-URL (старые записи из публичного бакета). Для путей
+  /// создаётся временная signed-ссылка (бакет приватный).
+  static Future<String> getReportPdfUrl(String pathOrUrl) async {
+    if (pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://')) {
+      return pathOrUrl;
+    }
+    return supabase.storage.from('reports').createSignedUrl(pathOrUrl, 3600);
+  }
+
   /// Создать черновик отчёта для заявки (status = draft).
+  ///
+  /// [ownerId] — владелец отчёта (клиент-владелец заявки). По умолчанию —
+  /// текущий пользователь (сам клиент создаёт черновик при заказе).
   static Future<Map<String, dynamic>> createReport({
     required String applicationId,
+    String? ownerId,
     String? reportNumber,
     Map<String, dynamic>? reportData,
   }) async {
     final data = await supabase.from('reports').insert({
       'application_id': applicationId,
-      'user_id': userId,
+      'user_id': ownerId ?? userId,
       'status': 'draft',
       'report_number': reportNumber,
       'report_data': reportData,
@@ -448,15 +457,27 @@ class SupabaseService {
   }
 
   /// Отметить отчёт как подписанный (после ЭЦП).
+  ///
+  /// Не понижает статус `paid` → `signed`: оплаченный отчёт уже официальный,
+  /// и клиент должен продолжать видеть его как оплаченный.
   static Future<void> markReportSigned(
     String reportId, {
     required String signerName,
     required String signerIin,
     String? signaturePath,
   }) async {
+    String? status = 'signed';
+    try {
+      final row = await supabase
+          .from('reports')
+          .select('status')
+          .eq('id', reportId)
+          .maybeSingle();
+      if (row != null && row['status'] == 'paid') status = null;
+    } catch (_) {}
     await updateReport(
       reportId,
-      status: 'signed',
+      status: status,
       signerName: signerName,
       signerIin: signerIin,
       signaturePath: signaturePath,

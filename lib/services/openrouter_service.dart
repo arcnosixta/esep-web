@@ -22,6 +22,17 @@ class OpenRouterService {
     'google/gemma-4-26b-a4b-it:free',
   ];
 
+  /// Заголовки для /api/chat: JWT пользователя (функция проверяет его
+  /// через Supabase — иначе любой сможет жечь квоту API-ключей).
+  static Map<String, String> _authHeaders() {
+    final token = SupabaseService.accessToken;
+    return {
+      'Content-Type': 'application/json',
+      if (token != null && token.isNotEmpty)
+        'Authorization': 'Bearer $token',
+    };
+  }
+
   static const _visionModels = [
     'gemini-2.5-flash',
     'google/gemma-4-26b-a4b-it:free',
@@ -468,9 +479,7 @@ $marketContext
 
         final response = await http.post(
           Uri.parse(_baseUrl),
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: _authHeaders(),
           body: body,
         );
         if (response.statusCode != 200) {
@@ -521,9 +530,7 @@ $marketContext
     debugPrint('[AI] Request body preview: ${body.substring(0, body.length > 300 ? 300 : body.length)}');
 
     final request = http.Request('POST', Uri.parse(_baseUrl))
-      ..headers.addAll({
-        'Content-Type': 'application/json',
-      })
+      ..headers.addAll(_authHeaders())
       ..body = body;
 
     final streamed = await request.send();

@@ -24,8 +24,10 @@ class CaseDetailScreen extends StatelessWidget {
       final status = report['status'] ?? '';
       // Официальный PDF доступен только после оплаты И подписи
       if (status != 'paid' && status != 'signed') return null;
-      final url = report['file_url'] ?? '';
-      return url.toString().isEmpty ? null : url.toString();
+      final stored = (report['file_url'] ?? '').toString();
+      if (stored.isEmpty) return null;
+      // Бакет приватный: путь → временная signed-ссылка (1 час).
+      return SupabaseService.getReportPdfUrl(stored);
     } catch (_) {
       return null;
     }
