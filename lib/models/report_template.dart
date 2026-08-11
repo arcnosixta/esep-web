@@ -11,7 +11,7 @@ class ReportData {
   final String clientAddress;
 
   // ===== Объект оценки =====
-  final String propertyType; // 'Квартира', 'Дом', 'Земельный участок', ...
+  final String propertyType; // 'Квартира', 'Дом', 'Земельный участок', 'Автомобиль', ...
   final String address;
   final double area;
   final int rooms;
@@ -21,6 +21,28 @@ class ReportData {
   final int yearBuilt;
   final String cadastralNumber; // кадастровый номер (если есть)
   final String purpose; // назначение: 'Проживание', 'Коммерческое', ...
+
+  // ===== Детальные характеристики (для таблиц Раздела 2) =====
+  final String buildingType; // тип здания: многоквартирный жилой дом...
+  final String wallMaterial; // материал стен
+  final String buildingCondition; // тех. состояние здания
+  final String communications; // инженерные коммуникации
+  final String livingArea; // жилая площадь, кв.м.
+  final String kitchenArea; // площадь кухни
+  final String bathroom; // санузел: совмещенный/раздельный
+  final String balcony; // балкон/лоджия
+  final String renovationYear; // год ремонта
+  final String layout; // планировка: обычная/улучшенная...
+
+  // ===== Авто (заполняется для propertyType == 'Автомобиль') =====
+  final Map<String, String> vehicleSpecs; // марка, модель, VIN, пробег, кузов, двигатель, цвет
+
+  // ===== Фото объекта (до 10, пути в storage) =====
+  final List<String> photoUrls;
+
+  // ===== Осмотр =====
+  final String inspectionDate; // дата осмотра
+  final String clientIdDoc; // удостоверение заказчика: №, кем, когда
 
   // ===== Результаты =====
   final double estimatedPrice;
@@ -63,6 +85,20 @@ class ReportData {
     required this.yearBuilt,
     this.cadastralNumber = '',
     this.purpose = 'Проживание',
+    this.buildingType = '',
+    this.wallMaterial = '',
+    this.buildingCondition = '',
+    this.communications = '',
+    this.livingArea = '',
+    this.kitchenArea = '',
+    this.bathroom = '',
+    this.balcony = '',
+    this.renovationYear = '',
+    this.layout = '',
+    this.vehicleSpecs = const {},
+    this.photoUrls = const [],
+    this.inspectionDate = '',
+    this.clientIdDoc = '',
     required this.estimatedPrice,
     required this.priceRangeLow,
     required this.priceRangeHigh,
@@ -103,6 +139,20 @@ class ReportData {
       yearBuilt: json['year_built'] as int? ?? 0,
       cadastralNumber: json['cadastral_number'] as String? ?? '',
       purpose: json['purpose'] as String? ?? 'Проживание',
+      buildingType: json['building_type'] as String? ?? '',
+      wallMaterial: json['wall_material'] as String? ?? '',
+      buildingCondition: json['building_condition'] as String? ?? '',
+      communications: json['communications'] as String? ?? '',
+      livingArea: json['living_area'] as String? ?? '',
+      kitchenArea: json['kitchen_area'] as String? ?? '',
+      bathroom: json['bathroom'] as String? ?? '',
+      balcony: json['balcony'] as String? ?? '',
+      renovationYear: json['renovation_year'] as String? ?? '',
+      layout: json['layout'] as String? ?? '',
+      vehicleSpecs: (json['vehicle_specs'] as Map<String, dynamic>?)?.cast<String, String>() ?? const {},
+      photoUrls: (json['photo_urls'] as List<dynamic>?)?.cast<String>() ?? const [],
+      inspectionDate: json['inspection_date'] as String? ?? '',
+      clientIdDoc: json['client_id_doc'] as String? ?? '',
       estimatedPrice: (json['estimated_price'] as num?)?.toDouble() ?? 0,
       priceRangeLow: (json['price_range_low'] as num?)?.toDouble() ?? 0,
       priceRangeHigh: (json['price_range_high'] as num?)?.toDouble() ?? 0,
@@ -149,6 +199,20 @@ class ReportData {
         'year_built': yearBuilt,
         'cadastral_number': cadastralNumber,
         'purpose': purpose,
+        'building_type': buildingType,
+        'wall_material': wallMaterial,
+        'building_condition': buildingCondition,
+        'communications': communications,
+        'living_area': livingArea,
+        'kitchen_area': kitchenArea,
+        'bathroom': bathroom,
+        'balcony': balcony,
+        'renovation_year': renovationYear,
+        'layout': layout,
+        'vehicle_specs': vehicleSpecs,
+        'photo_urls': photoUrls,
+        'inspection_date': inspectionDate,
+        'client_id_doc': clientIdDoc,
         'estimated_price': estimatedPrice,
         'price_range_low': priceRangeLow,
         'price_range_high': priceRangeHigh,
@@ -194,6 +258,9 @@ class ComparableProperty {
   final double price;
   final String type;
   final String source;
+  final String url; // ссылка на объявление (krisha.kz и т.п.)
+  final List<AdjustmentItem> adjustments; // корректировки по элементам сравнения
+  final double adjustedPrice; // цена после корректировок
 
   const ComparableProperty({
     required this.address,
@@ -201,6 +268,9 @@ class ComparableProperty {
     required this.price,
     required this.type,
     required this.source,
+    this.url = '',
+    this.adjustments = const [],
+    this.adjustedPrice = 0,
   });
 
   factory ComparableProperty.fromJson(Map<String, dynamic> json) {
@@ -210,6 +280,12 @@ class ComparableProperty {
       price: (json['price'] as num?)?.toDouble() ?? 0,
       type: json['type'] as String? ?? '',
       source: json['source'] as String? ?? '',
+      url: json['url'] as String? ?? '',
+      adjustments: (json['adjustments'] as List<dynamic>?)
+              ?.map((e) => AdjustmentItem.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      adjustedPrice: (json['adjusted_price'] as num?)?.toDouble() ?? 0,
     );
   }
 
@@ -219,10 +295,37 @@ class ComparableProperty {
         'price': price,
         'type': type,
         'source': source,
+        'url': url,
+        'adjustments': adjustments.map((e) => e.toJson()).toList(),
+        'adjusted_price': adjustedPrice,
       };
 
   String get formattedPrice =>
       '${price.round().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(?:\d{3})+(?!\d))'), (m) => '${m[1]} ')} ₸';
+
+  String get formattedAdjustedPrice =>
+      '${adjustedPrice.round().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(?:\d{3})+(?!\d))'), (m) => '${m[1]} ')} ₸';
+}
+
+/// Корректировка аналога по элементу сравнения.
+/// [percent] — знак учитывается: -10 = минус 10% (хуже аналог), +5 = плюс 5%.
+class AdjustmentItem {
+  final String name; // 'Местоположение', 'Площадь', 'Этаж', ...
+  final double percent;
+
+  const AdjustmentItem({required this.name, required this.percent});
+
+  factory AdjustmentItem.fromJson(Map<String, dynamic> json) {
+    return AdjustmentItem(
+      name: json['name'] as String? ?? '',
+      percent: (json['percent'] as num?)?.toDouble() ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {'name': name, 'percent': percent};
+
+  String get formattedPercent =>
+      '${percent > 0 ? '+' : ''}${percent.round()}%';
 }
 
 class Recommendation {

@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
@@ -8,6 +6,7 @@ import 'package:pdf/widgets.dart' as pw;
 import '../models/report_template.dart';
 import '../services/cms_signature_parser.dart';
 import '../services/openrouter_service.dart';
+import '../services/supabase_service.dart';
 import '../main.dart';
 
 /// Сервис генерации отчётов об оценке по шаблону GaMa Group.
@@ -60,6 +59,20 @@ class ReportService {
       yearBuilt: data.yearBuilt,
       cadastralNumber: data.cadastralNumber,
       purpose: data.purpose,
+      buildingType: data.buildingType,
+      wallMaterial: data.wallMaterial,
+      buildingCondition: data.buildingCondition,
+      communications: data.communications,
+      livingArea: data.livingArea,
+      kitchenArea: data.kitchenArea,
+      bathroom: data.bathroom,
+      balcony: data.balcony,
+      renovationYear: data.renovationYear,
+      layout: data.layout,
+      vehicleSpecs: data.vehicleSpecs,
+      photoUrls: data.photoUrls,
+      inspectionDate: data.inspectionDate,
+      clientIdDoc: data.clientIdDoc,
       estimatedPrice: data.estimatedPrice,
       priceRangeLow: data.priceRangeLow,
       priceRangeHigh: data.priceRangeHigh,
@@ -83,6 +96,22 @@ class ReportService {
       legalEntityKbe: companyKbe,
       legalEntityPhone: companyPhone,
     );
+  }
+
+  // ============================================
+  // REPORT NUMBER (счётчик G-XXXX в Supabase)
+  // ============================================
+
+  /// Выдать следующий номер отчёта через RPC next_report_number().
+  /// Формат: G-YYYY-NNNN (нумерация продолжается, счётчик в БД).
+  static Future<String> nextReportNumber() async {
+    try {
+      final res = await SupabaseService.rpc('next_report_number');
+      return res as String? ?? 'G-${DateTime.now().year}-0001';
+    } catch (e) {
+      debugPrint('[Report] nextReportNumber error: $e');
+      return 'G-${DateTime.now().year}-0001';
+    }
   }
 
   // ============================================
@@ -129,10 +158,12 @@ class ReportService {
 
   /// Основной конструктор PDF. [preview] = true → «ПРЕДВАРИТЕЛЬНЫЙ» вариант
   /// (водяной знак, без официального заключения и подписи).
+  /// [photos] — байты фотографий объекта (до 10), вставляются в приложение.
   static Future<Uint8List> generatePdf(
     ReportData data, {
     bool preview = false,
     CmsSignatureInfo? signature,
+    List<Uint8List> photos = const [],
   }) async {
     final pdf = pw.Document();
 
@@ -141,62 +172,90 @@ class ReportService {
     final font = pw.Font.ttf(fontData);
     final fontBold = pw.Font.ttf(fontBoldData);
 
-    pdf.addPage(
-      pw.MultiPage(
-        pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(40),
-        header: (context) => _buildHeader(data, font, fontBold),
-        footer: (context) => _buildFooter(context, data, font, fontBold),
-        build: (context) => [
-          if (preview)
-            _buildPreviewBanner(data, font, fontBold)
-          else
-            _buildTitlePage(data, font, fontBold),
-          _buildSection(
-            title: 'СОДЕРЖАНИЕ',
-            children: _buildTableOfContents(data, font, fontBold),
-            font: font,
-            fontBold: fontBold,
-          ),
-          _buildSection(
-            title: 'РАЗДЕЛ 1. ОБЩИЕ СВЕДЕНИЯ ОБ ОТЧЕТЕ',
-            children: _buildGeneralInfo(data, font, fontBold),
-            font: font,
-            fontBold: fontBold,
-          ),
-          _buildSection(
-            title: 'РАЗДЕЛ 2. ОПИСАНИЕ ОБЪЕКТА ОЦЕНКИ',
-            children: _buildObjectDescription(data, font, fontBold),
-            font: font,
-            fontBold: fontBold,
-          ),
-          _buildSection(
-            title: 'РАЗДЕЛ 3. РАСЧЕТНАЯ ЧАСТЬ ОТЧЕТА',
-            children: _buildCalculation(data, font, fontBold),
-            font: font,
-            fontBold: fontBold,
-          ),
-          if (!preview)
-            _buildSection(
-              title: 'РАЗДЕЛ 4. ЗАКЛЮЧИТЕЛЬНАЯ ЧАСТЬ ОТЧЕТА',
-              children: _buildConclusion(data, font, fontBold),
-              font: font,
-              fontBold: fontBold,
-            ),
-          if (!preview)
-            _buildSection(
-              title: 'ПРИЛОЖЕНИЯ К ОТЧЕТУ ОБ ОЦЕНКЕ',
-              children: _buildAppendices(data, font, fontBold),
-              font: font,
-              fontBold: fontBold,
-            ),
-          if (signature != null) _buildSignatureSheet(data, signature, font, fontBold),
-        ],
+    pw.MultiPage page(List<pw.Widget> children) => pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(40),
+          header: (context) => _buildHeader(data, font, fontBold),
+          footer: (context) => _buildFooter(context, data, font, fontBold),
+          build: (context) => children,
+        );
+
+    // 1. Титульный лист (или предварительный баннер)
+    pdf.addPage(page([
+      if (preview)
+        _buildPreviewBanner(data, font, fontBold)
+      else
+        _buildTitlePage(data, font, fontBold),
+    ]));
+
+    // 2. Содержание
+    pdf.addPage(page([
+      _buildSection(
+        title: 'СОДЕРЖАНИЕ',
+        children: _buildTableOfContents(data, font, fontBold),
+        font: font,
+        fontBold: fontBold,
       ),
-    );
+    ]));
+
+    // 3. Раздел 1. Общие сведения (основание, задание, оценщик, допущения,
+    //    документы, термины) — 3–5 страниц
+    pdf.addPage(page([
+      _buildSection(
+        title: 'РАЗДЕЛ 1. ОБЩИЕ СВЕДЕНИЯ ОБ ОТЧЕТЕ',
+        children: _buildGeneralInfo(data, font, fontBold),
+        font: font,
+        fontBold: fontBold,
+      ),
+    ]));
+
+    // 4. Раздел 2. Описание объекта оценки (таблицы характеристик)
+    pdf.addPage(page([
+      _buildSection(
+        title: 'РАЗДЕЛ 2. ОПИСАНИЕ ОБЪЕКТА ОЦЕНКИ',
+        children: _buildObjectDescription(data, font, fontBold),
+        font: font,
+        fontBold: fontBold,
+      ),
+    ]));
+
+    // 5. Раздел 3. Расчетная часть (методология + аналоги + расчет)
+    pdf.addPage(page([
+      _buildSection(
+        title: 'РАЗДЕЛ 3. РАСЧЕТНАЯ ЧАСТЬ ОТЧЕТА',
+        children: _buildCalculation(data, font, fontBold),
+        font: font,
+        fontBold: fontBold,
+      ),
+    ]));
+
+    if (!preview) {
+      // 6. Раздел 4. Заключительная часть (итоговая стоимость, подпись)
+      pdf.addPage(page([
+        _buildSection(
+          title: 'РАЗДЕЛ 4. ЗАКЛЮЧИТЕЛЬНАЯ ЧАСТЬ ОТЧЕТА',
+          children: _buildConclusion(data, font, fontBold),
+          font: font,
+          fontBold: fontBold,
+        ),
+      ]));
+      // 7. Приложения (акт осмотра, аналоги, фото, документы)
+      pdf.addPage(page([
+        _buildSection(
+          title: 'ПРИЛОЖЕНИЯ К ОТЧЕТУ ОБ ОЦЕНКЕ',
+          children: _buildAppendices(data, font, fontBold, photos: photos),
+          font: font,
+          fontBold: fontBold,
+        ),
+      ]));
+    }
+
+    if (signature != null) {
+      pdf.addPage(page([_buildSignatureSheet(data, signature, font, fontBold)]));
+    }
 
     final bytes = await pdf.save();
-    debugPrint('[Report] PDF generated: ${bytes.length} bytes (preview=$preview)');
+    debugPrint('[Report] PDF generated: ${bytes.length} bytes (preview=$preview, photos=${photos.length})');
     return bytes;
   }
 
@@ -276,6 +335,7 @@ class ReportService {
   }
 
   static pw.Widget _buildTitlePage(ReportData data, pw.Font font, pw.Font fontBold) {
+    final isCar = _isCar(data.propertyType);
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.center,
       children: [
@@ -311,7 +371,7 @@ class ReportService {
         ),
         pw.SizedBox(height: 8),
         pw.Text(
-          'об оценке недвижимого имущества',
+          isCar ? 'об оценке движимого имущества' : 'об оценке недвижимого имущества',
           style: pw.TextStyle(font: font, fontSize: 14),
         ),
         pw.SizedBox(height: 30),
@@ -324,6 +384,7 @@ class ReportService {
         _kv('Вид определяемой стоимости', 'Рыночная', font, fontBold),
         _kv('Заказчик отчета', data.clientName, font, fontBold),
         _kv(data.clientIsOrg ? 'БИН' : 'ИИН', data.clientIin, font, fontBold),
+        if (data.clientIdDoc.isNotEmpty) _kv('Удостоверение', data.clientIdDoc, font, fontBold),
         pw.SizedBox(height: 10),
         pw.Divider(color: PdfColors.grey300),
         pw.SizedBox(height: 10),
@@ -408,7 +469,7 @@ class ReportService {
       ..._assumptions(font, fontBold),
       pw.SizedBox(height: 14),
       _subTitle('1.5. Перечень документов', font, fontBold),
-      ..._documents(font),
+      ..._documents(font, fontBold),
       pw.SizedBox(height: 14),
       _subTitle('1.6. Основные термины и определения', font, fontBold),
       ..._terms(font),
@@ -417,86 +478,262 @@ class ReportService {
 
   static List<pw.Widget> _assumptions(pw.Font font, pw.Font fontBold) {
     return [
+      pw.Text(
+        'Исходя из нижеследующей трактовки и договоренности, настоящие условия подразумевают их '
+        'полное и однозначное понимание заказчиком и оценщиком, а также факт того, что все '
+        'положения, результаты переговоров и заявления, не оговоренные в тексте отчета, теряют '
+        'силу. Настоящие условия не могут быть изменены или преобразованы иным образом, кроме '
+        'как за подписью заказчика и оценщика. Заказчик должен и в дальнейшем соблюдать '
+        'настоящие условия даже в случае, если право собственности на объект недвижимости '
+        'полностью или частично перейдет к другому лицу.',
+        style: pw.TextStyle(font: font, fontSize: 11, height: 1.45),
+      ),
+      pw.SizedBox(height: 10),
       _numItem('1', 'Приведенные в отчете анализ, мнения, заключения и полученные выводы являются нашими персональными, непредвзятыми, профессиональным анализом, мнениями и выводами.', font),
       _numItem('2', 'Нами осмотрен объект оценки, являющийся предметом данного отчета. Факты, изложенные в отчете, верны и соответствуют действительности.', font),
       _numItem('3', 'Настоящая оценка произведена в соответствии и на условиях, определенных Стандартами, утвержденными Приказом Министра финансов Республики Казахстан от 5 мая 2018 года № 519 (с изменениями и дополнениями от 23 августа 2022 г.).', font),
       _numItem('4', 'Оценщик не имеет ни настоящей, ни ожидаемой заинтересованности в оцениваемом имуществе и действует не предвзято и без предубеждения по отношению к участвующим сторонам.', font),
       _numItem('5', 'Вознаграждение оценщика не зависит от итоговой оценки стоимости, а также тех событий, которые могут наступить в результате использования заказчиком или третьими сторонами выводов и заключений, содержащихся в данном отчете.', font),
-      _numItem('6', 'Оценщик не принимает на себя ответственность по вопросам юридического характера, воздействующего на оцениваемое имущество или титул собственности на него, и не выносит суждения относительно этого титула.', font),
-      _numItem('7', 'От оценщика не требуется давать свидетельство или появляться в суде в связи с данным отчетом, кроме как на основании отдельного договора.', font),
-      _numItem('8', 'Итоговая величина стоимости объекта оценки, указанная в отчете, признается рекомендуемой для целей совершения сделки, если от даты составления отчета до даты сделки прошло не более шести месяцев.', font),
+      _numItem('6', 'Предъявив выше сертификат оценки имущества в зависимости от выполнения исследующих условий, а также тех особых и ограничительных, которые были упомянуты оценщиком в настоящем отчете.', font),
+      _numItem('7', 'Оценщик не принимает на себя ответственность по вопросам юридического характера, воздействующего на оцениваемое имущество или титул собственности на него, таким образом, оценщик не выносит никакого суждения относительно этого титула, который рассматривается как полноценный и свободный от каких-либо претензий, уступок или ограничений, помимо оговоренных выше.', font),
+      _numItem('8', 'От оценщика не требуется давать свидетельство или появляться в суде вследствие проведенной оценки данной собственности, кроме как на основании отдельного Договора с Заказчиком и официального вызова суда.', font),
+      _numItem('9', 'При проведении оценки Оценщик предполагает отсутствие каких-либо скрытых факторов, оказывающих влияние на собственность, порчу или сооружение.', font),
+      _numItem('10', 'В своей работе Оценщик исходит из того, что представленная информация является точной и правдивой, и не проводил ее проверки. За основу в расчетах Оценщиками принимаются технические данные (площадь, объем, высота и т.д.), указанные в правоустанавливающих документах.', font),
+      _numItem('11', 'Ни Заказчик, ни Оценщик не могут использовать Отчет иначе, чем это предусмотрено Договором об оценке.', font),
+      _numItem('12', 'Отчет об оценке содержит профессиональное мнение оценщика относительно стоимости оцениваемого имущества и не является гарантией того, что это имущество будет реализовано по цене, указанной в Отчете.', font),
+      _numItem('13', 'Мнение оценщика относительно рыночной стоимости объекта действительно только на дату оценки. Оценщик не принимает на себя никакой ответственности за изменение экономических, юридических и иных факторов, которые могут возникнуть после этой даты и повлиять на рыночную ситуацию, и, следовательно, на рыночную стоимость объекта.', font),
+      _numItem('14', 'Публикация отчета об оценке целиком, частями или отдельных ссылок на отчет, данных, содержащихся в Отчете, имени и профессиональной принадлежности оценщика запрещается без его письменного согласия.', font),
+      pw.SizedBox(height: 10),
+      _subTitle('Стандарты и сертификаты качества оценки', font, fontBold),
+      _bullet('Факты, изложенные в Отчете об оценке, верны и соответствуют действительности;', font),
+      _bullet('Содержащиеся в Отчете об оценке анализ, мнения и заключения принадлежат самим Оценщикам и действительны строго в пределах ограничительных условий и допущений, являющихся частью отчета;', font),
+      _bullet('Ни Компания, ни Оценщики не имеют, ни настоящей, ни ожидаемой заинтересованности в оцениваемом имуществе и действуют непредвзято и без предубеждения по отношению к участвующим сторонам;', font),
+      _bullet('Вознаграждение Оценщиков не зависит от итоговой величины стоимости, а также тех событий, которые могут наступить в результате использования Заказчиком или третьими сторонами выводов и заключений, содержащихся в Отчете;', font),
+      _bullet('Оценка была проведена, а Отчет составлен в соответствии с Кодексом этики и Стандартами оценки, утвержденными в Республике Казахстан.', font),
     ];
   }
 
-  static List<pw.Widget> _documents(pw.Font font) {
+  static List<pw.Widget> _documents(pw.Font font, pw.Font fontBold) {
     return [
-      _numItem('1', 'Закон РК «Об оценочной деятельности в Республике Казахстан» от 10 января 2018 года', font),
-      _numItem('2', 'Приказ Министра финансов РК №519 от 05 мая 2018 года «Об утверждении стандартов оценки»', font),
-      _numItem('3', 'Стандарт «Оценка стоимости недвижимого имущества» (утвержден приказом Министра финансов РК)', font),
-      _numItem('4', 'Стандарт «Виды стоимости» (утвержден приказом Заместителя Премьер-Министра - Министра финансов РК)', font),
-      _numItem('5', 'Международные Стандарты Оценки МСО 2025', font),
+      _subTitle('1.5.1. Нормативные и правовые акты, используемые для оценки', font, fontBold),
+      _numItem('1', 'Закон РК «Об оценочной деятельности в Республике Казахстан» от 10 января 2018 года №133-VI ЗРК.', font),
+      _numItem('2', 'Приказ Министра финансов РК №519 от 05 мая 2018 года «Об утверждении стандартов оценки».', font),
+      _numItem('3', '«Требования к форме и содержанию отчета об оценке», утвержденные приказом Министра финансов РК 3 мая 2018 года № 501 с изменениями и дополнениями в редакции приказа Заместителя Премьер-Министра - Министра финансов РК №772 от 01.08.2022.', font),
+      _numItem('4', 'Приказ Заместителя Премьер-Министра финансов РК №876 от 23 августа 2022 года «Об утверждении стандартов оценки».', font),
+      _numItem('5', 'Приказ Министра финансов РК №227 от 22 апреля 2024 года «О внесении изменений в приказ Министра финансов Республики Казахстан от 5 мая 2018 года № 519 «Об утверждении стандартов оценки».', font),
+      _subTitle('1.5.2. Стандарты оценки и прочие нормативные акты', font, fontBold),
+      _numItem('1', 'Приказ Министра финансов Республики Казахстан от 3 мая 2018 года № 501 «Требования к форме и содержанию отчета об оценке»; приказ заместителя Премьер-Министра - Министра финансов Республики Казахстан № 772 от 01.08.2022 г. «О внесении изменений».', font),
+      _numItem('2', 'Приказ Министра финансов Республики Казахстан от 5 мая 2018 года № 519, зарегистрирован в Министерстве юстиции Республики Казахстан 31 мая 2018 года №16971; приказ Министра финансов Республики Казахстан № 227 от 22.04.2024 г. «О внесении изменений».', font),
+      _numItem('3', 'Стандарт «Оценка стоимости движимого имущества» (утвержден приказом Министра финансов РК 5 мая 2018 года №519 Приложение 1, с изменениями в редакции приказа №876 от 23.08.2022 года и приказа №227 от 22.04.2024 года).', font),
+      _numItem('4', 'Стандарт «Оценка стоимости недвижимого имущества» (утвержден приказом Министра финансов РК 5 мая 2018 года №519 Приложение 1, с изменениями в редакции приказа №876 от 23.08.2022 года и приказа №227 от 22.04.2024 года).', font),
+      _numItem('5', 'Стандарт «Виды стоимости» (утвержден приказом Заместителя Премьер-Министра - Министра финансов РК №876 от 23.08.2022г).', font),
+      _numItem('6', 'Стандарт «Оценка стоимости объектов интеллектуальной собственности и нематериальных активов» (утвержден приказом Министра финансов РК 5 мая 2018 года №519 Приложение 4, с изменениями в редакции приказа №227 от 22.04.2024 года).', font),
+      _numItem('7', 'Международные Стандарты Оценки МСО 2025; Типовой кодекс деловой и профессиональной этики оценщиков, утвержденный приказом Министра финансов Республики Казахстан №487 от 26 апреля 2018 года.', font),
+      _subTitle('1.5.3. Перечень документов, используемых оценщиком и устанавливающих количественные и качественные характеристики объекта оценки', font, fontBold),
+      pw.Text(
+        'Оценка была произведена на основании следующих правоустанавливающих, технических и иных документов (ксерокопий), предоставленных Заказчиком:',
+        style: pw.TextStyle(font: font, fontSize: 11, height: 1.45),
+      ),
+      _bullet('Документ, удостоверяющий личность Заказчика;', font),
+      _bullet('Правоустанавливающие документы на объект оценки (договор купли-продажи, акт приема-передачи);', font),
+      _bullet('Технический паспорт / техническая документация на объект оценки;', font),
+      _bullet('Справка о зарегистрированных правах (обременениях) на недвижимое имущество и его технических характеристиках.', font),
+      _subTitle('1.5.4. Перечень данных, использованных при проведении оценки, с указанием источника их получения', font, fontBold),
+      _bullet('Справочник оценщика / Под редакцией Шуленбаевой Г.Р., Яковлевой О.Н., Гузевой Е.Б. Алматы: ПО «Столичная палата профессиональных оценщиков»;', font),
+      _bullet('Данные Агентства Республики Казахстан по статистике (www.stat.gov.kz);', font),
+      _bullet('Данные сайтов: www.krisha.kz, www.olx.kz (анализ рынка предложений);', font),
+      _bullet('Кодекс Этики оценщика;', font),
+      _bullet('Справочная литература по оценке (Зимин А.И. «Оценка имущества», Иванова Е.Н. «Оценка стоимости недвижимости», Горемыкин В.А. «Экономика недвижимости» и др.).', font),
     ];
   }
 
   static List<pw.Widget> _terms(pw.Font font) {
     return [
+      _term('оценка', ' - определение возможной рыночной или иной стоимости объекта оценки в соответствии с законодательством Республики Казахстан;', font),
+      _term('подход к оценке', ' - способ определения возможной рыночной или иной стоимости объекта оценки с использованием одного или нескольких методов оценки;', font),
+      _term('метод оценки', ' - совокупность действий юридического, финансово-экономического и организационно-технического характера, совершаемых при оценке;', font),
+      _term('дата оценки', ' - день или период времени, на который определяется возможная рыночная или иная стоимость объекта оценки;', font),
+      _term('стандарт оценки', ' - нормативный правовой акт, разрабатываемый и утверждаемый уполномоченным органом в области оценочной деятельности, в котором устанавливаются единые для субъектов оценочной деятельности требования к определению рыночной или иной стоимости объекта оценки;', font),
+      _term('отчет об оценке', ' - письменный документ, составленный в соответствии с законодательством Республики Казахстан об оценочной деятельности по результатам проведенной оценки;', font),
+      _term('оценщик', ' - физическое лицо, осуществляющее профессиональную деятельность на основании свидетельства о присвоении квалификации «оценщик», выданного палатой оценщиков, и являющееся членом одной из палат оценщиков;', font),
+      _term('свидетельство о присвоении квалификации «оценщик»', ' - документ, подтверждающий соответствие лица требованиям к владению специальными теоретическими знаниями, практическими умениями, навыками и опытом работы;', font),
+      _term('палата оценщиков', ' – саморегулируемая организация в сфере профессиональной деятельности, созданная в целях осуществления контроля качества оценочной деятельности ее членов, защиты прав и законных интересов оценщиков;', font),
       _term('рыночная стоимость', ' - расчетная денежная сумма, за которую состоялся бы обмен актива на дату оценки между заинтересованным лицом и продавцом в результате коммерческой сделки после проведения надлежащего маркетинга, при которой каждая из сторон действовала бы будучи хорошо осведомленной, расчетливо и без принуждения;', font),
-      _term('недвижимое имущество (недвижимость)', ' – земельные участки, здания, сооружения и иное имущество, прочно связанное с землей, то есть объекты, перемещение которых без несоразмерного ущерба их назначению невозможно;', font),
+      _term('иная стоимость', ' - иная, кроме рыночной, стоимость объекта оценки, виды которой устанавливаются стандартами оценки;', font),
       _term('заказчик', ' - физическое и (или) юридическое лицо, заключившее договор на проведение оценки;', font),
-      _term('оценщик', ' - физическое лицо, являющееся членом палаты оценщиков и осуществляющее оценочную деятельность;', font),
-      _term('отчет об оценке', ' - документ, содержащий профессиональное суждение оценщика об итоговой величине стоимости объекта оценки.', font),
+      _term('третьи лица', ' - лица, не входящие в число оценщиков, экспертов и заказчиков, имеющие определенное отношение к объекту оценки, оценочной деятельности;', font),
+      _term('международные стандарты оценки', ' - стандарты оценки, принятые Международным советом по стандартам оценки;', font),
+      _term('недвижимое имущество (недвижимость)', ' – земельные участки, здания, сооружения и иное имущество, прочно связанное с землей, то есть объекты, перемещение которых без несоразмерного ущерба их назначению невозможно;', font),
+      _term('сопоставимые данные', ' – данные, используемые в оценочном анализе для получения расчетных величин стоимости, получаемые на основе анализа данных аналогов, оцениваемому объекту: цены продаж, арендная плата, доходы и расходы, ставки капитализации и дисконтирования, полученные из рыночных данных и другие;', font),
+      _term('элементы сравнения', ' – конкретные характеристики объектов имущества и сделок, которые приводят к вариациям в ценах, уплачиваемых за недвижимость. Элементы сравнения включают виды передаваемых имущественных прав, условия продажи, условия рынка, физические и экономические характеристики, использование, компоненты продажи и другие.', font),
     ];
   }
 
   static List<pw.Widget> _buildObjectDescription(ReportData data, pw.Font font, pw.Font fontBold) {
+    if (_isCar(data.propertyType)) return _buildCarDescription(data, font, fontBold);
     return [
       _subTitle('2.1. Дата осмотра объекта оценки', font, fontBold),
-      _kv('Дата осмотра', data.appraisalDate, font, fontBold),
+      _kv('Дата осмотра', _or(data.inspectionDate, data.appraisalDate), font, fontBold),
       pw.SizedBox(height: 14),
-      _subTitle('2.2. Состав, основные характеристики и состояние объекта', font, fontBold),
-      _kv('Тип объекта', data.propertyType, font, fontBold),
-      _kv('Адрес', data.address, font, fontBold),
-      _kv('Общая площадь', '${data.area} м²', font, fontBold),
-      if (data.rooms > 0) _kv('Комнат', '${data.rooms}', font, fontBold),
-      if (data.floor > 0)
-        _kv('Этаж', '${data.floor} / ${data.totalFloors}', font, fontBold),
-      if (data.yearBuilt > 0) _kv('Год постройки', '${data.yearBuilt}', font, fontBold),
-      _kv('Состояние', data.condition, font, fontBold),
-      if (data.cadastralNumber.isNotEmpty)
-        _kv('Кадастровый номер', data.cadastralNumber, font, fontBold),
-      if (data.purpose.isNotEmpty) _kv('Назначение', data.purpose, font, fontBold),
-      pw.SizedBox(height: 14),
-      _subTitle('2.3. Описание местоположения объекта', font, fontBold),
+      _subTitle('2.2. Состав, основные характеристики, назначение, текущее использование и состояние объекта оценки', font, fontBold),
       pw.Text(
-        'Адрес объекта оценки: ${data.address}',
-        style: pw.TextStyle(font: font, fontSize: 10),
+        '${_or(data.propertyType, 'Объект недвижимости')}, общей площадью ${_fmtArea(data.area)} кв.м., '
+        'расположенный по адресу: ${data.address}.',
+        style: pw.TextStyle(font: font, fontSize: 11, height: 1.45),
+      ),
+      pw.SizedBox(height: 12),
+      _subTitle('Таблица 1. Техническая характеристика объекта оценки', font, fontBold),
+      pw.TableHelper.fromTextArray(
+        headerStyle: pw.TextStyle(font: fontBold, fontSize: 9),
+        cellStyle: pw.TextStyle(font: font, fontSize: 10),
+        headerDecoration: const pw.BoxDecoration(color: PdfColors.grey100),
+        cellAlignment: pw.Alignment.centerLeft,
+        cellPadding: const pw.EdgeInsets.all(4),
+        headers: ['Характеристика', 'Значение'],
+        data: [
+          ['Тип объекта', _or(data.propertyType, '—')],
+          ['Адрес', _or(data.address, '—')],
+          ['Общая площадь, кв.м.', _fmtArea(data.area)],
+          if (data.livingArea.isNotEmpty) ['Жилая площадь, кв.м.', data.livingArea],
+          if (data.kitchenArea.isNotEmpty) ['Площадь кухни, кв.м.', data.kitchenArea],
+          if (data.rooms > 0) ['Количество комнат', '${data.rooms}'],
+          if (data.floor > 0) ['Этаж / этажность', '${data.floor} / ${data.totalFloors}'],
+          if (data.yearBuilt > 0) ['Год постройки', '${data.yearBuilt}'],
+          if (data.buildingType.isNotEmpty) ['Тип здания', data.buildingType],
+          if (data.wallMaterial.isNotEmpty) ['Материал стен', data.wallMaterial],
+          if (data.buildingCondition.isNotEmpty) ['Техническое состояние здания', data.buildingCondition],
+          if (data.communications.isNotEmpty) ['Коммуникации', data.communications],
+          if (data.bathroom.isNotEmpty) ['Санузел', data.bathroom],
+          if (data.balcony.isNotEmpty) ['Балкон / лоджия', data.balcony],
+          if (data.renovationYear.isNotEmpty) ['Год ремонта', data.renovationYear],
+          if (data.layout.isNotEmpty) ['Планировка', data.layout],
+          ['Состояние объекта', _or(data.condition, '—')],
+          if (data.cadastralNumber.isNotEmpty) ['Кадастровый номер', data.cadastralNumber],
+          if (data.purpose.isNotEmpty) ['Назначение', data.purpose],
+        ],
+      ),
+      pw.SizedBox(height: 14),
+      _subTitle('2.3. Анализ рынка объекта оценки', font, fontBold),
+      pw.Text(
+        'Анализ рынка выполнен на основании данных открытых источников: порталов '
+        'недвижимости (krisha.kz, olx.kz), данных Агентства РК по статистике и '
+        'аналитических обзоров рынка недвижимости. Рынок ${data.propertyType.toLowerCase()} '
+        'в г. Алматы характеризуется устойчивым спросом, ликвидность объекта '
+        'оценивается как средняя. Ценовой диапазон предложений по аналогичным объектам '
+        'составляет от ${data.formattedPriceRangeLow} до ${data.formattedPriceRangeHigh} тенге. '
+        'Срок экспозиции типового объекта данного сегмента — от 1 до 3 месяцев.',
+        style: pw.TextStyle(font: font, fontSize: 11, height: 1.45),
+      ),
+      pw.SizedBox(height: 10),
+      _subTitle('2.4. Анализ наиболее эффективного использования', font, fontBold),
+      pw.Text(
+        'Наиболее эффективным использованием объекта оценки является его текущее '
+        'использование по назначению — ${_or(data.purpose, 'проживание')}. Данный вариант '
+        'использования соответствует сложившейся застройке района, обеспечивает '
+        'максимальную доходность при минимальных затратах на адаптацию и не '
+        'противоречит градостроительным регламентам.',
+        style: pw.TextStyle(font: font, fontSize: 11, height: 1.45),
+      ),
+      pw.SizedBox(height: 14),
+      _subTitle('2.5. Имущественные права, обременения и физические характеристики', font, fontBold),
+      pw.Text(
+        'Адрес объекта оценки: ${data.address}.',
+        style: pw.TextStyle(font: font, fontSize: 11, height: 1.45),
       ),
       pw.SizedBox(height: 6),
       pw.Text(
-        'Объект расположен в сложившейся застройке, окружение типичное, '
-        'подъездные пути в хорошем состоянии, обеспечен общественным транспортом.',
-        style: pw.TextStyle(font: font, fontSize: 10),
+        'Объект расположен в сложившейся застройке, окружение типичное, подъездные пути в '
+        'хорошем состоянии, обеспечен общественным транспортом. Развитие инфраструктуры '
+        'района соответствует уровню застройки; в непосредственной близости расположены '
+        'объекты социальной и коммерческой инфраструктуры.',
+        style: pw.TextStyle(font: font, fontSize: 11, height: 1.45),
+      ),
+      pw.SizedBox(height: 14),
+      _subTitle('2.4. Имущественные права, обременения и физические характеристики', font, fontBold),
+      pw.Text(
+        'Оцениваемое право — право собственности. Объект оценки свободен от каких-либо '
+        'обременений и ограничений, что подтверждено документально (при наличии '
+        'предоставленных документов). Физическое состояние объекта оценено на основании '
+        'визуального осмотра и предоставленной документации.',
+        style: pw.TextStyle(font: font, fontSize: 11, height: 1.45),
+      ),
+    ];
+  }
+
+  static List<pw.Widget> _buildCarDescription(ReportData data, pw.Font font, pw.Font fontBold) {
+    final s = data.vehicleSpecs;
+    String v(String k) => s[k]?.trim().isNotEmpty == true ? s[k]!.trim() : '—';
+    return [
+      _subTitle('2.1. Дата осмотра объекта оценки', font, fontBold),
+      _kv('Дата осмотра', _or(data.inspectionDate, data.appraisalDate), font, fontBold),
+      pw.SizedBox(height: 14),
+      _subTitle('2.2. Состав, основные характеристики, назначение, текущее использование и состояние объекта оценки', font, fontBold),
+      pw.Text(
+        'Автомобиль ${v('make')} ${v('model')}, ${v('year')} года выпуска, '
+        'идентификационный номер (VIN) ${v('vin')}.',
+        style: pw.TextStyle(font: font, fontSize: 11, height: 1.45),
+      ),
+      pw.SizedBox(height: 12),
+      _subTitle('Таблица 1. Техническая характеристика объекта оценки', font, fontBold),
+      pw.TableHelper.fromTextArray(
+        headerStyle: pw.TextStyle(font: fontBold, fontSize: 9),
+        cellStyle: pw.TextStyle(font: font, fontSize: 10),
+        headerDecoration: const pw.BoxDecoration(color: PdfColors.grey100),
+        cellAlignment: pw.Alignment.centerLeft,
+        cellPadding: const pw.EdgeInsets.all(4),
+        headers: ['Характеристика', 'Значение'],
+        data: [
+          ['Марка', v('make')],
+          ['Модель', v('model')],
+          ['Год выпуска', v('year')],
+          ['VIN', v('vin')],
+          ['Государственный номер', v('plate')],
+          ['Пробег, км', v('mileage')],
+          ['Кузов', v('body')],
+          ['Двигатель', v('engine')],
+          ['Коробка передач', v('transmission')],
+          ['Привод', v('drive')],
+          ['Цвет', v('color')],
+          ['Состояние', _or(data.condition, '—')],
+        ],
+      ),
+      pw.SizedBox(height: 14),
+      _subTitle('2.3. Описание объекта оценки', font, fontBold),
+      pw.Text(
+        'Транспортное средство находится в ${_or(data.condition, 'удовлетворительном')} '
+        'техническом состоянии. Сведения о пробеге и комплектации указаны на основании '
+        'предоставленной документации и визуального осмотра.',
+        style: pw.TextStyle(font: font, fontSize: 11, height: 1.45),
       ),
     ];
   }
 
   static List<pw.Widget> _buildCalculation(ReportData data, pw.Font font, pw.Font fontBold) {
     return [
-      _subTitle('3.1. Методология оценки и обоснование выбора подходов', font, fontBold),
+      _subTitle('3.1. Методология оценки и обоснование выбора подходов и методов, примененных в данном отчете', font, fontBold),
       pw.Text(
-        'При определении рыночной стоимости объекта оценки применялись следующие подходы:',
-        style: pw.TextStyle(font: font, fontSize: 10),
+        'Установление рыночной или иной стоимости производится путем применения методов '
+        'оценки, сгруппированных в доходный, затратный и сравнительный подходы.',
+        style: pw.TextStyle(font: font, fontSize: 11, height: 1.45),
       ),
       pw.SizedBox(height: 8),
-      _numItem('1', 'Затратный подход — оценка стоимости на основе затрат на воспроизводство или замещение объекта с учетом износа.', font),
-      _numItem('2', 'Сравнительный подход — оценка на основе анализа цен сделок или предложений по аналогичным объектам с внесением корректировок.', font),
-      _numItem('3', 'Доходный подход — оценка на основе ожидаемых доходов от объекта.', font),
+      _numItem('1', 'Доходный подход применяется при оценке объектов недвижимости, которые покупаются и продаются в связи с их способностью приносить доходы.', font),
+      _bullet('метод дисконтирования денежных потоков (метод дисконтированного наличного потока) – определение стоимости исходя из условий изменения и неравномерного поступления денежных потоков в зависимости от степени риска, связанного с использованием объекта;', font),
+      _bullet('метод прямой капитализации дохода – определение стоимости объекта путем деления соответствующего рынку годового чистого операционного дохода на коэффициент капитализации, полученный на основе анализа рыночных данных о соотношениях дохода к стоимости активов, аналогичных оцениваемому;', font),
+      _numItem('2', 'Затратный подход применяется для проведения оценки недвижимого имущества, рынок купли-продажи или аренды которого является ограниченным.', font),
+      _bullet('Применение затратного подхода состоит в определении остаточной стоимости воспроизводства (замещения) объекта оценки, которая состоит из остаточной стоимости воспроизводства (замещения) земельных улучшений и рыночной стоимости земельного участка;', font),
+      _bullet('Стоимость полного воспроизводства, как правило, определяется при оценке объекта, замещение которого невозможно, а также в случае соответствия существующего использования объекта оценки его наиболее эффективному использованию;', font),
+      _numItem('3', 'Сравнительный подход применяется для определения рыночной стоимости объекта оценки путем сравнения с объектами-аналогами, по которым имеется достаточная и достоверная информация о ценах сделок или предложений.', font),
+      _bullet('Основой применения сравнительного подхода является тот факт, что стоимость объекта оценки напрямую связана с ценой продажи аналогичных объектов;', font),
+      _bullet('При этом вносятся корректировки на различия между объектом оценки и аналогами (дата предложения, местоположение, площадь, состояние, этаж и другие характеристики);', font),
       pw.SizedBox(height: 8),
       pw.Text(
         'Для ${data.propertyType.toLowerCase()} наиболее объективные результаты даёт '
         'сравнительный подход, который в силу хорошо развитой системы информационного '
-        'обеспечения рынка применяется как основной.',
-        style: pw.TextStyle(font: font, fontSize: 10),
+        'обеспечения рынка применяется как основной. Затратный подход применяется как '
+        'дополнительный, доходный подход в данном случае не применяется ввиду отсутствия '
+        'достоверной информации о доходах, приносимых объектом.',
+        style: pw.TextStyle(font: font, fontSize: 11, height: 1.45),
       ),
       pw.SizedBox(height: 14),
       _subTitle('3.2. Описание процесса оценки и расчеты', font, fontBold),
@@ -509,12 +746,11 @@ class ReportService {
       pw.SizedBox(height: 14),
       _subTitle('3.3. Расчет рыночной стоимости', font, fontBold),
       pw.Text(
-        'Для определения стоимости методом сравнительного анализа используется '
-        'следующая последовательность: исследование рынка, сбор информации о сделках '
-        'или предложениях по объектам-аналогам, проверка надежности информации, выбор '
-        'не менее трех типичных аналогов, внесение корректировок по элементам сравнения, '
-        'расчет скорректированных цен.',
-        style: pw.TextStyle(font: font, fontSize: 10),
+        'Для определения стоимости методом сравнительного анализа используется следующая '
+        'последовательность: исследование рынка, сбор информации о сделках или предложениях '
+        'по объектам-аналогам, проверка надежности информации, выбор не менее трех типичных '
+        'аналогов, внесение корректировок по элементам сравнения, расчет скорректированных цен.',
+        style: pw.TextStyle(font: font, fontSize: 11, height: 1.45),
       ),
       pw.SizedBox(height: 10),
       if (data.comparables.isNotEmpty) _buildComparablesTable(data, font, fontBold),
@@ -545,24 +781,37 @@ class ReportService {
   }
 
   static pw.Widget _buildComparablesTable(ReportData data, pw.Font font, pw.Font fontBold) {
-    return pw.TableHelper.fromTextArray(
-      headerStyle: pw.TextStyle(font: fontBold, fontSize: 9),
-      cellStyle: pw.TextStyle(font: font, fontSize: 9),
-      headerDecoration: const pw.BoxDecoration(color: PdfColors.grey100),
-      cellAlignment: pw.Alignment.centerLeft,
-      headerAlignments: {
-        0: pw.Alignment.centerLeft,
-        1: pw.Alignment.centerRight,
-        2: pw.Alignment.centerRight,
-        3: pw.Alignment.centerLeft,
-      },
-      headers: ['Адрес', 'Площадь', 'Цена', 'Источник'],
-      data: data.comparables.map((c) => [
+    // Собираем уникальные элементы сравнения из всех аналогов
+    final elements = <String>[];
+    for (final c in data.comparables) {
+      for (final a in c.adjustments) {
+        if (!elements.contains(a.name)) elements.add(a.name);
+      }
+    }
+    if (elements.isEmpty) elements.addAll(['Местоположение', 'Площадь', 'Состояние']);
+
+    final headers = ['Адрес', 'Площадь', 'Цена', ...elements, 'Скорр. цена'];
+    final rows = data.comparables.map((c) {
+      final byName = {for (final a in c.adjustments) a.name: a.formattedPercent};
+      return [
         c.address,
         '${c.area} м²',
         c.formattedPrice,
-        c.source,
-      ]).toList(),
+        ...elements.map((e) => byName[e] ?? '0%'),
+        c.adjustedPrice > 0
+            ? '${c.adjustedPrice.toStringAsFixed(0)} ₸'
+            : c.formattedPrice,
+      ];
+    }).toList();
+
+    return pw.TableHelper.fromTextArray(
+      headerStyle: pw.TextStyle(font: fontBold, fontSize: 8),
+      cellStyle: pw.TextStyle(font: font, fontSize: 8),
+      headerDecoration: const pw.BoxDecoration(color: PdfColors.grey100),
+      cellAlignment: pw.Alignment.centerLeft,
+      headerAlignments: {for (var i = 0; i < headers.length; i++) i: pw.Alignment.centerLeft},
+      headers: headers,
+      data: rows,
     );
   }
 
@@ -639,16 +888,73 @@ class ReportService {
     ];
   }
 
-  static List<pw.Widget> _buildAppendices(ReportData data, pw.Font font, pw.Font fontBold) {
+  static List<pw.Widget> _buildAppendices(
+    ReportData data,
+    pw.Font font,
+    pw.Font fontBold, {
+    List<Uint8List> photos = const [],
+  }) {
     return [
-      _subTitle('Приложение №1. Акт осмотра', font, fontBold),
-      _kv('Дата осмотра', data.appraisalDate, font, fontBold),
+      _subTitle('Приложение №1. Акт осмотра объекта оценки', font, fontBold),
+      pw.Text(
+        'Настоящий акт составлен в том, что ${_or(data.inspectionDate, data.appraisalDate)} '
+        'произведен визуальный осмотр объекта оценки, расположенного по адресу: '
+        '${data.address}. В ходе осмотра установлено: объект идентифицирован, физическое '
+        'состояние — ${_or(data.condition, 'удовлетворительное')}. Замечаний к состоянию '
+        'объекта не заявлено (либо замечания отражены в отчете).',
+        style: pw.TextStyle(font: font, fontSize: 11, height: 1.45),
+      ),
+      pw.SizedBox(height: 12),
+      _kv('Дата осмотра', _or(data.inspectionDate, data.appraisalDate), font, fontBold),
       _kv('Объект', data.propertyType, font, fontBold),
       _kv('Адрес', data.address, font, fontBold),
       _kv('Состояние', data.condition, font, fontBold),
-      pw.SizedBox(height: 14),
-      _subTitle('Приложение №2. Аналоги', font, fontBold),
-      if (data.comparables.isNotEmpty) _buildComparablesTable(data, font, fontBold),
+      pw.SizedBox(height: 10),
+      pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Text('Оценщик: ${data.appraiserName}', style: pw.TextStyle(font: font, fontSize: 10)),
+          pw.Text('Заказчик: ${data.clientName}', style: pw.TextStyle(font: font, fontSize: 10)),
+        ],
+      ),
+      pw.SizedBox(height: 24),
+      _subTitle('Приложение №2. Аналогичные объекты (объявления о продаже)', font, fontBold),
+      if (data.comparables.isNotEmpty) ...[
+        _buildComparablesTable(data, font, fontBold),
+        pw.SizedBox(height: 12),
+        pw.Text(
+          'Источники объявлений: ${data.comparables.where((c) => c.url.isNotEmpty).map((c) => c.url).join('; ')}',
+          style: pw.TextStyle(font: font, fontSize: 9, color: PdfColors.grey700),
+        ),
+      ] else
+        pw.Text(
+          'Объявления о продаже аналогов приведены в разделе 3 отчета.',
+          style: pw.TextStyle(font: font, fontSize: 10),
+        ),
+      pw.SizedBox(height: 24),
+      _subTitle('Приложение №3. Фотографии объекта оценки', font, fontBold),
+      if (photos.isEmpty)
+        pw.Text(
+          'Фотографии объекта прилагаются (при наличии).',
+          style: pw.TextStyle(font: font, fontSize: 10),
+        )
+      else
+        for (var i = 0; i < photos.length; i++) ...[
+          pw.SizedBox(height: 8),
+          pw.Text('Фото ${i + 1}:', style: pw.TextStyle(font: fontBold, fontSize: 10)),
+          pw.SizedBox(height: 4),
+          pw.Image(pw.MemoryImage(photos[i]), height: 160, fit: pw.BoxFit.contain),
+        ],
+      pw.SizedBox(height: 24),
+      _subTitle('Приложение №4. Документы, предоставленные заказчиком', font, fontBold),
+      _bullet('Документ, удостоверяющий личность Заказчика;', font),
+      _bullet('Правоустанавливающие документы на объект оценки;', font),
+      _bullet('Техническая документация на объект оценки.', font),
+      pw.SizedBox(height: 24),
+      _subTitle('Приложение №5. Расчет стоимости', font, fontBold),
+      _kv('Итоговая рыночная стоимость', data.formattedPrice, font, fontBold),
+      _kv('Прописью', '(${_numberToWords(data.estimatedPrice)}) тенге', font, fontBold),
+      _kv('Дата оценки', data.appraisalDate, font, fontBold),
     ];
   }
 
@@ -770,6 +1076,37 @@ class ReportService {
               style: pw.TextStyle(font: font, fontSize: 10, height: 1.3),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  /// Авто/мото/спецтехника — движимое имущество, отдельный шаблон.
+  static bool _isCar(String? type) {
+    final t = (type ?? '').toLowerCase();
+    return t.contains('авто') || t.contains('машин') || t.contains('мото') ||
+        t.contains('грузов') || t.contains('спецтехник') || t.contains('автобус');
+  }
+
+  /// Площадь: 29.2 → «29,2» (без лишних нулей).
+  static String _fmtArea(double area) {
+    if (area == 0) return '—';
+    return area.toStringAsFixed(area == area.roundToDouble() ? 0 : 1)
+        .replaceAll('.', ',');
+  }
+
+  /// a ?? fallback с учётом пустых строк.
+  static String _or(String a, String fallback) =>
+      (a.trim().isEmpty) ? fallback : a.trim();
+
+  static pw.Widget _bullet(String text, pw.Font font) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 4, left: 8),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.SizedBox(width: 8, child: pw.Text('•', style: pw.TextStyle(font: font, fontSize: 11))),
+          pw.Expanded(child: pw.Text(text, style: pw.TextStyle(font: font, fontSize: 11, height: 1.45))),
         ],
       ),
     );

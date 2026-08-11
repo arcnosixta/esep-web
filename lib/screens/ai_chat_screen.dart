@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
@@ -224,7 +225,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
                     child: ListView.separated(
                       shrinkWrap: true,
                       itemCount: _conversations.length,
-                      separatorBuilder: (_, __) => Divider(height: 1, color: c.border),
+                      separatorBuilder: (_, _) => Divider(height: 1, color: c.border),
                       itemBuilder: (_, i) {
                         final conv = _conversations[i];
                         final isActive = conv['id'] == _conversationId;
@@ -556,12 +557,38 @@ class _AiChatScreenState extends State<AiChatScreen> {
         estimatedPrice: e.priceMid,
       );
 
+      // Фото объекта (до 10) из переписки → storage + applications.photo_urls.
+      // Оценщик сможет удалять/добавлять фото при редактировании отчёта.
+      try {
+        final photos = _collectConversationPhotos();
+        if (photos.isNotEmpty) {
+          final paths = <String>[];
+          for (var i = 0; i < photos.length && i < 10; i++) {
+            try {
+              final path = await SupabaseService.uploadReportPhoto(
+                bytes: photos[i],
+                applicationId: app['id'].toString(),
+                index: i,
+              );
+              paths.add(path);
+            } catch (photoErr) {
+              debugPrint('[AI] photo upload error: $photoErr');
+            }
+          }
+          if (paths.isNotEmpty) {
+            await SupabaseService.updateApplicationPhotos(app['id'].toString(), paths);
+          }
+        }
+      } catch (photoErr) {
+        debugPrint('[AI] photos processing error: $photoErr');
+      }
+
       // Создаём черновик отчёта (draft) сразу при создании заявки —
       // в нём будут храниться данные и PDF, статус обновится после оплаты/подписи.
       try {
         final reportRow = await SupabaseService.createReport(
           applicationId: app['id'],
-          reportNumber: 'G-${DateTime.now().year}-${app['id'].toString().substring(0, 4).toUpperCase()}',
+          reportNumber: await ReportService.nextReportNumber(),
         );
         debugPrint('[AI] report draft created: ${reportRow['id']}');
       } catch (reportErr) {
@@ -607,6 +634,21 @@ class _AiChatScreenState extends State<AiChatScreen> {
         SnackBar(content: Text('Не удалось создать заявку: $err')),
       );
     }
+  }
+
+  /// Собрать байты всех фото из пользовательских сообщений сессии (до 10).
+  List<Uint8List> _collectConversationPhotos() {
+    final out = <Uint8List>[];
+    for (final m in _messages) {
+      if (m.role != MessageRole.user) continue;
+      for (final b64 in m.imageBase64) {
+        if (out.length >= 10) return out;
+        try {
+          out.add(base64Decode(b64));
+        } catch (_) {}
+      }
+    }
+    return out;
   }
 
   /// Диалог: для заказа нужен ИИН/БИН в профиле.

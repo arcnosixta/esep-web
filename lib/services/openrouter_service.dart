@@ -445,8 +445,18 @@ $marketContext
   "price_range_high": number,
   "price_per_meter": number,
   "confidence": number от 0.7 до 0.99,
+  "building_type": "string (тип здания: многоквартирный жилой дом и т.п.)",
+  "wall_material": "string (материал стен: кирпич, газоблоки...)",
+  "building_condition": "string (хорошее/удовлетворительное...)",
+  "communications": "string (центральные/автономные...)",
+  "living_area": "string (жилая площадь в кв.м, напр. 12,5)",
+  "kitchen_area": "string (площадь кухни, напр. 8,1)",
+  "bathroom": "string (совмещенный/раздельный)",
+  "balcony": "string (есть/нет, застеклен...)",
+  "renovation_year": "string (год ремонта или н/у)",
+  "layout": "string (обычная/улучшенная/европланировка...)",
   "comparables": [
-    {"address": "string", "area": number, "price": number, "type": "string", "source": "string"}
+    {"address": "string", "area": number, "price": number, "type": "string", "source": "string", "url": "ссылка на объявление (krisha.kz/olx.kz)", "adjusted_price": number, "adjustments": [{"name": "Местоположение", "percent": -5}, {"name": "Площадь", "percent": 3}]}
   ],
   "recommendations": [
     {"icon": "trending_up|home|location|info", "title": "string", "description": "string"}
@@ -472,7 +482,7 @@ $marketContext
           'model': model,
           'messages': apiMessages,
           'stream': false,
-          'max_tokens': 2048,
+          'max_tokens': 4096,
           'temperature': 0.3,
           'top_p': 0.9,
         });

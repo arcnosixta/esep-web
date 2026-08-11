@@ -1,6 +1,5 @@
-import 'dart:typed_data';
-
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../main.dart';
 import '../models/user_profile.dart';
@@ -293,6 +292,77 @@ class SupabaseService {
 
   static Future<String> getDocumentUrl(String filePath) async {
     return supabase.storage.from(_storageBucket).createSignedUrl(filePath, 3600);
+  }
+
+  /// Вызвать RPC-функцию в Supabase (например, next_report_number()).
+  static Future<dynamic> rpc(String fn, [Map<String, dynamic>? params]) async {
+    return supabase.rpc(fn, params: params);
+  }
+
+  // ============================================
+  // REPORT PHOTOS (фото объекта в заявке, до 10)
+  // ============================================
+
+  /// Загрузить фото объекта оценки в storage (user-docs/report_photos/).
+  /// Возвращает путь в storage (сохраняется в applications.photo_urls).
+  static Future<String> uploadReportPhoto({
+    required Uint8List bytes,
+    String applicationId = 'draft',
+    int index = 0,
+  }) async {
+    final ts = DateTime.now().millisecondsSinceEpoch;
+    final path = 'report_photos/${applicationId}_${ts}_$index.jpg';
+    await supabase.storage.from(_storageBucket).uploadBinary(
+          path,
+          bytes,
+          fileOptions: const FileOptions(upsert: true, contentType: 'image/jpeg'),
+        );
+    return path;
+  }
+
+  /// Сохранить список путей фото в заявке.
+  static Future<void> updateApplicationPhotos(
+    String applicationId,
+    List<String> paths,
+  ) async {
+    await supabase
+        .from('applications')
+        .update({'photo_urls': paths})
+        .eq('id', applicationId);
+  }
+
+  /// Скачать байты файла из storage по пути (для вставки фото в PDF).
+  static Future<Uint8List?> downloadStorageBytes(String filePath) async {
+    try {
+      final signed = await getDocumentUrl(filePath);
+      final resp = await http.get(Uri.parse(signed));
+      if (resp.statusCode == 200) return resp.bodyBytes;
+    } catch (e) {
+      debugPrint('[Storage] download error $filePath: $e');
+    }
+    return null;
+  }
+
+  /// Загрузить фото заявки (пути) и вернуть байты (до 10).
+  static Future<List<Uint8List>> loadApplicationPhotos(
+    List<dynamic>? photoUrls,
+  ) async {
+    final out = <Uint8List>[];
+    if (photoUrls == null) return out;
+    for (final p in photoUrls.take(10)) {
+      final bytes = await downloadStorageBytes(p.toString());
+      if (bytes != null) out.add(bytes);
+    }
+    return out;
+  }
+
+  /// Удалить файл из storage по пути (игнорирует ошибки).
+  static Future<void> deleteStorageFile(String filePath) async {
+    try {
+      await supabase.storage.from(_storageBucket).remove([filePath]);
+    } catch (e) {
+      debugPrint('[Storage] delete error $filePath: $e');
+    }
   }
 
   // ============================================

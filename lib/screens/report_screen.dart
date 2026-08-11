@@ -36,6 +36,9 @@ class _ReportScreenState extends State<ReportScreen> {
   String? _error;
   bool _isPaid = false;
 
+  /// Фото объекта из заявки (до 10) — вставляются в PDF (Приложение «Фото»).
+  List<Uint8List> _photoBytes = const [];
+
   /// Роль текущего пользователя: подписывать ЭЦП может только оценщик/админ.
   UserRole? _myRole;
 
@@ -76,6 +79,9 @@ class _ReportScreenState extends State<ReportScreen> {
       _isPaid = app['status'] == 'paid' || app['status'] == 'completed';
       _ownerUserId = (app['user_id'] ?? '').toString();
 
+      // Фото объекта из заявки — для PDF (Приложение «Фото», до 10).
+      final photoBytes = await SupabaseService.loadApplicationPhotos(app['photo_urls']);
+
       final prop = app['properties'] ?? {};
       final profile = app['profiles'] ?? {};
       final isOrg = (profile['client_type'] ?? 'person') == 'org';
@@ -103,6 +109,7 @@ class _ReportScreenState extends State<ReportScreen> {
       if (mounted) {
         setState(() {
           _reportData = data == null ? null : ReportService.fillCompanyData(data);
+          _photoBytes = photoBytes;
           _loading = false;
 
           // Восстанавливаем статус ЭЦП-подписи из БД (если отчёт уже подписан)
@@ -134,7 +141,13 @@ class _ReportScreenState extends State<ReportScreen> {
     if (data == null) return;
     final edited = await Navigator.push<ReportData>(
       context,
-      MaterialPageRoute(builder: (_) => ReportEditScreen(data: data)),
+      MaterialPageRoute(
+        builder: (_) => ReportEditScreen(
+          data: data,
+          applicationId: widget.applicationId,
+          initialPhotoUrls: _reportData?.photoUrls ?? const [],
+        ),
+      ),
     );
     if (edited != null && mounted) {
       setState(() => _reportData = edited);
@@ -157,6 +170,7 @@ class _ReportScreenState extends State<ReportScreen> {
       final pdfBytes = await ReportService.generatePdf(
         _reportData!,
         signature: _signatureInfo,
+        photos: _photoBytes,
       );
 
       if (mounted) {
@@ -212,6 +226,7 @@ class _ReportScreenState extends State<ReportScreen> {
         _reportData!,
         preview: !_isPaid,
         signature: _isPaid ? _signatureInfo : null,
+        photos: _photoBytes,
       );
       await Printing.sharePdf(bytes: pdfBytes, filename: 'report.pdf');
     } catch (e) {
@@ -1160,7 +1175,7 @@ class _ReportScreenState extends State<ReportScreen> {
         created = await SupabaseService.createReport(
           applicationId: appId,
           ownerId: _ownerUserId,
-          reportNumber: 'G-${DateTime.now().year}',
+          reportNumber: await ReportService.nextReportNumber(),
         );
         await SupabaseService.markReportSigned(
           created['id'].toString(),
@@ -1179,6 +1194,7 @@ class _ReportScreenState extends State<ReportScreen> {
       final pdfBytes = await ReportService.generatePdf(
         _reportData!,
         signature: info,
+        photos: _photoBytes,
       );
       final url = await ReportService.uploadReportPdf(pdfBytes, appId);
 
