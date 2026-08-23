@@ -507,10 +507,12 @@ class _AiChatScreenState extends State<AiChatScreen> {
         backgroundColor: c.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          onPressed: () => Scaffold.of(context).openDrawer(),
-          icon: Icon(Icons.menu_rounded, color: c.textPrimary, size: 22),
-          tooltip: 'Меню',
+        leading: Builder(
+          builder: (ctx) => IconButton(
+            onPressed: () => Scaffold.of(ctx).openDrawer(),
+            icon: Icon(Icons.menu_rounded, color: c.textPrimary, size: 22),
+            tooltip: 'Меню',
+          ),
         ),
         leadingWidth: 40,
         title: Row(
