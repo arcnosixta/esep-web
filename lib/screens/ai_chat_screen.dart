@@ -50,9 +50,6 @@ class _AiChatScreenState extends State<AiChatScreen> {
   @override
   void initState() {
     super.initState();
-    _controller.addListener(() {
-      if (mounted) setState(() {});
-    });
     Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) _loadConversations();
     });
@@ -932,6 +929,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           GestureDetector(
+            behavior: HitTestBehavior.opaque,
             onTap: _showImageSourceSheet,
             child: Container(
               width: 40,
@@ -974,12 +972,16 @@ class _AiChatScreenState extends State<AiChatScreen> {
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 ),
+                onChanged: (_) {
+                  if (mounted) setState(() {});
+                },
                 onSubmitted: (_) => canSend ? _sendMessage(_controller.text) : null,
               ),
             ),
           ),
           const SizedBox(width: 8),
           GestureDetector(
+            behavior: HitTestBehavior.opaque,
             onTap: canSend ? () => _sendMessage(_controller.text) : null,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
