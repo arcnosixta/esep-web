@@ -50,6 +50,9 @@ class _AiChatScreenState extends State<AiChatScreen> {
   @override
   void initState() {
     super.initState();
+    _controller.addListener(() {
+      if (mounted) setState(() {});
+    });
     Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) _loadConversations();
     });
@@ -495,6 +498,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
     }
   }
 
+  bool get _canSend => !_isStreaming && (_controller.text.trim().isNotEmpty || _pendingImageBase64.isNotEmpty);
+
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
@@ -505,13 +510,10 @@ class _AiChatScreenState extends State<AiChatScreen> {
         backgroundColor: c.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            size: 20,
-            color: c.textPrimary,
-          ),
+        leading: IconButton(
+          onPressed: () => Scaffold.of(context).openDrawer(),
+          icon: Icon(Icons.menu_rounded, color: c.textPrimary, size: 22),
+          tooltip: 'Меню',
         ),
         leadingWidth: 40,
         title: Row(
@@ -564,21 +566,48 @@ class _AiChatScreenState extends State<AiChatScreen> {
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            onPressed: _newChat,
-            icon: Icon(Icons.add_comment_outlined, color: c.textSecondary, size: 20),
-            tooltip: 'Новый чат',
-          ),
-          IconButton(
-            onPressed: _showHistorySheet,
-            icon: Icon(Icons.history_rounded, color: c.textSecondary, size: 20),
-            tooltip: 'История',
-          ),
-        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(height: 1, color: c.border),
+        ),
+      ),
+      drawer: Drawer(
+        backgroundColor: c.surface,
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Меню',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: c.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _MenuTile(
+                  icon: Icons.add_comment_outlined,
+                  label: 'Новый чат',
+                  onTap: () {
+                    Navigator.pop(context);
+                    _newChat();
+                  },
+                ),
+                const SizedBox(height: 8),
+                _MenuTile(
+                  icon: Icons.history_rounded,
+                  label: 'История',
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showHistorySheet();
+                  },
+                ),
+              ],
+            ),
+          ),
         ),
       ),
       body: Column(
@@ -887,6 +916,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
 
   Widget _buildInputArea() {
     final c = AppColors.of(context);
+    final canSend = _canSend;
     return Container(
       padding: EdgeInsets.only(
         left: 12,
@@ -944,25 +974,19 @@ class _AiChatScreenState extends State<AiChatScreen> {
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 ),
-                onSubmitted: _sendMessage,
+                onSubmitted: (_) => canSend ? _sendMessage(_controller.text) : null,
               ),
             ),
           ),
           const SizedBox(width: 8),
           GestureDetector(
-            onTap: _isStreaming
-                ? null
-                : () => _sendMessage(_controller.text),
+            onTap: canSend ? () => _sendMessage(_controller.text) : null,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: _isStreaming ||
-                        (_controller.text.trim().isEmpty &&
-                            _pendingImageBase64.isEmpty)
-                    ? c.muted
-                    : c.accent,
+                color: canSend ? c.gold : c.muted,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Center(
@@ -984,6 +1008,44 @@ class _AiChatScreenState extends State<AiChatScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _MenuTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _MenuTile({required this.icon, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: c.inputFill,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: c.accent, size: 20),
+            const SizedBox(width: 14),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: c.textPrimary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
