@@ -1,0 +1,120 @@
+================================================================
+ESEP ЖОБАСЫ — XPAYMENT ИНТЕГРАЦИЯСЫ
+Осы сессияда орындалған жұмыстың толық есебі
+Күні: 2026-08-26 | Branch: oplata | Commit: 40a6642
+================================================================
+
+1. ТӨЛЕМ НЕ ҮШІН КЕРЕК?
+----------------------------------------------------------------
+ESEP — GaMa Group ТОО-ның мүлік бағалау қызметі (Flutter +
+Supabase + Cloudflare Pages). Пайдаланушы AI-chat арқылы
+өтініш жасайды, ресми бағалау отчетын алады.
+РЕСМИ ОТЧЕТ АҚЫЛЫ — 15 000 ₸.
+
+Төлем экранының пайда болу орындары:
+  - ai_chat_screen.dart:628 — AI өтініш жасағаннан кейін автоматты ашылады
+  - case_detail_screen.dart:337 — «Оплатить» батырмасы (pending_payment)
+  - home_screen.dart:278 — Басты беттегі «Оплата» quick-action
+
+Төлегеннен кейін: payments=paid, applications=paid, reports=paid
+→ «Скачать официальный отчёт» батырмасы ашылады.
+
+Бұрынғы 3 әдіс: банк аударым (менеджер растайды),
+Kaspi Pay (қолмен), Kaspi online (демо).
+XPAYMENT = 4-ші әдіс: онлайн АВТОПОДТВЕРЖДЕНИЕ,
+менеджерді күтпейді.
+
+2. НЕ ЖАСАЛДЫ (6 ФАЙЛ)
+----------------------------------------------------------------
+[ЖАҢА]
+a) functions/api/xpayment.js — Cloudflare Pages Function:
+   * POST /api/xpayment/create  — JWT тексереді, payments
+     жазбасын жасайды (method=xpayment), XPayment-тен
+     платёжная ссылка сұрайды, checkout_url қайтарады
+   * POST /api/xpayment/status  — polling: XPaymentтен статус
+     сұрап, COMPLETED болса өздігінен растайды
+   * POST /api/xpayment/webhook — eventтерді қабылдайды,
+     X-xPayment-Signature (HMAC-SHA256) тексереді,
+     идемпотенттік (қайталанған delivery_id өткеріледі)
+   * GET /api/xpayment/checkout — демо бет (кілтсіз режим)
+
+b) lib/services/xpayment_service.dart — Flutter сервисі:
+   * createCheckout() — серверге сұраныс жіберіп URL алады
+   * syncStatus() — статуспен синхронизация
+
+c) lib/screens/xpayment_screen.dart — төлем экраны:
+   * Сілтеме ашылады → Kaspi қосымшасы → клиент төлейді
+   * Әр 5 секунд сайын статус тексеріледі (макс 60 рет)
+   * Төленсе конфетти + «Оплата прошла успешно»
+
+d) supabase_xpayment.sql — БД миграциясы:
+   * CHECK шектеулерді кеңейтеді:
+     method   += xpayment, bank, kaspi_online
+     provider += kaspi, xpayment
+   * provider_tx_id-ге индекс + аудиторлық жазба
+
+[ӨЗГЕРТІЛГЕН]
+e) lib/screens/payment_screen.dart — 4-ші әдіс «XPayment» қосылды,
+   төменгі submit батырмасы 3-ші әдісте жасырылды
+f) lib/services/payment_service.dart — methodLabel('xpayment')
+
+3. ЖҰМЫС ІСТЕУ ШЕМБЕРІ
+----------------------------------------------------------------
+Flutter экраны
+  → POST /api/xpayment/create (Supabase JWT арқылы)
+  → Cloudflare: payments жазбасы (pending) жасайды
+  → XPayment API: POST /v1/payments/link (сілтеме сұрайды)
+  → Flutter checkout_url ашады → Kaspi қосымшасы
+  → Клиент «Оплатить» басады (15 000 ₸)
+  → XPayment webhook жібереді (payment.completed + қолтаңба)
+  → Сервер HMAC тексереді → payments=paid, applications=paid,
+    reports=paid
+  → Flutter экраны 5 сек сайын тексеріп, конфетти көрсетеді
+
+API ақпараты: https://xpayment.kz/docs
+  - Авторизация: Authorization: Bearer xdev_...
+  - Платёжная ссылка ~5 минут жұмыс істейді
+  - Webhook қолтаңбасы: hex(HMAC-SHA256(secret, raw_body))
+    заголовокта X-xPayment-Signature түрінде келеді
+
+4. ҚАЛДЫ — ҚОЛМЕН ІСТЕЛУІ КЕРЕК
+----------------------------------------------------------------
+[ ] [1] Supabase SQL Editorде supabase_xpayment.sql — ОРЫНДАЛМАДЫ (әлі керек)
+[✓] [2] xpayment.kz-ке тіркелді (API кілт әлі алынбады)
+[ ] [3] Cloudflare Pages → Settings → Environment variables:
+    - XPAYMENT_API_KEY = xdev_... (XPayment кілті)
+    - XPAYMENT_WEBHOOK_SECRET = ұзын кездейсоқ жол
+    Содан кейін REDEPLOY керек.
+    Кілттер репозиторийге салынбайды (құпия) — қолмен қою керек.
+
+[ ] [4] XPayment кабинетінде WEBHOOK тіркеу:
+    - URL: https://esep.pages.dev/api/xpayment/webhook
+    - Secret: [3]-дегімен бірдей болуы тиіс
+    - Events: payment.completed (міндетті!)
+    Болмаса автоподтверждение істемейді (тек polling қалады).
+
+[✓] [5] Branch-ті remote-қа жіберу:
+        git push -u origin oplata (arcnosixta/esep-web)
+
+[ ] [6] Нақты телефон/браузерде тестілеу. Кілттер жоқ кезде де
+    демо-режим істейді (демо-бет ашылып, тест-webhookпен
+    толық өткізіледі).
+
+ТЕКСЕРУ НӘТИЖЕСІ: flutter analyze — жаңа кодта 0 қате.
+(25 info/warning бар — барлығы бұрыннан бар файлдарда:
+test/, report_service, ncalayer т.б.)
+
+5. GIT ЖАҒДАЙЫ
+----------------------------------------------------------------
+Branch   : oplata (push етілді → arcnosixta/esep-web)
+Commit   : 40a6642 «feat: XPayment интеграциясы...»
+Объем    : 6 файл, +1017 жол
+Master   : өзгеріссіз (соңғы commit fcaf79b)
+
+6. СЕССИЯ ТАРИХЫ
+----------------------------------------------------------------
+[2026-08-25] Код жазылды: 6 файл, +1017 жол (XPayment интеграциясы)
+[2026-08-26] xpayment.kz-ке аккаунт ашылды (API кілт әлі жоқ)
+             Branch: feat/xpayment → oplata деп аталды
+             Push етілді → arcnosixta/esep-web
+             → Қалды: SQL орындау + API кілт алу + Cloudflare env + webhook + push + тест
