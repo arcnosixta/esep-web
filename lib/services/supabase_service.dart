@@ -181,12 +181,33 @@ class SupabaseService {
       bytes,
       fileOptions: const FileOptions(upsert: true, contentType: 'image/jpeg'),
     );
+
+    final signedUrl = await supabase.storage.from(_storageBucket).createSignedUrl(path, 31536000);
+
     if (oldPath != null && oldPath.isNotEmpty) {
       try {
-        await supabase.storage.from(_storageBucket).remove([oldPath]);
+        String? pathToRemove = oldPath;
+        if (oldPath.startsWith('http')) {
+          final uri = Uri.tryParse(oldPath);
+          final segments = uri?.pathSegments ?? [];
+          final signIdx = segments.indexOf('sign');
+          final publicIdx = segments.indexOf('public');
+          int startIdx = -1;
+          if (signIdx != -1 && signIdx + 1 < segments.length) {
+            startIdx = signIdx + 1;
+          } else if (publicIdx != -1 && publicIdx + 1 < segments.length) {
+            startIdx = publicIdx + 1;
+          }
+          if (startIdx != -1) {
+            pathToRemove = segments.sublist(startIdx).join('/');
+          }
+        }
+        if (pathToRemove != null && pathToRemove.isNotEmpty) {
+          await supabase.storage.from(_storageBucket).remove([pathToRemove]);
+        }
       } catch (_) {}
     }
-    return path;
+    return signedUrl;
   }
 
   // ============================================
