@@ -201,185 +201,170 @@ class _ProfileScreenState extends State<ProfileScreen>
                                 isCompactWeb ? 14 : 20,
                                 isCompactWeb ? 16 : 20,
                               ),
-                          decoration: BoxDecoration(
-                            color: _profile?['cover_url'] == null ? c.surface : null,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                                color: c.border, width: 1),
-                            image: _profile?['cover_url'] != null
-                                ? DecorationImage(
-                                    image: NetworkImage(_profile!['cover_url']),
-                                    fit: BoxFit.cover,
-                                  )
-                                : null,
-                            boxShadow: [
-                              BoxShadow(
-                                color:
-                                    Colors.black.withValues(alpha: 0.04),
-                                blurRadius: 20,
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: isCompactWeb ? 8 : 10,
-                                      vertical: isCompactWeb ? 4 : 5,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: c.accent.withValues(alpha: 0.08),
-                                      borderRadius:
-                                          BorderRadius.circular(8),
-                                      border: Border.all(
-                                        color: c.accent.withValues(alpha: 0.15),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      role,
-                                      style: TextStyle(
-                                        fontSize: isCompactWeb ? 11 : 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: c.accent,
-                                      ),
-                                    ),
-                                  ),
-                                  const Spacer(),
-                                  Container(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: isCompactWeb ? 8 : 10,
-                                      vertical: isCompactWeb ? 4 : 5,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: c.gold
-                                          .withValues(alpha: 0.12),
-                                      borderRadius:
-                                          BorderRadius.circular(8),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.verified_rounded,
-                                            size: isCompactWeb ? 12 : 14,
-                                            color: c.gold),
-                                        SizedBox(width: isCompactWeb ? 3 : 4),
-                                        Text(
-                                          s.profileVerified,
-                                          style: TextStyle(
-                                            fontSize: isCompactWeb ? 10 : 11,
-                                            fontWeight: FontWeight.w600,
-                                            color: c.gold,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  SizedBox(width: isCompactWeb ? 6 : 8),
-                                  IconButton(
-                                    onPressed: _openEditProfile,
-                                    icon: Icon(Icons.edit_rounded,
-                                        size: isCompactWeb ? 16 : 18, color: c.accent),
-                                    tooltip: s.profileEdit,
+                              decoration: BoxDecoration(
+                                color: _profile?['cover_url'] == null ? c.surface : null,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: c.border, width: 1),
+                                image: _profile?['cover_url'] != null
+                                    ? DecorationImage(
+                                        image: NetworkImage(_profile!['cover_url']),
+                                        fit: BoxFit.cover,
+                                      )
+                                    : null,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.04),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 8),
                                   ),
                                 ],
                               ),
-                              SizedBox(height: isCompactWeb ? 12 : 16),
-                              Container(
-                                width: isCompactWeb ? 64 : 80,
-                                height: isCompactWeb ? 64 : 80,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                      color: c.surface, width: 4),
-                                  image: _profile?['avatar_url'] != null
-                                      ? DecorationImage(
-                                          image: NetworkImage(
-                                              _profile!['avatar_url']),
-                                          fit: BoxFit.cover,
-                                        )
-                                      : null,
-                                  color: c.accent,
-                                ),
-                                child: _profile?['avatar_url'] == null
-                                    ? Center(
-                                        child: Text(
-                                          _getInitials(),
-                                          style: TextStyle(
-                                            fontSize: isCompactWeb ? 22 : 26,
-                                            fontWeight: FontWeight.w800,
-                                            color: Colors.white,
+                              child: Column(
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: isCompactWeb ? 8 : 10,
+                                          vertical: isCompactWeb ? 4 : 5,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: c.accent.withValues(alpha: 0.08),
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(
+                                            color: c.accent.withValues(alpha: 0.15),
                                           ),
                                         ),
-                                      )
-                                    : null,
-                              ),
-                              SizedBox(height: isCompactWeb ? 10 : 12),
-                              Text(
-                                name.isNotEmpty ? name : '—',
-                                style: TextStyle(
-                                  fontSize: isCompactWeb ? 18 : 20,
-                                  fontWeight: FontWeight.w800,
-                                  color: c.textPrimary,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              if (iin.isNotEmpty) ...[
-                                SizedBox(height: isCompactWeb ? 3 : 4),
-                                Text(
-                                  iin,
-                                  style: TextStyle(
-                                    fontSize: isCompactWeb ? 11 : 12,
-                                    color: c.textSecondary,
+                                        child: Text(
+                                          role,
+                                          style: TextStyle(
+                                            fontSize: isCompactWeb ? 11 : 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: c.accent,
+                                          ),
+                                        ),
+                                      ),
+                                      const Spacer(),
+                                      Container(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: isCompactWeb ? 8 : 10,
+                                          vertical: isCompactWeb ? 4 : 5,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: c.gold.withValues(alpha: 0.12),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.verified_rounded,
+                                                size: isCompactWeb ? 12 : 14,
+                                                color: c.gold),
+                                            SizedBox(width: isCompactWeb ? 3 : 4),
+                                            Text(
+                                              s.profileVerified,
+                                              style: TextStyle(
+                                                fontSize: isCompactWeb ? 10 : 11,
+                                                fontWeight: FontWeight.w600,
+                                                color: c.gold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      SizedBox(width: isCompactWeb ? 6 : 8),
+                                      IconButton(
+                                        onPressed: _openEditProfile,
+                                        icon: Icon(Icons.edit_rounded,
+                                            size: isCompactWeb ? 16 : 18,
+                                            color: c.accent),
+                                        tooltip: s.profileEdit,
+                                      ),
+                                    ],
                                   ),
-                                ),
-                              ],
-                              SizedBox(height: isCompactWeb ? 14 : 18),
-                              if (isCompactWeb)
-                                Wrap(
-                                  spacing: 24,
-                                  runSpacing: 10,
-                                  alignment: WrapAlignment.center,
-                                  children: [
-                                    _ProfileStat(
-                                      value: '${_properties.length}',
-                                      label: s.profileObjects,
+                                  SizedBox(height: isCompactWeb ? 12 : 16),
+                                  Container(
+                                    width: isCompactWeb ? 64 : 80,
+                                    height: isCompactWeb ? 64 : 80,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: c.surface, width: 4),
+                                      image: _profile?['avatar_url'] != null
+                                          ? DecorationImage(
+                                              image: NetworkImage(_profile!['avatar_url']),
+                                              fit: BoxFit.cover,
+                                            )
+                                          : null,
+                                      color: c.accent,
                                     ),
-                                    _ProfileStat(
-                                      value: '${_history.length}',
-                                      label: s.profileEvaluations,
+                                    child: _profile?['avatar_url'] == null
+                                        ? Center(
+                                            child: Text(
+                                              _getInitials(),
+                                              style: TextStyle(
+                                                fontSize: isCompactWeb ? 22 : 26,
+                                                fontWeight: FontWeight.w800,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          )
+                                        : null,
+                                  ),
+                                  SizedBox(height: isCompactWeb ? 10 : 12),
+                                  Text(
+                                    name.isNotEmpty ? name : '—',
+                                    style: TextStyle(
+                                      fontSize: isCompactWeb ? 18 : 20,
+                                      fontWeight: FontWeight.w800,
+                                      color: c.textPrimary,
                                     ),
-                                    _ProfileStat(
-                                      value: _profile?['documents_count'] != null
-                                          ? '${_profile!['documents_count']}'
-                                          : '0',
-                                      label: s.profileDocuments,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  if (iin.isNotEmpty) ...[
+                                    SizedBox(height: isCompactWeb ? 3 : 4),
+                                    Text(
+                                      iin,
+                                      style: TextStyle(
+                                        fontSize: isCompactWeb ? 11 : 12,
+                                        color: c.textSecondary,
+                                      ),
                                     ),
                                   ],
-                                )
-                              else
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    _ProfileStat(
-                                      value: '${_properties.length}',
-                                      label: s.profileObjects,
+                                  SizedBox(height: isCompactWeb ? 14 : 18),
+                                  if (isCompactWeb)
+                                    Wrap(
+                                      spacing: 24,
+                                      runSpacing: 10,
+                                      alignment: WrapAlignment.center,
+                                      children: [
+                                        _ProfileStat(
+                                            value: '${_properties.length}', label: s.profileObjects),
+                                        _ProfileStat(
+                                            value: '${_history.length}', label: s.profileEvaluations),
+                                        _ProfileStat(
+                                            value: _profile?['documents_count'] != null
+                                                ? '${_profile!['documents_count']}'
+                                                : '0',
+                                            label: s.profileDocuments),
+                                      ],
+                                    )
+                                  else
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        _ProfileStat(
+                                            value: '${_properties.length}', label: s.profileObjects),
+                                        _ProfileStat(
+                                            value: '${_history.length}', label: s.profileEvaluations),
+                                        _ProfileStat(
+                                            value: _profile?['documents_count'] != null
+                                                ? '${_profile!['documents_count']}'
+                                                : '0',
+                                            label: s.profileDocuments),
+                                      ],
                                     ),
-                                    _ProfileStat(
-                                      value: '${_history.length}',
-                                      label: s.profileEvaluations,
-                                    ),
-                                    _ProfileStat(
-                                      value: _profile?['documents_count'] != null
-                                          ? '${_profile!['documents_count']}'
-                                          : '0',
-                                      label: s.profileDocuments,
-                                    ),
-                                  ],
-                                ),
-                            ],
+                                ],
+                              ),
+                            ),
                           ),
                         ),
 
@@ -389,8 +374,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                           decoration: BoxDecoration(
                             color: c.surface,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                                color: c.border, width: 1),
+                            border: Border.all(color: c.border, width: 1),
                           ),
                           child: Column(
                             children: [
@@ -411,8 +395,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                           decoration: BoxDecoration(
                             color: c.surface,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                                color: c.border, width: 1),
+                            border: Border.all(color: c.border, width: 1),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -433,10 +416,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                                     width: 40,
                                     height: 40,
                                     decoration: BoxDecoration(
-                                      color: c.info
-                                          .withValues(alpha: 0.1),
-                                      borderRadius:
-                                          BorderRadius.circular(10),
+                                      color: c.info.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: Icon(
                                       Icons.account_balance_rounded,
@@ -447,8 +428,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                                   const SizedBox(width: 14),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           s.profileEcpStatus,
@@ -463,8 +443,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                                           s.profileEgovSubtitle,
                                           style: TextStyle(
                                             fontSize: 12,
-                                            color:
-                                                c.textSecondary,
+                                            color: c.textSecondary,
                                           ),
                                         ),
                                       ],
@@ -478,19 +457,14 @@ class _ProfileScreenState extends State<ProfileScreen>
                                 child: OutlinedButton(
                                   onPressed: () => Navigator.push(
                                     context,
-                                    MaterialPageRoute(
-                                        builder: (_) =>
-                                            const EgovScreen()),
+                                    MaterialPageRoute(builder: (_) => const EgovScreen()),
                                   ),
                                   style: OutlinedButton.styleFrom(
-                                    side: BorderSide(
-                                        color: c.info, width: 1),
+                                    side: BorderSide(color: c.info, width: 1),
                                     shape: RoundedRectangleBorder(
-                                      borderRadius:
-                                          BorderRadius.circular(12),
+                                      borderRadius: BorderRadius.circular(12),
                                     ),
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 24, vertical: 12),
+                                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                                   ),
                                   child: Text(
                                     s.profileEgovOpen,
@@ -533,10 +507,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                             padding: const EdgeInsets.only(top: 14),
                             child: Text(
                               s.profileNoProperty,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: c.textHint,
-                              ),
+                              style: TextStyle(fontSize: 14, color: c.textHint),
                             ),
                           )
                         else
@@ -546,20 +517,16 @@ class _ProfileScreenState extends State<ProfileScreen>
                               decoration: BoxDecoration(
                                 color: c.surface,
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                    color: c.border, width: 1),
+                                border: Border.all(color: c.border, width: 1),
                               ),
                               child: Column(
                                 children: [
-                                  for (int i = 0;
-                                      i < _properties.length;
-                                      i++) ...[
+                                  for (int i = 0; i < _properties.length; i++) ...[
                                     _buildPropertyRow(context, _properties[i]),
                                     if (i < _properties.length - 1)
                                       Container(
                                         height: 1,
-                                        margin: const EdgeInsets.only(
-                                            left: 72),
+                                        margin: const EdgeInsets.only(left: 72),
                                         color: c.divider,
                                       ),
                                   ],
@@ -583,10 +550,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                             padding: const EdgeInsets.only(top: 14),
                             child: Text(
                               s.profileNoHistory,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: c.textHint,
-                              ),
+                              style: TextStyle(fontSize: 14, color: c.textHint),
                             ),
                           )
                         else
@@ -596,20 +560,16 @@ class _ProfileScreenState extends State<ProfileScreen>
                               decoration: BoxDecoration(
                                 color: c.surface,
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                    color: c.border, width: 1),
+                                border: Border.all(color: c.border, width: 1),
                               ),
                               child: Column(
                                 children: [
-                                  for (int i = 0;
-                                      i < _history.length;
-                                      i++) ...[
+                                  for (int i = 0; i < _history.length; i++) ...[
                                     _buildHistoryRow(context, _history[i]),
                                     if (i < _history.length - 1)
                                       Container(
                                         height: 1,
-                                        margin: const EdgeInsets.only(
-                                            left: 72),
+                                        margin: const EdgeInsets.only(left: 72),
                                         color: c.divider,
                                       ),
                                   ],
@@ -623,29 +583,24 @@ class _ProfileScreenState extends State<ProfileScreen>
                           decoration: BoxDecoration(
                             color: c.surface,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                                color: c.border, width: 1),
+                            border: Border.all(color: c.border, width: 1),
                           ),
                           child: Column(
                             children: [
-                              _settingsRow(
-                                  Icons.help_rounded, s.profileHelp),
+                              _settingsRow(Icons.help_rounded, s.profileHelp),
                               Container(
                                 height: 1,
                                 margin: const EdgeInsets.only(left: 52),
                                 color: c.divider,
                               ),
-                              _settingsRow(Icons.info_outline_rounded,
-                                  s.profileAbout),
+                              _settingsRow(Icons.info_outline_rounded, s.profileAbout),
                               Container(
                                 height: 1,
                                 margin: const EdgeInsets.only(left: 52),
                                 color: c.divider,
                               ),
-                              _settingsRow(
-                                  Icons.logout_rounded, s.profileSignOut,
-                                  color: c.error,
-                                  onTap: _signOut),
+                              _settingsRow(Icons.logout_rounded, s.profileSignOut,
+                                  color: c.error, onTap: _signOut),
                             ],
                           ),
                         ),
@@ -723,8 +678,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     final prop = item['properties'];
     final propType = prop != null ? (prop['type'] ?? '') : '';
     final price = item['estimated_price'];
-    final priceStr =
-        price != null ? '${price.toStringAsFixed(0)} ₸' : '';
+    final priceStr = price != null ? '${price.toStringAsFixed(0)} ₸' : '';
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       child: Row(
@@ -978,7 +932,6 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       return;
     }
 
-    // Валидация ИИН/БИН (обязателен: это основа идентификации клиента).
     final idNumber = _iinController.text.trim();
     if (idNumber.isEmpty) {
       setState(() => _iinError = s.profileIinRequired);
@@ -1025,7 +978,6 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     } catch (e) {
       if (!mounted) return;
       final msg = e.toString();
-      // Уникальный индекс profiles_iin_unique → код 23505 (unique_violation).
       if (msg.contains('23505') || msg.contains('duplicate key')) {
         setState(() => _iinError = s.profileIinTaken);
       } else {
@@ -1114,7 +1066,6 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                 keyboardType: TextInputType.phone,
               ),
               const SizedBox(height: 16),
-              // Тип клиента: физлицо (ИИН) / юрлицо (БИН + организация)
               Row(
                 children: [
                   _typeChip(s.profileClientTypePerson, !_isOrg, () {
@@ -1288,7 +1239,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: c.muted,
+                    color: c.border,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -1328,78 +1279,13 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
           children: [
             Icon(icon, color: c.accent, size: 20),
             const SizedBox(width: 14),
-            Text(label, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: c.textPrimary)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MediaPickerRow extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final String? path;
-  final double borderRadius;
-  final double maxHeight;
-  final bool isAvatar;
-  final VoidCallback onPickAvatar;
-  final VoidCallback onPickCover;
-
-  const _MediaPickerRow({
-    required this.title,
-    required this.subtitle,
-    this.path,
-    required this.borderRadius,
-    required this.maxHeight,
-    required this.isAvatar,
-    required this.onPickAvatar,
-    required this.onPickCover,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final c = AppColors.of(context);
-    final hasImage = path != null && path!.startsWith('http');
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: isAvatar ? onPickAvatar : onPickCover,
-      child: Container(
-        constraints: BoxConstraints(maxHeight: maxHeight),
-        decoration: BoxDecoration(
-          color: c.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: c.border, width: 1),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: c.textPrimary)),
-                    const SizedBox(height: 4),
-                    Text(subtitle, style: TextStyle(fontSize: 12, color: c.textSecondary)),
-                  ],
-                ),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: c.textPrimary,
               ),
-            ),
-            Container(
-              width: isAvatar ? 52 : 88,
-              height: isAvatar ? 52 : 44,
-              margin: const EdgeInsets.only(right: 12),
-              decoration: BoxDecoration(
-                color: c.inputFill,
-                borderRadius: BorderRadius.circular(borderRadius),
-                border: Border.all(color: c.border),
-                image: hasImage ? DecorationImage(image: NetworkImage(path!), fit: BoxFit.cover) : null,
-              ),
-              child: !hasImage
-                  ? Icon(Icons.add_photo_alternate_rounded, color: c.textHint, size: isAvatar ? 22 : 18)
-                  : null,
             ),
           ],
         ),
