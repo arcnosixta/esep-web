@@ -23,6 +23,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
   final _scrollController = ScrollController();
   final _focusNode = FocusNode();
   final _picker = ImagePicker();
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   final List<ChatMessage> _messages = [];
   bool _isStreaming = false;
@@ -502,6 +503,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
     final c = AppColors.of(context);
 
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: c.background,
       appBar: AppBar(
         backgroundColor: c.surface,
@@ -516,7 +518,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
               tooltip: 'Назад',
             ),
             IconButton(
-              onPressed: () => Scaffold.of(context).openDrawer(),
+              onPressed: () => _scaffoldKey.currentState?.openDrawer(),
               icon: Icon(Icons.menu_rounded, color: c.textPrimary, size: 22),
               tooltip: 'Меню',
             ),
