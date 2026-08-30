@@ -142,16 +142,16 @@ class SupabaseService {
     String? clientType,
     String? orgName,
     String? bin,
+    String? avatarUrl,
+    String? coverUrl,
   }) async {
     if (userId == null) return;
     final updates = <String, dynamic>{};
     if (clientType != null) {
       updates['client_type'] = clientType;
       if (clientType == 'org') {
-        // Юрлицо: ИИН не нужен — освобождаем его (1 ИИН = 1 аккаунт).
         updates['iin'] = '';
       } else {
-        // Физлицо: сбрасываем поля юрлица.
         updates['bin'] = '';
         updates['org_name'] = '';
       }
@@ -162,9 +162,31 @@ class SupabaseService {
     if (email != null) updates['email'] = email;
     if (orgName != null) updates['org_name'] = orgName;
     if (bin != null) updates['bin'] = bin;
+    if (avatarUrl != null) updates['avatar_url'] = avatarUrl;
+    if (coverUrl != null) updates['cover_url'] = coverUrl;
     if (updates.isNotEmpty) {
       await supabase.from('profiles').update(updates).eq('user_id', userId!);
     }
+  }
+
+  static Future<String?> uploadProfileAvatar(Uint8List bytes, {String? oldPath}) async {
+    if (userId == null) throw Exception('Не авторизован');
+    try {
+      await ensureStorageBucket();
+    } catch (_) {}
+    final safeName = 'profile_${userId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    final path = _storagePath(safeName);
+    await supabase.storage.from(_storageBucket).uploadBinary(
+      path,
+      bytes,
+      fileOptions: const FileOptions(upsert: true, contentType: 'image/jpeg'),
+    );
+    if (oldPath != null && oldPath.isNotEmpty) {
+      try {
+        await supabase.storage.from(_storageBucket).remove([oldPath]);
+      } catch (_) {}
+    }
+    return path;
   }
 
   // ============================================

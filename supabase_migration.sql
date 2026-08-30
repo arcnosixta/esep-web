@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   email TEXT NOT NULL DEFAULT '',
   role TEXT NOT NULL DEFAULT 'client' CHECK (role IN ('client', 'appraiser', 'admin')),
   avatar_url TEXT,
+  cover_url TEXT,
   is_blocked BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()

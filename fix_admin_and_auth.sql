@@ -10,6 +10,7 @@
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS iin TEXT NOT NULL DEFAULT '';
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS cover_url TEXT;
 
 -- ============================================
 -- ШАГ 2: ВЫКЛЮЧИ RLS НА ВСЕХ ТАБЛИЦАХ

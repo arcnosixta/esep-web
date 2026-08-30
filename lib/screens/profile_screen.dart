@@ -1,4 +1,7 @@
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+
 import '../theme/app_colors.dart';
 import '../l10n/app_strings.dart';
 import '../widgets/information_tile.dart';
@@ -22,7 +25,6 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   Map<String, dynamic>? _profile;
   List<Map<String, dynamic>> _properties = [];
-  List<Map<String, dynamic>> _documents = [];
   List<Map<String, dynamic>> _history = [];
   bool _loading = true;
 
@@ -44,15 +46,13 @@ class _ProfileScreenState extends State<ProfileScreen>
       final results = await Future.wait([
         SupabaseService.getProfile(),
         SupabaseService.getProperties(),
-        SupabaseService.getDocuments(),
         SupabaseService.getApplications(),
       ]);
       if (mounted) {
         setState(() {
           _profile = results[0] as Map<String, dynamic>?;
           _properties = results[1] as List<Map<String, dynamic>>;
-          _documents = results[2] as List<Map<String, dynamic>>;
-          _history = results[3] as List<Map<String, dynamic>>;
+          _history = results[2] as List<Map<String, dynamic>>;
           _loading = false;
         });
       }
@@ -184,10 +184,16 @@ class _ProfileScreenState extends State<ProfileScreen>
                           child: Container(
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
-                              color: c.surface,
+                              color: _profile?['cover_url'] == null ? c.surface : null,
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
                                   color: c.border, width: 1),
+                              image: _profile?['cover_url'] != null
+                                  ? DecorationImage(
+                                      image: NetworkImage(_profile!['cover_url']),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : null,
                               boxShadow: [
                                 BoxShadow(
                                   color:
@@ -205,17 +211,25 @@ class _ProfileScreenState extends State<ProfileScreen>
                                   decoration: BoxDecoration(
                                     color: c.accent,
                                     shape: BoxShape.circle,
+                                    image: _profile?['avatar_url'] != null
+                                        ? DecorationImage(
+                                            image: NetworkImage(_profile!['avatar_url']),
+                                            fit: BoxFit.cover,
+                                          )
+                                        : null,
                                   ),
-                                  child: Center(
-                                    child: Text(
-                                      _getInitials(),
-                                      style: const TextStyle(
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.w800,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
+                                  child: _profile?['avatar_url'] == null
+                                      ? Center(
+                                          child: Text(
+                                            _getInitials(),
+                                            style: const TextStyle(
+                                              fontSize: 24,
+                                              fontWeight: FontWeight.w800,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        )
+                                      : null,
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
@@ -297,32 +311,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                           ),
                         ),
 
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            InformationTile(
-                              content: '${_properties.length}',
-                              name: s.profileObjects,
-                              icon: Icons.home_rounded,
-                              valueColor: c.accent,
-                            ),
-                            InformationTile(
-                              content: '${_documents.length}',
-                              name: s.profileDocuments,
-                              icon: Icons.folder_rounded,
-                              valueColor: c.warning,
-                            ),
-                            InformationTile(
-                              content: '${_history.length}',
-                              name: s.profileEvaluations,
-                              icon: Icons.assessment_rounded,
-                              valueColor: c.success,
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 20),
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
@@ -508,68 +497,6 @@ class _ProfileScreenState extends State<ProfileScreen>
                           ),
 
                         const SizedBox(height: 24),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              s.profileMyDocuments,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: c.textSecondary,
-                                letterSpacing: 0.8,
-                              ),
-                            ),
-                            Text(
-                              '${_documents.length}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: c.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (_documents.isEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 14),
-                            child: Text(
-                              s.profileNoDocuments,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: c.textHint,
-                              ),
-                            ),
-                          )
-                        else
-                          Padding(
-                            padding: const EdgeInsets.only(top: 12),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: c.surface,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                    color: c.border, width: 1),
-                              ),
-                              child: Column(
-                                children: [
-                                  for (int i = 0;
-                                      i < _documents.length;
-                                      i++) ...[
-                                    _buildDocumentRow(_documents[i]),
-                                    if (i < _documents.length - 1)
-                                      Container(
-                                        height: 1,
-                                        margin: const EdgeInsets.only(
-                                            left: 72),
-                                        color: c.divider,
-                                      ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                          ),
-
-                        const SizedBox(height: 24),
                         Text(
                           s.profileHistory,
                           style: TextStyle(
@@ -704,66 +631,6 @@ class _ProfileScreenState extends State<ProfileScreen>
                     color: c.textSecondary,
                   ),
                   overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          Icon(
-            Icons.chevron_right_rounded,
-            color: c.textHint,
-            size: 20,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDocumentRow(Map<String, dynamic> doc) {
-    final c = AppColors.of(context);
-    final fileType = doc['file_type'] ?? 'pdf';
-    final color = fileType == 'pdf'
-        ? const Color(0xFFEF4444)
-        : fileType == 'jpg'
-            ? const Color(0xFF38BDF8)
-            : const Color(0xFF2DD4A8);
-    final icon = fileType == 'pdf'
-        ? Icons.picture_as_pdf_rounded
-        : fileType == 'jpg'
-            ? Icons.photo_rounded
-            : Icons.image_rounded;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: color, size: 18),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  doc['name'] ?? '',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: c.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  doc['created_at'] ?? '',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: c.textSecondary,
-                  ),
                 ),
               ],
             ),
@@ -942,6 +809,8 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
   late bool _isOrg;
   String? _iinError;
   bool _saving = false;
+  String? _avatarPath;
+  String? _coverPath;
 
   @override
   void initState() {
@@ -955,6 +824,8 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     _orgNameController = TextEditingController(
         text: widget.profile?['org_name'] ?? '');
     _isOrg = (widget.profile?['client_type'] ?? 'person') == 'org';
+    _avatarPath = widget.profile?['avatar_url'] as String?;
+    _coverPath = widget.profile?['cover_url'] as String?;
   }
 
   @override
@@ -964,6 +835,33 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     _iinController.dispose();
     _orgNameController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickAndUpload({
+    required ImageSource source,
+    required bool isAvatar,
+  }) async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: source,
+      maxWidth: isAvatar ? 1200 : 1600,
+      maxHeight: isAvatar ? 1200 : 700,
+      imageQuality: 88,
+    );
+    if (picked == null) return;
+    final bytes = await picked.readAsBytes();
+    final oldPath = isAvatar ? _avatarPath : _coverPath;
+    try {
+      final path = await SupabaseService.uploadProfileAvatar(bytes, oldPath: oldPath ?? '');
+      if (!mounted) return;
+      setState(() {
+        if (isAvatar) _avatarPath = path;
+        else _coverPath = path;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
   }
 
   Future<void> _save() async {
@@ -1010,6 +908,8 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
         clientType: _isOrg ? 'org' : 'person',
         orgName: _isOrg ? _orgNameController.text.trim() : null,
         bin: _isOrg ? idNumber : null,
+        avatarUrl: _avatarPath,
+        coverUrl: _coverPath,
       );
       if (mounted) {
         widget.onSaved();
@@ -1072,6 +972,28 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
                   fontWeight: FontWeight.w700,
                   color: c.textPrimary,
                 ),
+              ),
+              const SizedBox(height: 24),
+              _MediaPickerRow(
+                title: 'Фото профиля',
+                subtitle: 'Поменять аватар',
+                path: _avatarPath,
+                borderRadius: 36,
+                maxHeight: 96,
+                isAvatar: true,
+                onPickAvatar: () => _showImageSourceSheet(true),
+                onPickCover: () => _showImageSourceSheet(false),
+              ),
+              const SizedBox(height: 12),
+              _MediaPickerRow(
+                title: 'Обложка профиля',
+                subtitle: 'Фон как на YouTube',
+                path: _coverPath,
+                borderRadius: 16,
+                maxHeight: 140,
+                isAvatar: false,
+                onPickAvatar: () => _showImageSourceSheet(true),
+                onPickCover: () => _showImageSourceSheet(false),
               ),
               const SizedBox(height: 24),
               _buildField(
@@ -1236,6 +1158,146 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: c.accent, width: 1.5),
+        ),
+      ),
+    );
+  }
+
+  void _showImageSourceSheet(bool forAvatar) {
+    final canUseCamera = !kIsWeb && defaultTargetPlatform != TargetPlatform.linux;
+    final c = AppColors.of(context);
+    final label = forAvatar ? 'Изменить аватар' : 'Изменить обложку';
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: c.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: c.muted,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(label, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: c.textPrimary)),
+                const SizedBox(height: 16),
+                if (canUseCamera)
+                  _imageSourceOption(Icons.camera_alt_rounded, 'Камера', () {
+                    Navigator.pop(ctx);
+                    _pickAndUpload(source: ImageSource.camera, isAvatar: forAvatar);
+                  }),
+                if (canUseCamera) const SizedBox(height: 8),
+                _imageSourceOption(Icons.photo_library_rounded, 'Галерея', () {
+                  Navigator.pop(ctx);
+                  _pickAndUpload(source: ImageSource.gallery, isAvatar: forAvatar);
+                }),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _imageSourceOption(IconData icon, String label, VoidCallback onTap) {
+    final c = AppColors.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: c.inputFill,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: c.accent, size: 20),
+            const SizedBox(width: 14),
+            Text(label, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: c.textPrimary)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MediaPickerRow extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final String? path;
+  final double borderRadius;
+  final double maxHeight;
+  final bool isAvatar;
+  final VoidCallback onPickAvatar;
+  final VoidCallback onPickCover;
+
+  const _MediaPickerRow({
+    required this.title,
+    required this.subtitle,
+    this.path,
+    required this.borderRadius,
+    required this.maxHeight,
+    required this.isAvatar,
+    required this.onPickAvatar,
+    required this.onPickCover,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final hasImage = path != null && path!.startsWith('http');
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: isAvatar ? onPickAvatar : onPickCover,
+      child: Container(
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        decoration: BoxDecoration(
+          color: c.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: c.border, width: 1),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: c.textPrimary)),
+                    const SizedBox(height: 4),
+                    Text(subtitle, style: TextStyle(fontSize: 12, color: c.textSecondary)),
+                  ],
+                ),
+              ),
+            ),
+            Container(
+              width: isAvatar ? 52 : 88,
+              height: isAvatar ? 52 : 44,
+              margin: const EdgeInsets.only(right: 12),
+              decoration: BoxDecoration(
+                color: c.inputFill,
+                borderRadius: BorderRadius.circular(borderRadius),
+                border: Border.all(color: c.border),
+                image: hasImage ? DecorationImage(image: NetworkImage(path!), fit: BoxFit.cover) : null,
+              ),
+              child: !hasImage
+                  ? Icon(Icons.add_photo_alternate_rounded, color: c.textHint, size: isAvatar ? 22 : 18)
+                  : null,
+            ),
+          ],
         ),
       ),
     );
