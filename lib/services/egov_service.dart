@@ -279,18 +279,18 @@ class EgovService {
   }
 
   static void _walkTimes(ASN1Object obj, List<String> results) {
-    if (obj is ASN1Sequence || obj is ASN1Set) {
-      final elements = obj.elements;
-      if (elements == null) return;
-      for (final el in elements) {
-        _walkTimes(el, results);
-      }
-    } else if (obj is ASN1GeneralizedTime) {
+    if (obj is ASN1GeneralizedTime) {
       final s = obj.dateTimeValue?.toIso8601String();
       if (s != null && s.isNotEmpty) results.add(s);
     } else if (obj is ASN1UtcTime) {
       final s = obj.time?.toIso8601String();
       if (s != null && s.isNotEmpty) results.add(s);
+    } else if (obj is ASN1Sequence || obj is ASN1Set) {
+      final elements = obj is ASN1Sequence ? obj.elements : (obj as ASN1Set).elements;
+      if (elements == null) return;
+      for (final el in elements) {
+        _walkTimes(el, results);
+      }
     }
   }
 
