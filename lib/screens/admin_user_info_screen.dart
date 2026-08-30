@@ -22,29 +22,48 @@ class AdminUserInfoScreen extends StatefulWidget {
 
 class _AdminUserInfoScreenState extends State<AdminUserInfoScreen> {
   List<Map<String, dynamic>> _applications = [];
+  List<Map<String, dynamic>> _documents = [];
   bool _loadingApps = true;
+  bool _loadingDocs = true;
 
   @override
   void initState() {
     super.initState();
     _loadApplications();
+    _loadDocuments();
   }
 
   Future<void> _loadApplications() async {
     try {
-      final all = await SupabaseService.getAllApplications();
-      final userId = (widget.user['user_id'] ?? '').toString();
-      final mine =
-          all.where((a) => (a['user_id'] ?? '').toString() == userId).toList();
+      final apps = await SupabaseService.getApplicationsForUser(
+        (widget.user['user_id'] ?? '').toString(),
+      );
       if (mounted) {
         setState(() {
-          _applications = mine;
+          _applications = apps;
           _loadingApps = false;
         });
       }
     } catch (e) {
       debugPrint('[AdminUserInfo] apps error: $e');
       if (mounted) setState(() => _loadingApps = false);
+    }
+  }
+
+  Future<void> _loadDocuments() async {
+    try {
+      final docs = await SupabaseService.getDocumentsForUser(
+        (widget.user['user_id'] ?? '').toString(),
+      );
+      if (mounted) {
+        setState(() {
+          _documents = docs;
+          _loadingDocs = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('[AdminUserInfo] docs error: $e');
+      if (mounted) setState(() => _loadingDocs = false);
     }
   }
 
@@ -258,6 +277,57 @@ class _AdminUserInfoScreenState extends State<AdminUserInfoScreen> {
           ),
           const SizedBox(height: 14),
 
+          // ===== Медиа профиля =====
+          _sectionTitle(c, 'Профиль'),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: c.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: c.border, width: 1),
+            ),
+            child: Column(
+              children: [
+                if ((u['avatar_url'] ?? '').toString().isEmpty && (u['cover_url'] ?? '').toString().isEmpty)
+                  Text('Нет фото профиля или обложки', style: TextStyle(fontSize: 13, color: c.textHint))
+                else ...[
+                  if ((u['cover_url'] ?? '').toString().isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          u['cover_url'].toString(),
+                          width: double.infinity,
+                          height: 120,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            height: 120,
+                            color: c.inputFill,
+                            child: Icon(Icons.image_rounded, color: c.textHint),
+                          ),
+                        ),
+                      ),
+                    ),
+                  if ((u['avatar_url'] ?? '').toString().isNotEmpty)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: CircleAvatar(
+                        radius: 28,
+                        backgroundImage: NetworkImage(u['avatar_url'].toString()),
+                        onBackgroundImageError: (_, __) {},
+                        child: (u['avatar_url'] ?? '').toString().isEmpty
+                            ? Icon(Icons.person_rounded, color: c.textHint)
+                            : null,
+                      ),
+                    )
+                ]
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+
           // ===== Заявки пользователя =====
           _sectionTitle(c, 'Заявки (${_loadingApps ? '…' : _applications.length})'),
           const SizedBox(height: 8),
@@ -304,6 +374,49 @@ class _AdminUserInfoScreenState extends State<AdminUserInfoScreen> {
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
                                         color: c.textSecondary)),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+          ),
+          const SizedBox(height: 14),
+          _sectionTitle(c, 'Документы (${_loadingDocs ? '…' : _documents.length})'),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: c.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: c.border, width: 1),
+            ),
+            child: _loadingDocs
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: CircularProgressIndicator(color: c.accent, strokeWidth: 2),
+                    ),
+                  )
+                : _documents.isEmpty
+                    ? Text('Документов нет', style: TextStyle(fontSize: 13, color: c.textHint))
+                    : Column(
+                        children: _documents.take(20).map((doc) {
+                          final name = (doc['name'] ?? '').toString();
+                          final created = (doc['created_at'] ?? '').toString();
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 5),
+                            child: Row(
+                              children: [
+                                Icon(Icons.folder_rounded, size: 15, color: c.textHint),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(name.isEmpty ? 'Документ' : name,
+                                      style: TextStyle(fontSize: 13, color: c.textPrimary),
+                                      overflow: TextOverflow.ellipsis),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(_fmtDate(created),
+                                    style: TextStyle(fontSize: 12, color: c.textSecondary)),
                               ],
                             ),
                           );

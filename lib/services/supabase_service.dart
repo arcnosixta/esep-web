@@ -789,7 +789,6 @@ class SupabaseService {
         .select()
         .order('created_at', ascending: false);
 
-    // Fetch profiles and properties separately (FKs point to auth.users, not profiles)
     final profilesData = await supabase.from('profiles').select('user_id, full_name, email, iin');
     final profilesMap = {for (var p in profilesData) p['user_id']: p};
 
@@ -806,6 +805,24 @@ class SupabaseService {
 
     debugPrint('[Admin] getAllApplications: got ${result.length} applications');
     return result;
+  }
+
+  static Future<List<Map<String, dynamic>>> getDocumentsForUser(String userId) async {
+    final data = await supabase
+        .from('documents')
+        .select()
+        .eq('user_id', userId)
+        .order('created_at', ascending: false);
+    return List<Map<String, dynamic>>.from(data);
+  }
+
+  static Future<List<Map<String, dynamic>>> getApplicationsForUser(String userId) async {
+    final data = await supabase
+        .from('applications')
+        .select('*, properties(type, address, area, rooms, floor)')
+        .eq('user_id', userId)
+        .order('created_at', ascending: false);
+    return List<Map<String, dynamic>>.from(data);
   }
 
   static Future<void> updateUserRole(String userUserId, String role) async {
