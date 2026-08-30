@@ -507,7 +507,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
         backgroundColor: c.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        leadingWidth: 88,
+        leadingWidth: 104,
         leading: Row(
           children: [
             IconButton(

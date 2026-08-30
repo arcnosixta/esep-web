@@ -179,135 +179,160 @@ class _ProfileScreenState extends State<ProfileScreen>
                       ),
                       padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
                       children: [
-                        GestureDetector(
-                          onTap: _openEditProfile,
-                          child: Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: _profile?['cover_url'] == null ? c.surface : null,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                  color: c.border, width: 1),
-                              image: _profile?['cover_url'] != null
-                                  ? DecorationImage(
-                                      image: NetworkImage(_profile!['cover_url']),
-                                      fit: BoxFit.cover,
-                                    )
-                                  : null,
-                              boxShadow: [
-                                BoxShadow(
-                                  color:
-                                      Colors.black.withValues(alpha: 0.04),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 8),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 64,
-                                  height: 64,
-                                  decoration: BoxDecoration(
-                                    color: c.accent,
-                                    shape: BoxShape.circle,
-                                    image: _profile?['avatar_url'] != null
-                                        ? DecorationImage(
-                                            image: NetworkImage(_profile!['avatar_url']),
-                                            fit: BoxFit.cover,
-                                          )
-                                        : null,
+                        Container(
+                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                          decoration: BoxDecoration(
+                            color: _profile?['cover_url'] == null ? c.surface : null,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                                color: c.border, width: 1),
+                            image: _profile?['cover_url'] != null
+                                ? DecorationImage(
+                                    image: NetworkImage(_profile!['cover_url']),
+                                    fit: BoxFit.cover,
+                                  )
+                                : null,
+                            boxShadow: [
+                              BoxShadow(
+                                color:
+                                    Colors.black.withValues(alpha: 0.04),
+                                blurRadius: 20,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: c.accent.withValues(alpha: 0.08),
+                                      borderRadius:
+                                          BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: c.accent.withValues(alpha: 0.15),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      role,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: c.accent,
+                                      ),
+                                    ),
                                   ),
-                                  child: _profile?['avatar_url'] == null
-                                      ? Center(
-                                          child: Text(
-                                            _getInitials(),
-                                            style: const TextStyle(
-                                              fontSize: 24,
-                                              fontWeight: FontWeight.w800,
-                                              color: Colors.white,
-                                            ),
+                                  const Spacer(),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: c.gold
+                                          .withValues(alpha: 0.12),
+                                      borderRadius:
+                                          BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.verified_rounded,
+                                            size: 14,
+                                            color: c.gold),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          s.profileVerified,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: c.gold,
                                           ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  IconButton(
+                                    onPressed: _openEditProfile,
+                                    icon: Icon(Icons.edit_rounded,
+                                        size: 18, color: c.accent),
+                                    tooltip: s.profileEdit,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              Container(
+                                width: 80,
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                      color: c.surface, width: 4),
+                                  image: _profile?['avatar_url'] != null
+                                      ? DecorationImage(
+                                          image: NetworkImage(
+                                              _profile!['avatar_url']),
+                                          fit: BoxFit.cover,
                                         )
                                       : null,
+                                  color: c.accent,
                                 ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        name.isNotEmpty ? name : '—',
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w700,
-                                          color: c.textPrimary,
+                                child: _profile?['avatar_url'] == null
+                                    ? Center(
+                                        child: Text(
+                                          _getInitials(),
+                                          style: const TextStyle(
+                                            fontSize: 26,
+                                            fontWeight: FontWeight.w800,
+                                            color: Colors.white,
+                                          ),
                                         ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        role,
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          color: c.textSecondary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                      )
+                                    : null,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                name.isNotEmpty ? name : '—',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w800,
+                                  color: c.textPrimary,
                                 ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 5),
-                                  decoration: BoxDecoration(
-                                    color: c.gold
-                                        .withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.verified_rounded,
-                                          size: 14,
-                                          color: c.gold),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        s.profileVerified,
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                          color: c.gold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 4),
-                        GestureDetector(
-                          onTap: _openEditProfile,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.edit_rounded,
-                                    size: 14, color: c.accent),
-                                const SizedBox(width: 6),
+                                textAlign: TextAlign.center,
+                              ),
+                              if (iin.isNotEmpty) ...[
+                                const SizedBox(height: 4),
                                 Text(
-                                  s.profileEdit,
+                                  iin,
                                   style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: c.accent,
+                                    fontSize: 12,
+                                    color: c.textSecondary,
                                   ),
                                 ),
                               ],
-                            ),
+                              const SizedBox(height: 18),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  _ProfileStat(
+                                    value: '${_properties.length}',
+                                    label: s.profileObjects,
+                                  ),
+                                  _ProfileStat(
+                                    value: '${_history.length}',
+                                    label: s.profileEvaluations,
+                                  ),
+                                  _ProfileStat(
+                                    value: _profile?['documents_count'] != null
+                                        ? '${_profile!['documents_count']}'
+                                        : '0',
+                                    label: s.profileDocuments,
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
 
@@ -784,6 +809,38 @@ class _ProfileScreenState extends State<ProfileScreen>
     if (confirm == true && mounted) {
       await SupabaseService.signOut();
     }
+  }
+}
+
+class _ProfileStat extends StatelessWidget {
+  final String value;
+  final String label;
+
+  const _ProfileStat({required this.value, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: c.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            color: c.textSecondary,
+          ),
+        ),
+      ],
+    );
   }
 }
 
