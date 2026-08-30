@@ -286,10 +286,10 @@ class EgovService {
         _walkTimes(el, results);
       }
     } else if (obj is ASN1GeneralizedTime) {
-      final s = obj.timeString;
+      final s = obj.dateTimeValue?.toIso8601String();
       if (s != null && s.isNotEmpty) results.add(s);
-    } else if (obj is ASN1UTCTime) {
-      final s = obj.timeString;
+    } else if (obj is ASN1UtcTime) {
+      final s = obj.time?.toIso8601String();
       if (s != null && s.isNotEmpty) results.add(s);
     }
   }
