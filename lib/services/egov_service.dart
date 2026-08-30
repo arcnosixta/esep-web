@@ -137,6 +137,22 @@ class EgovService {
     return val == 'true';
   }
 
+  static Future<bool> isValidEcp() async {
+    final connected = await isEcpConnected();
+    if (!connected) return false;
+    final validUntil = await getValidUntil();
+    if (validUntil == null || validUntil.isEmpty) return false;
+    final until = DateTime.tryParse(validUntil);
+    if (until == null) return false;
+    return DateTime.now().isBefore(until);
+  }
+
+  static Future<DateTime?> getEcpValidUntilDate() async {
+    final val = await getValidUntil();
+    if (val == null || val.isEmpty) return null;
+    return DateTime.tryParse(val);
+  }
+
   // ============================================
   // ЗАГРУЗКА .p12/.pfx ФАЙЛА
   // ============================================
@@ -195,10 +211,11 @@ class EgovService {
         ownerName: ownerName,
         iin: '',
         serialNumber: serialNumber,
+        validUntil: '',
         fileName: fileName,
       );
     } catch (e) {
-      final name = fileName.replaceAll(RegExp(r'\.(p12|pfx)$'), '');
+      final name = fileName.replaceAll(RegExp(r'\\.(p12|pfx)$'), '');
       return EcpFileResult(
         success: true,
         ownerName: name,
@@ -251,6 +268,29 @@ class EgovService {
       for (final el in elements) {
         _walkAsn1(el, results, targetOid);
       }
+    }
+  }
+
+  static String _extractValidUntil(ASN1Object root) {
+    final results = <String>[];
+    _walkTimes(root, results);
+    if (results.length >= 2) return results.last;
+    return '';
+  }
+
+  static void _walkTimes(ASN1Object obj, List<String> results) {
+    if (obj is ASN1Sequence || obj is ASN1Set) {
+      final elements = obj.elements;
+      if (elements == null) return;
+      for (final el in elements) {
+        _walkTimes(el, results);
+      }
+    } else if (obj is ASN1GeneralizedTime) {
+      final s = obj.timeString;
+      if (s != null && s.isNotEmpty) results.add(s);
+    } else if (obj is ASN1UTCTime) {
+      final s = obj.timeString;
+      if (s != null && s.isNotEmpty) results.add(s);
     }
   }
 
