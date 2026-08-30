@@ -89,6 +89,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     final s = AppStrings.of(context);
+    final isCompactWeb = kIsWeb && MediaQuery.of(context).size.width < 640;
 
     if (_loading) {
       return Scaffold(
@@ -117,7 +118,12 @@ class _ProfileScreenState extends State<ProfileScreen>
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+              padding: EdgeInsets.fromLTRB(
+                isCompactWeb ? 14 : 24,
+                20,
+                isCompactWeb ? 14 : 24,
+                0,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -177,10 +183,20 @@ class _ProfileScreenState extends State<ProfileScreen>
                       physics: const AlwaysScrollableScrollPhysics(
                         parent: BouncingScrollPhysics(),
                       ),
-                      padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+                      padding: EdgeInsets.fromLTRB(
+                        isCompactWeb ? 14 : 24,
+                        20,
+                        isCompactWeb ? 14 : 24,
+                        32,
+                      ),
                       children: [
                         Container(
-                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                          padding: EdgeInsets.fromLTRB(
+                            isCompactWeb ? 14 : 20,
+                            16,
+                            isCompactWeb ? 14 : 20,
+                            isCompactWeb ? 16 : 20,
+                          ),
                           decoration: BoxDecoration(
                             color: _profile?['cover_url'] == null ? c.surface : null,
                             borderRadius: BorderRadius.circular(16),
@@ -206,8 +222,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                               Row(
                                 children: [
                                   Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 5),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: isCompactWeb ? 8 : 10,
+                                      vertical: isCompactWeb ? 4 : 5,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: c.accent.withValues(alpha: 0.08),
                                       borderRadius:
@@ -219,7 +237,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                                     child: Text(
                                       role,
                                       style: TextStyle(
-                                        fontSize: 12,
+                                        fontSize: isCompactWeb ? 11 : 12,
                                         fontWeight: FontWeight.w600,
                                         color: c.accent,
                                       ),
@@ -227,8 +245,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                                   ),
                                   const Spacer(),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 5),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: isCompactWeb ? 8 : 10,
+                                      vertical: isCompactWeb ? 4 : 5,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: c.gold
                                           .withValues(alpha: 0.12),
@@ -238,13 +258,13 @@ class _ProfileScreenState extends State<ProfileScreen>
                                     child: Row(
                                       children: [
                                         Icon(Icons.verified_rounded,
-                                            size: 14,
+                                            size: isCompactWeb ? 12 : 14,
                                             color: c.gold),
-                                        const SizedBox(width: 4),
+                                        SizedBox(width: isCompactWeb ? 3 : 4),
                                         Text(
                                           s.profileVerified,
                                           style: TextStyle(
-                                            fontSize: 11,
+                                            fontSize: isCompactWeb ? 10 : 11,
                                             fontWeight: FontWeight.w600,
                                             color: c.gold,
                                           ),
@@ -252,19 +272,19 @@ class _ProfileScreenState extends State<ProfileScreen>
                                       ],
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
+                                  SizedBox(width: isCompactWeb ? 6 : 8),
                                   IconButton(
                                     onPressed: _openEditProfile,
                                     icon: Icon(Icons.edit_rounded,
-                                        size: 18, color: c.accent),
+                                        size: isCompactWeb ? 16 : 18, color: c.accent),
                                     tooltip: s.profileEdit,
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 16),
+                              SizedBox(height: isCompactWeb ? 12 : 16),
                               Container(
-                                width: 80,
-                                height: 80,
+                                width: isCompactWeb ? 64 : 80,
+                                height: isCompactWeb ? 64 : 80,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
@@ -282,8 +302,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                                     ? Center(
                                         child: Text(
                                           _getInitials(),
-                                          style: const TextStyle(
-                                            fontSize: 26,
+                                          style: TextStyle(
+                                            fontSize: isCompactWeb ? 22 : 26,
                                             fontWeight: FontWeight.w800,
                                             color: Colors.white,
                                           ),
@@ -291,47 +311,70 @@ class _ProfileScreenState extends State<ProfileScreen>
                                       )
                                     : null,
                               ),
-                              const SizedBox(height: 12),
+                              SizedBox(height: isCompactWeb ? 10 : 12),
                               Text(
                                 name.isNotEmpty ? name : '—',
                                 style: TextStyle(
-                                  fontSize: 20,
+                                  fontSize: isCompactWeb ? 18 : 20,
                                   fontWeight: FontWeight.w800,
                                   color: c.textPrimary,
                                 ),
                                 textAlign: TextAlign.center,
                               ),
                               if (iin.isNotEmpty) ...[
-                                const SizedBox(height: 4),
+                                SizedBox(height: isCompactWeb ? 3 : 4),
                                 Text(
                                   iin,
                                   style: TextStyle(
-                                    fontSize: 12,
+                                    fontSize: isCompactWeb ? 11 : 12,
                                     color: c.textSecondary,
                                   ),
                                 ),
                               ],
-                              const SizedBox(height: 18),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  _ProfileStat(
-                                    value: '${_properties.length}',
-                                    label: s.profileObjects,
-                                  ),
-                                  _ProfileStat(
-                                    value: '${_history.length}',
-                                    label: s.profileEvaluations,
-                                  ),
-                                  _ProfileStat(
-                                    value: _profile?['documents_count'] != null
-                                        ? '${_profile!['documents_count']}'
-                                        : '0',
-                                    label: s.profileDocuments,
-                                  ),
-                                ],
-                              ),
+                              SizedBox(height: isCompactWeb ? 14 : 18),
+                              if (isCompactWeb)
+                                Wrap(
+                                  spacing: 24,
+                                  runSpacing: 10,
+                                  alignment: WrapAlignment.center,
+                                  children: [
+                                    _ProfileStat(
+                                      value: '${_properties.length}',
+                                      label: s.profileObjects,
+                                    ),
+                                    _ProfileStat(
+                                      value: '${_history.length}',
+                                      label: s.profileEvaluations,
+                                    ),
+                                    _ProfileStat(
+                                      value: _profile?['documents_count'] != null
+                                          ? '${_profile!['documents_count']}'
+                                          : '0',
+                                      label: s.profileDocuments,
+                                    ),
+                                  ],
+                                )
+                              else
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    _ProfileStat(
+                                      value: '${_properties.length}',
+                                      label: s.profileObjects,
+                                    ),
+                                    _ProfileStat(
+                                      value: '${_history.length}',
+                                      label: s.profileEvaluations,
+                                    ),
+                                    _ProfileStat(
+                                      value: _profile?['documents_count'] != null
+                                          ? '${_profile!['documents_count']}'
+                                          : '0',
+                                      label: s.profileDocuments,
+                                    ),
+                                  ],
+                                ),
                             ],
                           ),
                         ),
