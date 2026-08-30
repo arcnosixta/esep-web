@@ -1293,3 +1293,75 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     );
   }
 }
+
+class _MediaPickerRow extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final String? path;
+  final double borderRadius;
+  final double maxHeight;
+  final bool isAvatar;
+  final VoidCallback onPickAvatar;
+  final VoidCallback onPickCover;
+
+  const _MediaPickerRow({
+    required this.title,
+    required this.subtitle,
+    this.path,
+    required this.borderRadius,
+    required this.maxHeight,
+    required this.isAvatar,
+    required this.onPickAvatar,
+    required this.onPickCover,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final hasImage = path != null && path!.startsWith('http');
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: isAvatar ? onPickAvatar : onPickCover,
+      child: Container(
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        decoration: BoxDecoration(
+          color: c.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: c.border, width: 1),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: c.textPrimary)),
+                    const SizedBox(height: 4),
+                    Text(subtitle, style: TextStyle(fontSize: 12, color: c.textSecondary)),
+                  ],
+                ),
+              ),
+            ),
+            Container(
+              width: isAvatar ? 52 : 88,
+              height: isAvatar ? 52 : 44,
+              margin: const EdgeInsets.only(right: 12),
+              decoration: BoxDecoration(
+                color: c.inputFill,
+                borderRadius: BorderRadius.circular(borderRadius),
+                border: Border.all(color: c.border),
+                image: hasImage ? DecorationImage(image: NetworkImage(path!), fit: BoxFit.cover) : null,
+              ),
+              child: !hasImage
+                  ? Icon(Icons.add_photo_alternate_rounded, color: c.textHint, size: isAvatar ? 22 : 18)
+                  : null,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
