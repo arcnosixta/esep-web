@@ -190,13 +190,17 @@ class _ProfileScreenState extends State<ProfileScreen>
                         32,
                       ),
                       children: [
-                        Container(
-                          padding: EdgeInsets.fromLTRB(
-                            isCompactWeb ? 14 : 20,
-                            16,
-                            isCompactWeb ? 14 : 20,
-                            isCompactWeb ? 16 : 20,
-                          ),
+                        Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 980),
+                            child: Container(
+                              width: double.infinity,
+                              padding: EdgeInsets.fromLTRB(
+                                isCompactWeb ? 14 : 20,
+                                16,
+                                isCompactWeb ? 14 : 20,
+                                isCompactWeb ? 16 : 20,
+                              ),
                           decoration: BoxDecoration(
                             color: _profile?['cover_url'] == null ? c.surface : null,
                             borderRadius: BorderRadius.circular(16),
