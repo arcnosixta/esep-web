@@ -118,6 +118,7 @@ class PaymentService {
   static String methodLabel(String method) => switch (method) {
         'kaspi' => 'Kaspi Pay',
         'kaspi_online' => 'Kaspi Pay (онлайн)',
+        'xpayment' => 'XPayment',
         'card' => 'Банковская карта',
         'bank' => 'Банковский перевод',
         _ => 'Вручную',

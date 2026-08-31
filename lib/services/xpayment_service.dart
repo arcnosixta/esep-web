@@ -1,37 +1,59 @@
 import 'dart:convert';
 
-import 'package:http/http.dart' as http';
-import '../main.dart' show supabase;
+import 'package:http/http.dart' as http;
 
-/// Заглушка интеграции XPayment.
-///
-/// TODO: заменить на реальный SDK/серверные вызовы XPayment.
-/// Контракт подогнан под существующий `PaymentService`, чтобы второй
-/// человек мог быстро вкрутить готовую точку входа.
+import 'payment_service.dart';
+import 'supabase_service.dart';
+
 class XPaymentService {
   XPaymentService._();
 
-  static const int appraisalPrice = 15000;
+  static String get _baseUrl => PaymentService.apiBaseUrl;
 
-  static Future<Map<String, dynamic>> createSession({
+  static Map<String, String> _headers() {
+    final token = SupabaseService.accessToken;
+    return {
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+  }
+
+  /// Создаёт сессию оплаты через /api/xpayment/create и возвращает
+  /// checkout_url (реальная ссылка Kaspi через XPayment либо демо-страница).
+  static Future<String> createCheckout({
     required String applicationId,
     required int amount,
   }) async {
-    // TODO: создать сессию оплаты в XPayment и вернуть `checkout_url`.
-    throw UnimplementedError('XPayment: createSession not implemented');
+    final resp = await http.post(
+      Uri.parse('$_baseUrl/api/xpayment/create'),
+      headers: _headers(),
+      body: jsonEncode({'application_id': applicationId, 'amount': amount}),
+    );
+    if (resp.statusCode != 200) {
+      throw Exception('XPayment: ${resp.body}');
+    }
+    final data = jsonDecode(utf8.decode(resp.bodyBytes)) as Map<String, dynamic>;
+    final url = data['checkout_url'] as String?;
+    if (url == null || url.isEmpty) {
+      throw Exception('XPayment: пустой checkout_url');
+    }
+    return url;
   }
 
-  static Future<Map<String, dynamic>> confirmPayment({
-    required String paymentId,
-  }) async {
-    // TODO: подтвердить платёж в XPayment / через вебхук.
-    throw UnimplementedError('XPayment: confirmPayment not implemented');
-  }
-
-  static Future<List<Map<String, dynamic>>> getPaymentsForApplication(
-    String applicationId,
-  ) async {
-    // TODO: вернуть историю платежей по заявке из XPayment/ Supabase.
-    return <Map<String, dynamic>>[];
+  /// Просит сервер сверить статусы XPayment-платежей заявки с провайдером.
+  /// Возвращает true, если после синхронизации есть подтверждённый платёж.
+  static Future<bool> syncStatus(String applicationId) async {
+    try {
+      final resp = await http.post(
+        Uri.parse('$_baseUrl/api/xpayment/status'),
+        headers: _headers(),
+        body: jsonEncode({'application_id': applicationId}),
+      );
+      if (resp.statusCode != 200) return false;
+      final data = jsonDecode(utf8.decode(resp.bodyBytes)) as Map<String, dynamic>;
+      return (data['confirmed'] as num? ?? 0) > 0;
+    } catch (_) {
+      return false;
+    }
   }
 }

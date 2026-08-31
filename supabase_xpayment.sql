@@ -1,19 +1,29 @@
 -- ============================================================
--- ESEP: XPayment интеграция (ЗАГЛУШКА)
--- ============================================================
+-- ESEP: XPayment интеграциясы (xpayment.kz → Kaspi Pay API)
+-- Supabase SQL Editor-де бір рет іске қосу.
 --
--- TODO: после подключения XPayment актуализировать схему
--- и добавить недостающие поля/индексы под их API.
+-- payments кестесінің CHECK-шектеулерін кеңейтеміз:
+--   method   += 'bank', 'kaspi_online', 'xpayment'
+--   provider += 'kaspi', 'xpayment'
+-- ============================================================
 
-CREATE TABLE IF NOT EXISTS xpayment_sessions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  application_id UUID REFERENCES applications(id) ON DELETE CASCADE NOT NULL,
-  amount NUMERIC NOT NULL CHECK (amount > 0),
-  status TEXT NOT NULL DEFAULT 'pending'
-    CHECK (status IN ('pending', 'paid', 'failed', 'cancelled')),
-  provider_payload JSONB,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+ALTER TABLE payments DROP CONSTRAINT IF EXISTS payments_method_check;
+ALTER TABLE payments ADD CONSTRAINT payments_method_check
+  CHECK (method IN ('kaspi', 'kaspi_online', 'xpayment', 'bank', 'card', 'manual'));
+
+ALTER TABLE payments DROP CONSTRAINT IF EXISTS payments_provider_check;
+ALTER TABLE payments ADD CONSTRAINT payments_provider_check
+  CHECK (provider IN ('manual', 'paybox', 'kaspi_api', 'kaspi', 'xpayment'));
+
+CREATE INDEX IF NOT EXISTS idx_payments_provider_tx ON payments(provider_tx_id);
+
+-- Аудиторский след
+INSERT INTO activity_logs (user_id, action, details)
+SELECT NULL, 'migration',
+       '{"message": "payments constraints extended for xpayment (method/provider)",
+         "source": "supabase_xpayment.sql"}'::jsonb
+WHERE NOT EXISTS (
+  SELECT 1 FROM activity_logs
+  WHERE action = 'migration'
+    AND details->>'message' LIKE '%constraints extended for xpayment%'
 );
-
-CREATE INDEX IF NOT EXISTS idx_xpayment_application
-  ON xpayment_sessions(application_id);
