@@ -10,6 +10,7 @@ import '../utils/formatters.dart';
 import '../widgets/status_badge.dart';
 import '../widgets/app_filter_chip.dart';
 import 'admin_user_info_screen.dart';
+import 'admin_api_requests_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -45,11 +46,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
     final pages = [
       _AdminHome(profile: _profile, onNavigate: _switchTab),
       _AdminUsers(onRefresh: _loadProfile),
+      const AdminCompaniesScreen(),
       const _AdminAppraisers(),
       _AdminRequests(onRefresh: _loadProfile),
       const _AdminPayments(),
       const _AdminDocuments(),
       const _AdminLogs(),
+      const AdminApiRequestsScreen(),
       _AdminProfile(profile: _profile, onRefresh: _loadProfile),
     ];
 
@@ -68,12 +71,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
               children: [
                 _navItem(0, Icons.dashboard_rounded, 'Главная'),
                 _navItem(1, Icons.people_rounded, 'Юзеры'),
-                _navItem(2, Icons.engineering_rounded, 'Оценщики'),
-                _navItem(3, Icons.assignment_rounded, 'Заявки'),
-                _navItem(4, Icons.payments_rounded, 'Платежи'),
-                _navItem(5, Icons.description_rounded, 'Доки'),
-                _navItem(6, Icons.history_rounded, 'Логи'),
-                _navItem(7, Icons.person_rounded, 'Профиль'),
+                _navItem(2, Icons.business_rounded, 'Компании'),
+                _navItem(3, Icons.engineering_rounded, 'Оценщики'),
+                _navItem(4, Icons.assignment_rounded, 'Заявки'),
+                _navItem(5, Icons.payments_rounded, 'Платежи'),
+                _navItem(6, Icons.description_rounded, 'Доки'),
+                _navItem(7, Icons.history_rounded, 'Логи'),
+                _navItem(8, Icons.vpn_key_rounded, 'API'),
+                _navItem(9, Icons.person_rounded, 'Профиль'),
               ],
             ),
           ),

@@ -11,6 +11,7 @@ import '../utils/formatters.dart';
 import '../utils/iin_validator.dart';
 import 'egov_screen.dart';
 import 'settings_screen.dart';
+import 'company_request_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -578,6 +579,59 @@ class _ProfileScreenState extends State<ProfileScreen>
                             ),
                           ),
 
+                        if ((_profile?['client_type'] ?? '') == 'org')
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const CompanyRequestScreen(),
+                                ),
+                              );
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 12),
+                              child: Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: c.info.withValues(alpha: 0.06),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: c.info.withValues(alpha: 0.2), width: 1),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.vpn_key_rounded, color: c.info, size: 20),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'API-доступ компании',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                              color: c.textPrimary,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            'Запросить ключ и webhook',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: c.textSecondary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Icon(Icons.chevron_right_rounded, color: c.info, size: 18),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
                         const SizedBox(height: 28),
                         Container(
                           decoration: BoxDecoration(

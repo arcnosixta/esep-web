@@ -20,6 +20,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   bool _agreed = false;
   bool _loading = false;
   bool _obscure = true;
+  bool _isOrg = false;
+  final _orgNameController = TextEditingController();
 
   @override
   void dispose() {
@@ -27,6 +29,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     _phoneController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _orgNameController.dispose();
     super.dispose();
   }
 
@@ -38,6 +41,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
     if (name.isEmpty || email.isEmpty || password.isEmpty) {
       _showError(context, 'Заполните имя, email и пароль');
+      return;
+    }
+
+    if (_isOrg && _orgNameController.text.trim().isEmpty) {
+      _showError(context, 'Укажите наименование организации');
       return;
     }
 
@@ -54,6 +62,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         password: password,
         fullName: name,
         phone: phone,
+        clientType: _isOrg ? 'org' : 'person',
+        orgName: _isOrg ? _orgNameController.text.trim() : null,
       );
       if (mounted) {
         final c = AppColors.of(context);
@@ -65,8 +75,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             ),
             backgroundColor: c.success,
             behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
         );
         Navigator.of(context).popUntil((route) => route.isFirst);
@@ -123,10 +132,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
                 child: Text(
                   'Создайте аккаунт для оценки недвижимости',
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: c.textSecondary,
-                  ),
+                  style: TextStyle(fontSize: 15, color: c.textSecondary),
                 ),
               ),
               const SizedBox(height: 32),
@@ -152,13 +158,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     const SizedBox(height: 8),
                     TextField(
                       controller: _nameController,
-                      style: TextStyle(
-                        color: c.textPrimary,
-                        fontSize: 15,
-                      ),
-                      decoration: const InputDecoration(
-                        hintText: 'Введите имя',
-                      ),
+                      style: TextStyle(color: c.textPrimary, fontSize: 15),
+                      decoration: const InputDecoration(hintText: 'Введите имя'),
                     ),
                     const SizedBox(height: 20),
                     const _Label('ТЕЛЕФОН'),
@@ -166,13 +167,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     TextField(
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
-                      style: TextStyle(
-                        color: c.textPrimary,
-                        fontSize: 15,
-                      ),
-                      decoration: const InputDecoration(
-                        hintText: '+7 (___) ___-__-__',
-                      ),
+                      style: TextStyle(color: c.textPrimary, fontSize: 15),
+                      decoration: const InputDecoration(hintText: '+7 (___) ___-__-__'),
                     ),
                     const SizedBox(height: 20),
                     const _Label('EMAIL'),
@@ -180,13 +176,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     TextField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
-                      style: TextStyle(
-                        color: c.textPrimary,
-                        fontSize: 15,
-                      ),
-                      decoration: const InputDecoration(
-                        hintText: 'example@mail.com',
-                      ),
+                      style: TextStyle(color: c.textPrimary, fontSize: 15),
+                      decoration: const InputDecoration(hintText: 'example@mail.com'),
                     ),
                     const SizedBox(height: 20),
                     const _Label('ПАРОЛЬ'),
@@ -194,24 +185,47 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     TextField(
                       controller: _passwordController,
                       obscureText: _obscure,
-                      style: TextStyle(
-                        color: c.textPrimary,
-                        fontSize: 15,
-                      ),
+                      style: TextStyle(color: c.textPrimary, fontSize: 15),
                       decoration: InputDecoration(
                         hintText: 'Минимум 8 символов',
                         suffixIcon: GestureDetector(
                           onTap: () => setState(() => _obscure = !_obscure),
                           child: Icon(
-                            _obscure
-                                ? Icons.visibility_off_outlined
-                                : Icons.visibility_outlined,
+                            _obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                             size: 20,
                             color: c.textHint,
                           ),
                         ),
                       ),
                     ),
+                    const SizedBox(height: 20),
+                    const _Label('ТИП АККАУНТА'),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        _typeChip('Физлицо', !_isOrg, () {
+                          setState(() {
+                            _isOrg = false;
+                          });
+                        }),
+                        const SizedBox(width: 12),
+                        _typeChip('Юрлицо', _isOrg, () {
+                          setState(() {
+                            _isOrg = true;
+                          });
+                        }),
+                      ],
+                    ),
+                    if (_isOrg) ...[
+                      const SizedBox(height: 20),
+                      const _Label('НАИМЕНОВАНИЕ ОРГАНИЗАЦИИ'),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _orgNameController,
+                        style: TextStyle(color: c.textPrimary, fontSize: 15),
+                        decoration: const InputDecoration(hintText: 'ТОО «Название»'),
+                      ),
+                    ],
                     const SizedBox(height: 24),
                     GestureDetector(
                       onTap: () => setState(() => _agreed = !_agreed),
@@ -225,33 +239,22 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                               color: _agreed ? c.accent : Colors.transparent,
                               borderRadius: BorderRadius.circular(6),
                               border: Border.all(
-                                color: _agreed
-                                    ? c.accent
-                                    : c.inputBorder,
+                                color: _agreed ? c.accent : c.inputBorder,
                                 width: 1.5,
                               ),
                             ),
-                            child: _agreed
-                                ? const Icon(Icons.check_rounded,
-                                    size: 14, color: Colors.white)
-                                : null,
+                            child: _agreed ? const Icon(Icons.check_rounded, size: 14, color: Colors.white) : null,
                           ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: RichText(
                               text: TextSpan(
                                 text: 'Я согласен с ',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: c.textSecondary,
-                                ),
+                                style: TextStyle(fontSize: 13, color: c.textSecondary),
                                 children: [
                                   TextSpan(
                                     text: 'условиями использования',
-                                    style: TextStyle(
-                                      color: c.accent,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                    style: TextStyle(color: c.accent, fontWeight: FontWeight.w500),
                                   ),
                                 ],
                               ),
@@ -268,24 +271,15 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     const SizedBox(height: 20),
                     Center(
                       child: GestureDetector(
-                        onTap: () => AppNavigator.push(
-                          context,
-                          const LoginScreen(),
-                        ),
+                        onTap: () => AppNavigator.push(context, const LoginScreen()),
                         child: RichText(
                           text: TextSpan(
                             text: 'Уже есть аккаунт? ',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: c.textSecondary,
-                            ),
+                            style: TextStyle(fontSize: 14, color: c.textSecondary),
                             children: [
                               TextSpan(
                                 text: 'Войти',
-                                style: TextStyle(
-                                  color: c.accent,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                                style: TextStyle(color: c.accent, fontWeight: FontWeight.w600),
                               ),
                             ],
                           ),
@@ -313,12 +307,27 @@ class _Label extends StatelessWidget {
     final c = AppColors.of(context);
     return Text(
       text,
-      style: TextStyle(
-        fontSize: 11,
-        fontWeight: FontWeight.w600,
-        color: c.textSecondary,
-        letterSpacing: 0.8,
-      ),
+      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: c.textSecondary, letterSpacing: 0.8),
     );
   }
+}
+
+Widget _typeChip(String label, bool selected, VoidCallback onTap) {
+  final c = AppColors.of(context);
+  return GestureDetector(
+    onTap: onTap,
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+      decoration: BoxDecoration(
+        color: selected ? c.accent : c.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: selected ? c.accent : c.border),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: selected ? Colors.white : c.textSecondary),
+      ),
+    ),
+  );
 }

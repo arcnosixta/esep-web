@@ -1122,4 +1122,115 @@ class SupabaseService {
         .delete()
         .eq('id', id);
   }
+
+  // ============================================
+  // B2B: companies, members, api key requests
+  // ============================================
+
+  static Future<Map<String, dynamic>?> getMyCompany() async {
+    if (userId == null) return null;
+    final rows = await supabase
+        .from('companies')
+        .select()
+        .eq('owner_id', userId!)
+        .maybeSingle();
+    return rows;
+  }
+
+  static Future<Map<String, dynamic>> createCompany({
+    required String name,
+    required String bin,
+    required String contactName,
+    required String contactEmail,
+    required String contactPhone,
+  }) async {
+    if (userId == null) throw Exception('Не авторизован');
+    final data = await supabase
+        .from('companies')
+        .insert({
+          'name': name,
+          'bin': bin,
+          'contact_name': contactName,
+          'contact_email': contactEmail,
+          'contact_phone': contactPhone,
+          'owner_id': userId!,
+        })
+        .select()
+        .single();
+    return data;
+  }
+
+  static Future<Map<String, dynamic>> requestApiKey({
+    required String companyId,
+    String reason = '',
+  }) async {
+    if (userId == null) throw Exception('Не авторизован');
+    final data = await supabase
+        .from('api_key_requests')
+        .insert({
+          'company_id': companyId,
+          'user_id': userId!,
+          'reason': reason,
+        })
+        .select()
+        .single();
+    return data;
+  }
+
+  static Future<List<Map<String, dynamic>>> getMyApiKeyRequests() async {
+    if (userId == null) return [];
+    final data = await supabase
+        .from('api_key_requests')
+        .select('*, companies(name, bin)')
+        .eq('user_id', userId!)
+        .order('created_at', ascending: false);
+    return List<Map<String, dynamic>>.from(data);
+  }
+
+  static Future<List<Map<String, dynamic>>> getAllApiKeyRequests() async {
+    final data = await supabase
+        .from('api_key_requests')
+        .select('*, companies(name, bin), profiles(full_name, email)')
+        .order('created_at', ascending: false);
+    return List<Map<String, dynamic>>.from(data);
+  }
+
+  static Future<void> approveApiKeyRequest(String requestId) async {
+    if (userId == null) throw Exception('Не авторизован');
+    await supabase
+        .from('api_key_requests')
+        .update({
+          'status': 'approved',
+          'reviewed_by': userId!,
+          'reviewed_at': DateTime.now().toIso8601String(),
+        })
+        .eq('id', requestId);
+  }
+
+  static Future<void> rejectApiKeyRequest(String requestId) async {
+    if (userId == null) throw Exception('Не авторизован');
+    await supabase
+        .from('api_key_requests')
+        .update({
+          'status': 'rejected',
+          'reviewed_by': userId!,
+          'reviewed_at': DateTime.now().toIso8601String(),
+        })
+        .eq('id', requestId);
+  }
+
+  static Future<List<Map<String, dynamic>>> getAllCompanies() async {
+    final data = await supabase
+        .from('companies')
+        .select('*, profiles(full_name, email)')
+        .order('created_at', ascending: false);
+    return List<Map<String, dynamic>>.from(data);
+  }
+
+  static Future<void> updateCompanyStatus(String companyId, String status) async {
+    await supabase
+        .from('companies')
+        .update({'status': status})
+        .eq('id', companyId);
+  }
 }

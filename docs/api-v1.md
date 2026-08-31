@@ -53,29 +53,52 @@ VALUES (
 | `SUPABASE_URL` | Secret | URL проекта Supabase |
 | `SUPABASE_SERVICE_ROLE_KEY` | Secret | Сервисный ключ (только на сервере!) |
 
+## Аутентификация B2B
+
+- Для B2B используется отдельный под-путь `/api/v1/b2b/*`.
+- Ключ обязан принадлежать `api_keys.company_id`, а компания должна быть `verified = true`.
+- Объекты ограничены компанией: `applications WHERE company_id = current_company`.
+
 ## Эндпоинты
 
-### GET /ping — публичный
+### B2B: проверка ключа компании
 
-Живость API и версия.
-
-```json
-{ "service": "esep-api", "version": "v1", "time": "..." }
-```
-
-### POST /iin/validate — публичный
-
-Валидация ИИН/БИН РК (12 цифр, контрольная цифра mod 11, правдоподобная
-дата). Полезен интеграторам для предварительной проверки на своей стороне.
+`GET /b2b/ping`
 
 ```json
-// запрос
-{ "iin": "900101123456" }
-// ответ
-{ "valid": true, "isOrg": false }
+{ "ok": true, "company": { "id": "...", "name": "...", "verified": true, "limit": 100 } }
 ```
 
-`isOrg: true` — номер похож на БИН юрлица (7-я цифра 4/5).
+### B2B: заявки
+
+`GET /b2b/applications?status=new|in_progress|completed|cancelled`
+`POST /b2b/applications`
+
+```json
+{ "client_name": "...", "property_type": "...", "address": "...", "client_iin": "...", "area": 42 }
+```
+
+### B2B: отчёты
+
+`GET /b2b/reports/{applicationId}/report`
+`GET /b2b/reports/{applicationId}/pdf`
+
+### B2B: вебхуки
+
+`GET /b2b/webhooks`
+`POST /b2b/webhooks`
+`DELETE /b2b/webhooks`
+
+```json
+{ "url": "https://partner.example/hook", "events": ["application.created", "report.ready"] }
+```
+
+## План
+
+| Метод | Путь | Описание |
+|---|---|---|
+| `GET` | `/b2b/appraisers` | Список оценщиков |
+| `GET` | `/b2b/balance` | Лимиты/баланс интегратора |
 
 ## План (следующие эндпоинты, по мере спроса)
 

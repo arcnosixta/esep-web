@@ -43,7 +43,7 @@ export async function requireApiKey(request, env) {
   }
 
   const hash = await sha256hex(key);
-  const url = `${SUPABASE_URL}/rest/v1/api_keys?select=id,name,scopes,revoked&key_hash=eq.${hash}`;
+  const url = `${SUPABASE_URL}/rest/v1/api_keys?select=id,name,scopes,revoked,company_id&key_hash=eq.${hash}`;
   let res;
   try {
     res = await fetch(url, {
@@ -74,7 +74,7 @@ export async function requireApiKey(request, env) {
     body: JSON.stringify({ last_used_at: new Date().toISOString() }),
   }).catch(() => {});
 
-  return { ok: true, key: { id: row.id, name: row.name, scopes: row.scopes ?? [] } };
+  return { ok: true, key: { id: row.id, name: row.name, scopes: row.scopes ?? [], companyId: row.company_id } };
 }
 
 /** Валидация ИИН/БИН РК (12 цифр, контрольная цифра mod 11, дата). */
