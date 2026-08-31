@@ -310,6 +310,49 @@ ESEP — онлайн-сервис оценки недвижимости в Ка
    [ ] Мониторинг (Sentry) + аналитика (Метрика/GA4)
 
 ================================================================
+КОНТРОЛЬНАЯ ТОЧКА: XPAYMENT ИНТЕГРАЦИЯ (ОЖИДАНИЕ КЛЮЧЕЙ)
+================================================================
+Дата контрольной точки: 31.08.2026
+Commit: a6f6e32
+Branch: master
+Деплой: esep.pages.dev (Cloudflare Pages)
+
+СТАТУС:
+  [x] Интегрирован код XPayment из ветки oplata в master.
+  [x] Edge-функция /api/xpayment/* подключена и готова к работе.
+  [x] Добавлен экран и сервис XPayment в Flutter.
+  [x] Расширены ограничения payments в Supabase под xpayment.
+  [ ] Ждём ключи/реквизиты от заказчика/партнёра.
+  [ ] После получения ключей: добавить env в Cloudflare Pages.
+  [ ] После добавления env: выполнить supabase_xpayment.sql в Supabase.
+  [ ] После настройки env/SQL: протестировать тестовый и боевой поток.
+
+ЧТО НУЖНО ОТ ЗАКАЗЧИКА:
+  1. XPAYMENT_API_KEY — ключ устройства/мерчанта xpayment (xdev_...).
+  2. XPAYMENT_API_URL — базовый URL API XPayment, если отличается от https://api.xpayment.kz.
+  3. XPAYMENT_WEBHOOK_SECRET — секрет для HMAC-SHA256 подписи вебхука.
+  4. Подтверждение, что заказчик работает именно через xpayment.kz / Kaspi Pay API.
+
+ГДЕ ДОБАВИТЬ КЛЮЧИ:
+  Cloudflare Pages → Проект 'esep' → Settings → Environment variables:
+    XPAYMENT_API_KEY
+    XPAYMENT_API_URL
+    XPAYMENT_WEBHOOK_SECRET
+    SUPABASE_SERVICE_ROLE_KEY
+  Также проверить, что уже стоят:
+    SUPABASE_URL
+    SUPABASE_ANON_KEY
+
+SQL ДЛЯ SUPABASE:
+  Выполнить один раз в Supabase → SQL Editor:
+    \i supabase_xpayment.sql
+
+ПОСЛЕДНЯЯ ПРОВЕРКА ПЕРЕД ТЕСТОМ:
+  - node --check functions/api/xpayment.js
+  - git status в master чистый, без конфликтов
+  - Cloudflare Pages деплой прошёл после push a6f6e32
+
+================================================================
 БЫСТРАЯ СВОДКА ДЛЯ НОВИЧКА
 ================================================================
  - Стек: Flutter + Supabase + Cloudflare + Gemini/OpenRouter.
